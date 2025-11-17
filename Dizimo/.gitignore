@@ -1,0 +1,29 @@
+# Visual Studio / Rider / JetBrains
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build artifacts
+bin/
+obj/
+**/bin/
+**/obj/
+
+# NuGet
+*.nupkg
+packages/
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# User-specific files
+*.swp
+*.tmp
+
+# Logs
+.log
