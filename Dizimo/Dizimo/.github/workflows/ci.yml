@@ -26,10 +26,22 @@ jobs:
         run: dotnet build Dizimo.sln -c Release --no-restore
 
       - name: Test Dizimo.Core
-        run: dotnet test src/Dizimo.Core/Dizimo.Core.csproj --no-build -c Release --verbosity normal
+        run: dotnet test src/Dizimo.Core/Dizimo.Core.csproj --no-build -c Release --logger "trx;LogFileName=Dizimo.Core.trx" --verbosity normal
+
+      - name: Upload Dizimo.Core test result
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dizimo.Core.trx
+          path: src/Dizimo.Core/bin/Release/*/TestResults/Dizimo.Core.trx
 
       - name: Test Dizimo.Tests
-        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj --no-build -c Release --verbosity normal
+        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj --no-build -c Release --logger "trx;LogFileName=Dizimo.Tests.trx" --verbosity normal
+
+      - name: Upload Dizimo.Tests result
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dizimo.Tests.trx
+          path: tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
 
   maui-windows:
     name: Build MAUI on Windows (optional)
