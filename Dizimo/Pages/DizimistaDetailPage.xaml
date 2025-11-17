@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Dizimo.Pages.DizimistaDetailPage"
+             Title="Dizimista">
+    <ContentPage.Content>
+        <StackLayout Padding="12" Spacing="8">
+            <Entry Placeholder="Nome" Text="{Binding Dizimista.Nome}" />
+            <Entry Placeholder="Código" Text="{Binding Dizimista.Codigo}" />
+            <DatePicker Date="{Binding Dizimista.DataNascimento}" />
+            <Switch IsToggled="{Binding Dizimista.Ativo}" />
+            <Button Text="Salvar" Command="{Binding SaveCommand}" />
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
