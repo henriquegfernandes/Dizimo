@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Dizimo.Pages.OfertaPage"
+             Title="Lançar Oferta">
+    <ContentPage.Content>
+        <StackLayout Padding="12" Spacing="8">
+            <Entry Placeholder="Código do Dizimista" Text="{Binding Codigo}" />
+            <Entry Placeholder="Valor" Keyboard="Numeric" Text="{Binding Valor}" />
+            <Entry Placeholder="Observação" Text="{Binding Observacao}" />
+            <Button Text="Lançar" Command="{Binding LançarCommand}" />
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

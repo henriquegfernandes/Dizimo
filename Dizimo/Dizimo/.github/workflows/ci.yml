@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Dizimo.sln
+
+      - name: Build
+        run: dotnet build Dizimo.sln -c Release --no-restore
+
+      - name: Test Dizimo.Core
+        run: dotnet test src/Dizimo.Core/Dizimo.Core.csproj --no-build -c Release --logger "trx;LogFileName=Dizimo.Core.trx" --verbosity normal
+
+      - name: Upload Dizimo.Core test result
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dizimo.Core.trx
+          path: src/Dizimo.Core/bin/Release/*/TestResults/Dizimo.Core.trx
+
+      - name: Test Dizimo.Tests
+        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj --no-build -c Release --logger "trx;LogFileName=Dizimo.Tests.trx" --verbosity normal
+
+      - name: Upload Dizimo.Tests result
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dizimo.Tests.trx
+          path: tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
+
+  maui-windows:
+    name: Build MAUI on Windows (optional)
+    runs-on: windows-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Install Chocolatey (if missing)
+        shell: powershell
+        run: |
+          if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          } else { Write-Host "choco already available" }
+
+      - name: Install Visual Studio Build Tools (best-effort)
+        shell: powershell
+        run: |
+          echo "Installing Visual Studio Build Tools (may be slow). This is best-effort on hosted runners."
+          choco install visualstudio2022buildtools --no-progress -y || echo "choco install returned non-zero"
+
+      - name: Locate MSBuild via vswhere
+        shell: powershell
+        run: |
+          $vswhere = "$env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath | ForEach-Object { Write-Host "Found VS at: $_" }
+          } else { Write-Host "vswhere not found; skipping" }
+
+      - name: Attempt MAUI workload install (dotnet)
+        shell: powershell
+        run: |
+          echo "Attempting to install dotnet MAUI workload (may require Visual Studio components)."
+          dotnet workload install microsoft-net-maui -v minimal || echo "dotnet workload install returned non-zero"
+
+      - name: Best-effort MAUI build (non-blocking)
+        shell: powershell
+        continue-on-error: true
+        run: |
+          echo "Running dotnet build for the MAUI solution (best-effort). Failure here is non-fatal in hosted runners."
+          dotnet build Dizimo.sln -c Release --no-restore
+
+      - name: Self-hosted runner recommendation (PR note)
+        shell: powershell
+        run: |
+          Write-Host "If the MAUI build fails on hosted runners, consider using a self-hosted Windows runner with Visual Studio and MAUI workloads installed."

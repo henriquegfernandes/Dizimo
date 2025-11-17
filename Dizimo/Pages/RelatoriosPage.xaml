@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Dizimo.Pages.RelatoriosPage"
+             Title="Relatórios">
+  <ContentPage.Content>
+    <StackLayout Padding="12" Spacing="8">
+      <Button Text="Relatório Geral" Command="{Binding OpenGeral}" />
+      <Button Text="Aniversariantes" Command="{Binding OpenAniversariantes}" />
+      <Button Text="Ofertas por Data" Command="{Binding OpenOfertas}" />
+    </StackLayout>
+  </ContentPage.Content>
+</ContentPage>
