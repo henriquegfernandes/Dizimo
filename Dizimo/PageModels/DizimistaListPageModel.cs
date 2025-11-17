@@ -8,12 +8,12 @@ namespace Dizimo.PageModels;
 public partial class DizimistaListPageModel : ObservableObject
 {
     private readonly DizimoService _service;
-    private readonly Dizimo.Services.BackupService _backupService;
+    private readonly BackupService _backupService;
 
     [ObservableProperty]
     private List<Dizimista> dizimistas = new();
 
-    public DizimistaListPageModel(DizimoService service, Dizimo.Services.BackupService backupService)
+    public DizimistaListPageModel(DizimoService service, BackupService backupService)
     {
         _service = service;
         _backupService = backupService;
