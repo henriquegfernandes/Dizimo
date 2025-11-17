@@ -23,7 +23,17 @@ public partial class OfertaPageModel : ObservableObject
         try
         {
             if (string.IsNullOrWhiteSpace(Codigo)) return;
-            if (!decimal.TryParse(Valor, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var v)) return;
+            if (!decimal.TryParse(Valor, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var v))
+            {
+                await Shell.Current.DisplayAlert("Validação", "Valor inválido.", "OK");
+                return;
+            }
+
+            if (v <= 0)
+            {
+                await Shell.Current.DisplayAlert("Validação", "O valor da oferta deve ser maior que zero.", "OK");
+                return;
+            }
             var d = await _service.GetDizimistaByCodigoAsync(Codigo);
             if (d is null)
             {

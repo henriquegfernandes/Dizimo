@@ -64,9 +64,27 @@ public partial class DizimistaListPageModel : ObservableObject
     [ICommand]
     public async Task LaunchByCodigo(string codigo, decimal valor)
     {
-        var d = await _service.GetDizimistaByCodigoAsync(codigo);
-        if (d is null) return;
-        await _service.LançarOfertaAsync(d.ID, valor, DateTime.Now);
-        await LoadAsync();
+        try
+        {
+            var d = await _service.GetDizimistaByCodigoAsync(codigo);
+            if (d is null)
+            {
+                await Shell.Current.DisplayAlert("Erro", "Dizimista não encontrado.", "OK");
+                return;
+            }
+
+            if (valor <= 0)
+            {
+                await Shell.Current.DisplayAlert("Validação", "O valor da oferta deve ser maior que zero.", "OK");
+                return;
+            }
+
+            await _service.LançarOfertaAsync(d.ID, valor, DateTime.Now);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
+        }
     }
 }

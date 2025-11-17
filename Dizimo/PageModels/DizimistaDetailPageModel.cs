@@ -22,6 +22,28 @@ public partial class DizimistaDetailPageModel : ObservableObject
     [ICommand]
     public async Task SaveAsync()
     {
+        // Basic validation
+        if (string.IsNullOrWhiteSpace(Dizimista.Nome))
+        {
+            await Shell.Current.DisplayAlert("Validação", "Nome é obrigatório.", "OK");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Dizimista.Codigo))
+        {
+            await Shell.Current.DisplayAlert("Validação", "Código é obrigatório.", "OK");
+            return;
+        }
+
+        // Ensure codigo uniqueness (allow same codigo if editing the same ID)
+        var all = await _service.ListDizimistasAsync();
+        var existing = all.FirstOrDefault(x => x.Codigo == Dizimista.Codigo && x.ID != Dizimista.ID);
+        if (existing is not null)
+        {
+            await Shell.Current.DisplayAlert("Validação", "Código já está em uso por outro dizimista.", "OK");
+            return;
+        }
+
         await _service.SaveDizimistaAsync(Dizimista);
     }
 
