@@ -15,7 +15,19 @@ public partial class RelatorioGeralPage : ContentPage
         base.OnAppearing();
         if (BindingContext is RelatorioGeralPageModel vm)
         {
-            _ = vm.LoadAsync();
+            _ = RunLoadAsync(vm);
+        }
+    }
+
+    private async Task RunLoadAsync(RelatorioGeralPageModel vm)
+    {
+        try
+        {
+            await vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
         }
     }
 }

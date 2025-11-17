@@ -15,7 +15,19 @@ public partial class DizimistaListPage : ContentPage
         base.OnAppearing();
         if (BindingContext is DizimistaListPageModel vm)
         {
-            _ = vm.LoadAsync();
+            _ = RunLoadAsync(vm);
+        }
+    }
+
+    private async Task RunLoadAsync(DizimistaListPageModel vm)
+    {
+        try
+        {
+            await vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
         }
     }
 

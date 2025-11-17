@@ -15,7 +15,19 @@ public partial class RelatorioOfertasPage : ContentPage
         base.OnAppearing();
         if (BindingContext is RelatorioOfertasPageModel vm)
         {
-            _ = vm.FiltrarAsync();
+            _ = RunFilterAsync(vm);
+        }
+    }
+
+    private async Task RunFilterAsync(RelatorioOfertasPageModel vm)
+    {
+        try
+        {
+            await vm.FiltrarAsync();
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
         }
     }
 }

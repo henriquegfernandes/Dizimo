@@ -16,7 +16,19 @@ public partial class RelatorioAniversariantesPage : ContentPage
         if (BindingContext is RelatorioAniversariantesPageModel vm)
         {
             vm.SelectedMesIndex = DateTime.Today.Month - 1;
-            _ = vm.FiltrarAsync();
+            _ = RunFilterAsync(vm);
+        }
+    }
+
+    private async Task RunFilterAsync(RelatorioAniversariantesPageModel vm)
+    {
+        try
+        {
+            await vm.FiltrarAsync();
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
         }
     }
 }

@@ -20,12 +20,29 @@ public partial class OfertaPageModel : ObservableObject
     [ICommand]
     public async Task LançarAsync()
     {
-        if (string.IsNullOrWhiteSpace(Codigo)) return;
-        if (!decimal.TryParse(Valor, out var v)) return;
-        var d = await _service.GetDizimistaByCodigoAsync(Codigo);
-        if (d is null) return;
-        await _service.LançarOfertaAsync(d.ID, v, DateTime.Now, Observacao);
-        await Shell.Current.DisplayAlert("Oferta", "Oferta lançada.", "OK");
-        await Shell.Current.GoToAsync("..");
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Codigo)) return;
+            if (!decimal.TryParse(Valor, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var v)) return;
+            var d = await _service.GetDizimistaByCodigoAsync(Codigo);
+            if (d is null)
+            {
+                await Shell.Current.DisplayAlert("Erro", "Dizimista não encontrado.", "OK");
+                return;
+            }
+
+            await _service.LançarOfertaAsync(d.ID, v, DateTime.Now, Observacao);
+            // clear inputs
+            Codigo = string.Empty;
+            Valor = string.Empty;
+            Observacao = string.Empty;
+
+            await Shell.Current.DisplayAlert("Oferta", "Oferta lançada.", "OK");
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
+        }
     }
 }
