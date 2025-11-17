@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Dizimo.sln
+
+      - name: Build
+        run: dotnet build Dizimo.sln -c Release --no-restore
+
+      - name: Test Dizimo.Core
+        run: dotnet test src/Dizimo.Core/Dizimo.Core.csproj --no-build -c Release --verbosity normal
+
+      - name: Test Dizimo.Tests
+        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj --no-build -c Release --verbosity normal
+
+  maui-windows:
+    name: Build MAUI on Windows (optional)
+    runs-on: windows-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install .NET MAUI workload (best-effort)
+        run: |
+          echo "Attempting to install MAUI workload; this may fail on hosted runners if Visual Studio components are required."
+          dotnet workload install microsoft-net-maui -v minimal || true
+
+      - name: Build solution (MAUI)
+        run: |
+          echo "Attempting to build the MAUI solution. If this fails, run MAUI builds on a self-hosted runner or Windows machine with Visual Studio workloads."
+          dotnet build Dizimo.sln -c Release --no-restore || true
+
+      - name: Post-build note
+        run: echo "If MAUI build failed, please run the build on a Windows machine with Visual Studio and the MAUI workload installed."
