@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Dizimo.Data;
 using Dizimo.Models;
-using Dizimo.Services;
+using Dizimo.Core.Services;
 using Microsoft.Extensions.Logging;
 
 // Simple runner to validate repositories/services compile and basic operations.

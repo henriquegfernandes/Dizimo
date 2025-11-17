@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Data;
 using Dizimo.Models;
-using Dizimo.Services;
+using Dizimo.Core.Services;
 
 namespace Dizimo.PageModels;
 
