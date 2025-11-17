@@ -44,8 +44,9 @@ jobs:
           path: tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
 
   maui-windows:
-    name: Build MAUI on Windows (optional)
-    runs-on: windows-latest
+    name: Build MAUI on self-hosted Windows (optional)
+    # This job should be run on a self-hosted Windows runner that has Visual Studio and MAUI workloads installed.
+    runs-on: [self-hosted, windows, windows-maui]
     needs: build-and-test
     steps:
       - name: Checkout
