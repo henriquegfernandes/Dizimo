@@ -1,9 +1,8 @@
 using System;
 using System.IO;
-using Dizimo.Data;
-using Dizimo.Models;
+using Dizimo.Core.Data;
+using Dizimo.Core.Models;
 using Dizimo.Core.Services;
-using Microsoft.Extensions.Logging;
 
 // Simple runner to validate repositories/services compile and basic operations.
 Console.WriteLine("Starting validation runner...");
@@ -15,9 +14,9 @@ if (File.Exists(tempDb)) File.Delete(tempDb);
 // Simpler approach: set environment variable to indicate use of temp DB and update Constants class for test.
 Environment.SetEnvironmentVariable("DIZIMO_TEST_DB", tempDb);
 
-using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
-var dizimistaRepo = new DizimistaRepository(loggerFactory.CreateLogger<DizimistaRepository>());
-var ofertaRepo = new OfertaRepository(loggerFactory.CreateLogger<OfertaRepository>());
+// Create repositories using a temporary DB path for validation
+var dizimistaRepo = new DizimistaRepository(tempDb);
+var ofertaRepo = new OfertaRepository(tempDb);
 var service = new DizimoService(dizimistaRepo, ofertaRepo);
 
 // Create and save a dizimista
@@ -26,7 +25,7 @@ var id = await dizimistaRepo.SaveAsync(d);
 Console.WriteLine($"Dizimista criado ID={id}");
 
 // Lançar uma oferta
-var ofertaId = await service.LançarOfertaAsync(id, 50.0m, DateTime.Now, "Ofertar para manutenção");
+var ofertaId = await service.LancarOfertaAsync(id, 50.0m, DateTime.Now, "Ofertar para manutenção");
 Console.WriteLine($"Oferta criada ID={ofertaId}");
 
 // Buscar ofertas por dizimista

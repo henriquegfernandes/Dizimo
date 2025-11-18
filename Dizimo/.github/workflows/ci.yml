@@ -15,9 +15,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Restore
-        run: dotnet restore Dizimo.sln
-      - name: Build
-        run: dotnet build Dizimo.sln --no-restore --configuration Release
+      - name: Restore (non-MAUI projects)
+        run: |
+          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj
+          dotnet restore Dizimo/tools/validate-standalone/ValidateStandalone.csproj
+          dotnet restore Dizimo/tools/validate/Validate.csproj
+          dotnet restore Dizimo/tests/Dizimo.Tests/Dizimo.Tests.csproj
+      - name: Build (non-MAUI projects)
+        run: |
+          dotnet build Dizimo/src/Dizimo.Core/Dizimo.Core.csproj --no-restore --configuration Release
+          dotnet build Dizimo/tools/validate-standalone/ValidateStandalone.csproj --no-restore --configuration Release
+          dotnet build Dizimo/tools/validate/Validate.csproj --no-restore --configuration Release
       - name: Run tests
-        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj --no-build --verbosity normal
+        run: dotnet test Dizimo/tests/Dizimo.Tests/Dizimo.Tests.csproj --no-build --verbosity normal
