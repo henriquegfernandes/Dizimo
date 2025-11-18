@@ -51,7 +51,7 @@ jobs:
           script: |
             const fs = require('fs');
             const diff = fs.readFileSync('format.diff', 'utf8');
-            const body = `Formatting changes required:\n\n<details><summary>Diff</summary>\n\n```diff\n${diff}\n```\n</details>`;
+            const body = `Formatting changes required:\n\nPlease run the following locally to apply the formatting changes and push them to your branch:\n\n1. Install the formatter (if not installed):\n\n   dotnet tool install -g dotnet-format --version 6.*\n\n2. Run the formatter at repository root:\n\n   dotnet format\n\n3. Review and commit the changes:\n\n   git add -A\n   git commit -m "style: apply dotnet-format"\n   git push\n\nOnce the changes are pushed the workflow will re-run and the formatting check should pass.\n\n<details><summary>Diff</summary>\n\n```diff\n${diff}\n```\n</details>`;
             const pr = context.issue.number;
             await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr, body });
 
