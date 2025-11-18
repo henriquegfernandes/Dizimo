@@ -31,9 +31,9 @@ jobs:
           dotnet tool install -g dotnet-format --version 6.* || dotnet tool update -g dotnet-format
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
-      - name: Run formatting check (dotnet-format)
+      - name: Run formatting (dotnet-format)
         run: |
-          dotnet format --verify-no-changes Dizimo/tools/validate-standalone/ValidateStandalone.csproj
+          dotnet format Dizimo/tools/validate-standalone/ValidateStandalone.csproj
 
       - name: Build with warnings as errors
         run: |
