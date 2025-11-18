@@ -37,37 +37,24 @@ jobs:
           dotnet workload install maui
           dotnet workload install android
 
-      - name: Restore
-        run: dotnet restore Dizimo/Dizimo.csproj
+      - name: Restore solution
+        run: dotnet restore
 
-      - name: Decode Android keystore (if provided)
+      - name: Build libraries
         run: |
-          if [ -n "$ANDROID_KEYSTORE" ]; then
-            echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
-            echo "Decoded keystore.jks"
-          else
-            echo "No ANDROID_KEYSTORE provided; skipping decode"
-          fi
-        shell: bash
+          dotnet build src/Dizimo.Core/Dizimo.Core.csproj -c Release
+          dotnet build tools/validate/Validate.csproj -c Release
 
-      - name: Build Android (Windows)
+      - name: Run unit tests
         run: |
-          if [ -f keystore.jks ]; then
-            dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=keystore.jks -p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS -p:AndroidSigningKeyStorePassword=$ANDROID_KEYSTORE_PASSWORD -p:AndroidSigningKeyPassword=$ANDROID_KEY_PASSWORD
-          else
-            dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
-          fi
-        shell: bash
+          dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release --no-build --logger "trx;LogFileName=Dizimo.Tests.trx"
 
-      - name: Build Windows
-        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-windows10.0.19041.0 -c Release
-
-      - name: Publish artifacts
+      - name: Publish test results
         uses: actions/upload-artifact@v4
         with:
-          name: maui-windows-artifacts
+          name: test-trx
           path: |
-            Dizimo/bin/Release/net10.0-windows10.0.19041.0
+            tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
 
   # Optional: Android-specific job on Ubuntu (if you want a Linux runner for Android builds)
   build-android-linux:
