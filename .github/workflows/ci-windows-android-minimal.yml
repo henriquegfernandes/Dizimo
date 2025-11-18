@@ -88,7 +88,9 @@ jobs:
           dotnet msbuild Dizimo/Dizimo.csproj -t:Restore -p:TargetFramework=net10.0-android -verbosity:minimal
 
       - name: Build Android
-        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release -v:m
+        run: |
+          # Use msbuild with TargetFramework property so only the android TFM is evaluated
+          dotnet msbuild Dizimo/Dizimo.csproj -t:Build -p:Configuration=Release -p:TargetFramework=net10.0-android -verbosity:minimal
 
       - name: Publish artifacts
         if: always()
