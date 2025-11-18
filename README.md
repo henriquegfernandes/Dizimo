@@ -25,4 +25,4 @@ Testes adicionados:
 
 Próximos passos sugeridos:
 - Escrever mais testes para casos de erro no import/export.
-- Implementar UI rest (se desejar que eu prossiga com as páginas MAUI).
+- Implementar UI rest.
