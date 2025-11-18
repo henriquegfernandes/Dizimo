@@ -1,0 +1,58 @@
+name: CI - Windows (minimal)
+
+on:
+  push:
+    paths:
+      - 'Dizimo/**'
+  pull_request:
+    paths:
+      - 'Dizimo/**'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows - build & test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pin SDK to 10.0.100
+        shell: pwsh
+        run: |
+          $json = '{"sdk":{"version":"10.0.100"}}'
+          Set-Content -Path global.json -Value $json -Encoding UTF8
+          Write-Host "Wrote global.json:"; Get-Content global.json
+          dotnet --info || true
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: '${{ env.USERPROFILE }}/.nuget/packages'
+          key: nuget-windows-${{ hashFiles('**/*.csproj') }}
+
+      - name: Restore projects
+        working-directory: Dizimo
+        run: |
+          dotnet restore src/Dizimo.Core/Dizimo.Core.csproj
+          dotnet restore tests/Dizimo.Tests/Dizimo.Tests.csproj
+
+      - name: Build libraries
+        working-directory: Dizimo
+        run: dotnet build src/Dizimo.Core/Dizimo.Core.csproj -c Release -v:detailed
+
+      - name: Build and run tests
+        working-directory: Dizimo
+        run: |
+          dotnet build tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release -v:detailed
+          dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release --logger "trx;LogFileName=Dizimo.Tests.trx"
+
+      - name: Upload test TRX
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-trx
+          path: Dizimo/tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx

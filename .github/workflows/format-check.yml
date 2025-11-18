@@ -18,18 +18,67 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Install dotnet-format
         run: |
-          dotnet tool install -g dotnet-format --version 6.* || dotnet tool update -g dotnet-format
+          # Pin to 5.* to avoid NuGet warning about 6.* not being available; 5.x is stable here
+          dotnet tool install -g dotnet-format --version 5.* || dotnet tool update -g dotnet-format --version 5.*
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Run dotnet format (apply changes)
         run: |
-          dotnet tool install -g dotnet-format --version 6.* || dotnet tool update -g dotnet-format
+          # Ensure the formatter is installed (pin to 5.x)
+          dotnet tool install -g dotnet-format --version 5.* || dotnet tool update -g dotnet-format --version 5.*
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
-          dotnet format
+
+          # If repository has a global.json that pins SDK to 9.x, move it aside so the installed .NET 10 SDK is used for this job.
+          if [ -f global.json ]; then
+            echo "Backing up global.json to global.json.ci-bak"
+            mv global.json global.json.ci-bak
+          fi
+
+          # Show the SDK in use (should be .NET 10 installed by setup-dotnet)
+          dotnet --info
+
+          # Restore and format each non-MAUI project individually to avoid evaluating the MAUI Android TFM
+          # Exclude the MAUI app project (Dizimo/Dizimo.csproj) which targets net10.0-android and requires workloads.
+          mapfile -t projects < <(git ls-files '*.csproj' | grep -v '^Dizimo/Dizimo.csproj$')
+
+          if [ ${#projects[@]} -eq 0 ]; then
+            echo "No projects found to restore/format.";
+            # restore original global.json if it existed
+            if [ -f global.json.ci-bak ]; then mv global.json.ci-bak global.json; fi
+            exit 0;
+          fi
+
+          format_failed=0
+          for p in "${projects[@]}"; do
+            echo "Restoring $p (prefer net9.0 framework if available)"
+            # Try restoring for net9.0 first (safe for multi-target libs), fallback to plain restore
+            if ! dotnet restore "$p" --verbosity minimal --framework net9.0; then
+              echo "Fallback: restoring $p without specifying framework"
+              dotnet restore "$p" --verbosity minimal || { echo "Restore failed for $p"; # restore original global.json
+                if [ -f global.json.ci-bak ]; then mv global.json.ci-bak global.json; fi
+                exit 1; }
+            fi
+
+            echo "Running dotnet format --verify-no-changes on $p"
+            if ! dotnet format "$p" --verify-no-changes; then
+              format_failed=1
+              echo "Applying formatting to $p"
+              dotnet format "$p" || true
+            fi
+          done
+
+          # restore original global.json if we moved it
+          if [ -f global.json.ci-bak ]; then
+            mv global.json.ci-bak global.json
+          fi
+
+          if [ "$format_failed" -eq 1 ]; then
+            echo "One or more projects required formatting changes.";
+          fi
 
       - name: Create diff if formatting changed
         id: create_diff

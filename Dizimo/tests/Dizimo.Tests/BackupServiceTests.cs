@@ -34,17 +34,21 @@ namespace Dizimo.Tests
             var tmp = Path.Combine(Path.GetTempPath(), $"bk_{Guid.NewGuid():N}.json");
             await _bs.ExportJsonAsync(tmp);
 
-            // simulate fresh DB: remove and recreate
-            File.Delete(_db);
-            await _dr.InitAsync();
-            await _or.InitAsync();
+            // Import into a fresh DB instance to simulate a clean restore environment and avoid
+            // deleting a file that may still be held by the provider on CI runners.
+            var freshDb = Path.Combine(Path.GetTempPath(), $"dizimo_fresh_{Guid.NewGuid():N}.db");
+            var freshDr = new DizimistaRepository(freshDb);
+            var freshOr = new OfertaRepository(freshDb);
+            var freshBs = new BackupService(freshDr, freshOr);
+            await freshDr.InitAsync();
+            await freshOr.InitAsync();
 
-            var added = await _bs.ImportJsonAsync(tmp);
-            // ImportJsonAsync returns number of dizimistas created; implementation may reuse existing
-            // Instead of relying on the exact return value, assert that records exist after import
-            var diz = await _dr.ListAsync();
+            var added = await freshBs.ImportJsonAsync(tmp);
+
+            // Verify records exist in the fresh DB after import
+            var diz = await freshDr.ListAsync();
             Assert.Single(diz);
-            var ofertas = await _or.ListAsync();
+            var ofertas = await freshOr.ListAsync();
             Assert.Single(ofertas);
         }
 
