@@ -182,8 +182,10 @@ jobs:
             # Avoid passing the framework token directly to restore; older SDKs/MSBuild can treat it as a positional
             # argument which results in MSB1008 (Only one project can be specified). Do a plain project-scoped restore
             # and let the SDK handle TFMs.
-            if dotnet restore Dizimo/Dizimo.csproj -v:detailed > "$logfile" 2>&1; then
-              echo "Restore succeeded"
+            # Use msbuild Restore target and set TargetFramework as a property to avoid passing the framework
+            # as a separate token which some SDK/MSBuild combos treat as an extra project argument.
+            if dotnet msbuild Dizimo/Dizimo.csproj -t:Restore -p:TargetFramework=net10.0-android -verbosity:detailed > "$logfile" 2>&1; then
+              echo "Restore (msbuild) succeeded"
               break
             else
               echo "Restore failed; saving log to $logfile"
