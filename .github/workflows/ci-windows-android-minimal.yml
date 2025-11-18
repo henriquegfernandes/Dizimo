@@ -83,6 +83,11 @@ jobs:
           echo "=== dotnet workload list ==="
           dotnet workload list || true
 
+      - name: Restore core library (net9.0)
+        run: |
+          echo "Restoring Dizimo.Core (net9.0) before Android build"
+          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj
+
       - name: "Diagnostic: list Dizimo folder"
         run: |
           echo "=== Listing Dizimo (first 200 lines) ==="
