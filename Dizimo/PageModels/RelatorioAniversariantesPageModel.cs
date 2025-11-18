@@ -13,7 +13,7 @@ public partial class RelatorioAniversariantesPageModel : ObservableObject
     private List<Dizimista> items = new();
 
     [ObservableProperty]
-    private List<string> meses = new() { "Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro" };
+    private List<string> meses = new() { "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" };
 
     [ObservableProperty]
     private int selectedMesIndex = 0;

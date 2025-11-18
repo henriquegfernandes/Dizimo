@@ -35,7 +35,8 @@ public partial class ProjectDetailPageModel : ObservableObject, IQueryAttributab
 
     [ObservableProperty] bool _isBusy;
 
-    [ObservableProperty] private List<IconData> _icons = new List<IconData>
+    [ObservableProperty]
+    private List<IconData> _icons = new List<IconData>
     {
         new IconData { Icon = FluentUI.ribbon_24_regular, Description = "Ribbon Icon" },
         new IconData { Icon = FluentUI.ribbon_star_24_regular, Description = "Ribbon Star Icon" },
