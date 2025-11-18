@@ -32,9 +32,10 @@ jobs:
         run: dotnet restore Dizimo/Dizimo.csproj
 
       - name: Decode Android keystore (if provided)
-        if: secrets.ANDROID_KEYSTORE
+        if: ${{ secrets.ANDROID_KEYSTORE != '' }}
         run: |
           echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+        shell: bash
 
       - name: Build Android (Windows)
         run: |
@@ -43,6 +44,7 @@ jobs:
           else
             dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
           fi
+        shell: bash
 
       - name: Build Windows
         run: dotnet build Dizimo/Dizimo.csproj -f net10.0-windows10.0.19041.0 -c Release
@@ -72,7 +74,7 @@ jobs:
       - name: Restore
         run: dotnet restore Dizimo/Dizimo.csproj
       - name: Decode Android keystore (if provided)
-        if: secrets.ANDROID_KEYSTORE
+        if: ${{ secrets.ANDROID_KEYSTORE != '' }}
         run: |
           echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
 
