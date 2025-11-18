@@ -32,7 +32,13 @@ jobs:
           dotnet tool install -g dotnet-format --version 5.* || dotnet tool update -g dotnet-format --version 5.*
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
-          # Use .NET 10 SDK so projects targeting net10.0 can be restored.
+          # If repository has a global.json that pins SDK to 9.x, move it aside so the installed .NET 10 SDK is used for this job.
+          if [ -f global.json ]; then
+            echo "Backing up global.json to global.json.ci-bak"
+            mv global.json global.json.ci-bak
+          fi
+
+          # Show the SDK in use (should be .NET 10 installed by setup-dotnet)
           dotnet --info
 
           # Restore and format each non-MAUI project individually to avoid evaluating the MAUI Android TFM
@@ -41,13 +47,21 @@ jobs:
 
           if [ ${#projects[@]} -eq 0 ]; then
             echo "No projects found to restore/format.";
+            # restore original global.json if it existed
+            if [ -f global.json.ci-bak ]; then mv global.json.ci-bak global.json; fi
             exit 0;
           fi
 
           format_failed=0
           for p in "${projects[@]}"; do
-            echo "Restoring $p"
-            dotnet restore "$p" --verbosity minimal || { echo "Restore failed for $p"; exit 1; }
+            echo "Restoring $p (prefer net9.0 framework if available)"
+            # Try restoring for net9.0 first (safe for multi-target libs), fallback to plain restore
+            if ! dotnet restore "$p" --verbosity minimal --framework net9.0; then
+              echo "Fallback: restoring $p without specifying framework"
+              dotnet restore "$p" --verbosity minimal || { echo "Restore failed for $p"; # restore original global.json
+                if [ -f global.json.ci-bak ]; then mv global.json.ci-bak global.json; fi
+                exit 1; }
+            fi
 
             echo "Running dotnet format --verify-no-changes on $p"
             if ! dotnet format "$p" --verify-no-changes; then
@@ -56,6 +70,11 @@ jobs:
               dotnet format "$p" || true
             fi
           done
+
+          # restore original global.json if we moved it
+          if [ -f global.json.ci-bak ]; then
+            mv global.json.ci-bak global.json
+          fi
 
           if [ "$format_failed" -eq 1 ]; then
             echo "One or more projects required formatting changes.";
