@@ -31,7 +31,7 @@ jobs:
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
-          path: ${{ env.USERPROFILE }}\\.nuget\\packages
+          path: '${{ env.USERPROFILE }}/.nuget/packages'
           key: nuget-windows-${{ hashFiles('**/*.csproj') }}
 
       - name: Restore projects
@@ -82,6 +82,11 @@ jobs:
           dotnet workload install android || true
           echo "=== dotnet workload list ==="
           dotnet workload list || true
+
+      - name: "Diagnostic: list Dizimo folder"
+        run: |
+          echo "=== Listing Dizimo (first 200 lines) ==="
+          ls -la Dizimo | head -n 200 || true
 
       - name: Restore (msbuild Restore with TargetFramework)
         run: |
