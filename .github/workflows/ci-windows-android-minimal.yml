@@ -86,7 +86,7 @@ jobs:
       - name: Restore core library (net9.0)
         run: |
           echo "Restoring Dizimo.Core (net9.0) before Android build"
-          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj
+          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj --framework net9.0 -v minimal || dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj -v minimal
 
       - name: "Diagnostic: list Dizimo folder"
         run: |
