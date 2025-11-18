@@ -28,11 +28,16 @@ jobs:
 
       - name: Restore test and core projects
         run: |
-          dotnet restore tests/Dizimo.Tests/Dizimo.Tests.csproj
-          dotnet restore src/Dizimo.Core/Dizimo.Core.csproj
+          echo "Listing repository layout for diagnostics"
+          ls -la || true
+          echo "Listing Dizimo/tests and Dizimo/src"
+          ls -la Dizimo/tests || true
+          ls -la Dizimo/src || true
+          dotnet restore Dizimo/tests/Dizimo.Tests/Dizimo.Tests.csproj
+          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj
 
       - name: Run tests (fast)
-        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release
+        run: dotnet test Dizimo/tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release
 
   # Note: macOS/iOS builds removed per request (we'll build Windows + Android only)
 
