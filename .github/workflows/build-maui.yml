@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache NuGet packages (Windows)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.USERPROFILE }}\\.nuget\\packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -98,9 +103,15 @@ jobs:
 
       - name: Restore libraries and tests (project-scoped)
         run: |
-          dotnet restore src/Dizimo.Core/Dizimo.Core.csproj
-          dotnet restore tools/validate/Validate.csproj
-          dotnet restore tests/Dizimo.Tests/Dizimo.Tests.csproj
+          echo "Listing repository layout for diagnostics"
+          dir
+          echo "Listing Dizimo/src, Dizimo/tools and Dizimo/tests"
+          dir Dizimo\src || true
+          dir Dizimo\tools || true
+          dir Dizimo\tests || true
+          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj
+          dotnet restore Dizimo/tools/validate/Validate.csproj
+          dotnet restore Dizimo/tests/Dizimo.Tests/Dizimo.Tests.csproj
 
       - name: Build libraries
         run: |
