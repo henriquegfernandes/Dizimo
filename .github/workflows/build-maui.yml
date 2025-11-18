@@ -16,10 +16,16 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set Android signing env (placeholder)
+      - name: Export Android signing secrets to GITHUB_ENV
         run: |
-          echo "Android signing is disabled in this workflow by default."
-          echo "To enable signing, update the workflow to write your repository secrets into GITHUB_ENV or provide them as step env variables."
+          # Write repository secrets into GITHUB_ENV at runtime so they are available to later steps.
+          # Empty secrets will result in empty variables; checks later will handle missing values.
+          echo "Exporting Android signing secrets to GITHUB_ENV"
+          echo "ANDROID_KEYSTORE=${{ secrets.ANDROID_KEYSTORE }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV || true
+        shell: bash
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -81,6 +87,15 @@ jobs:
           dotnet workload install android
       - name: Restore
         run: dotnet restore Dizimo/Dizimo.csproj
+      - name: Export Android signing secrets to GITHUB_ENV
+        run: |
+          echo "Exporting Android signing secrets to GITHUB_ENV"
+          echo "ANDROID_KEYSTORE=${{ secrets.ANDROID_KEYSTORE }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV || true
+        shell: bash
+
       - name: Decode Android keystore (if provided)
         run: |
           if [ -n "$ANDROID_KEYSTORE" ]; then
