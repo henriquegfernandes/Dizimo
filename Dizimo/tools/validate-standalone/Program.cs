@@ -5,6 +5,8 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 Console.WriteLine("Starting standalone validation...");
+// Print the actual connection string/path used by the tool (helps locate the DB file)
+Console.WriteLine(Constants.DatabasePath);
 
 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 var dizimistaRepo = new DizimistaRepository(loggerFactory.CreateLogger("dizimista"));
