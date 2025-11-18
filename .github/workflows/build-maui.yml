@@ -1,0 +1,107 @@
+name: Build MAUI App
+
+on:
+  push:
+    paths:
+      - 'Dizimo/**'
+  pull_request:
+    paths:
+      - 'Dizimo/**'
+
+jobs:
+  build-macos:
+    name: Build (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI workloads
+        run: |
+          dotnet workload install maui
+          dotnet workload install android
+          dotnet workload install ios
+          dotnet workload install maccatalyst
+
+      - name: Restore
+        run: dotnet restore Dizimo/Dizimo.csproj
+
+      - name: Build iOS
+        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-ios -c Release
+
+      - name: Build MacCatalyst
+        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-maccatalyst -c Release
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maui-macos-artifacts
+          path: |
+            Dizimo/bin/Release/net10.0-maccatalyst
+
+  build-windows:
+    name: Build (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI workloads
+        run: |
+          dotnet workload install maui
+          dotnet workload install android
+          dotnet workload install windows
+
+      - name: Restore
+        run: dotnet restore Dizimo/Dizimo.csproj
+
+      - name: Build Android (Windows)
+        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
+
+      - name: Build Windows
+        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-windows10.0.19041.0 -c Release
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maui-windows-artifacts
+          path: |
+            Dizimo/bin/Release/net10.0-windows10.0.19041.0
+
+  # Optional: Android-specific job on Ubuntu (if you want a Linux runner for Android builds)
+  build-android-linux:
+    name: Build Android (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install workloads and Android SDK
+        run: |
+          sudo apt-get update && sudo apt-get install -y openjdk-11-jdk
+          dotnet workload install maui
+          dotnet workload install android
+      - name: Restore
+        run: dotnet restore Dizimo/Dizimo.csproj
+      - name: Build Android
+        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maui-android-artifacts
+          path: Dizimo/bin/Release/net10.0-android
+
+# Notes:
+# - For signing/publishing (Android keystore, iOS provisioning, App Store operations) you must add repository secrets
+#   (keystore files, passwords, Apple App Store Connect key, etc.). The PR will include instructions on which secrets to
+#   add and how to create them.
