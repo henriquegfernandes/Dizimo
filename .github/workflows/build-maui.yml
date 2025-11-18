@@ -96,8 +96,55 @@ jobs:
           sudo apt-get update && sudo apt-get install -y openjdk-11-jdk
           # On Linux runners we only install the Android workload; 'maui' workload isn't supported on Ubuntu hosted runners
           dotnet workload install android
-      - name: Restore
-        run: dotnet restore Dizimo/Dizimo.csproj
+      - name: Verify dotnet and workloads
+        run: |
+          echo "=== dotnet --info ==="
+          dotnet --info
+          echo
+          echo "=== dotnet workload list ==="
+          dotnet workload list || true
+          echo
+          # Wait for the android workload to appear (sometimes workload install takes a moment to register)
+          found=1
+          for i in 1 2 3; do
+            if dotnet workload list | grep -iq "android"; then
+              echo "Android workload is present"
+              found=0
+              break
+            fi
+            echo "Android workload not found yet (attempt $i/3), sleeping 5s..."
+            sleep 5
+          done
+          if [ "$found" -ne 0 ]; then
+            echo "Android workload still not found, attempting to install again"
+            dotnet workload install android || true
+            echo "Final workload list:"
+            dotnet workload list || true
+            if ! dotnet workload list | grep -iq "android"; then
+              echo "ERROR: Android workload not available after retry"
+              exit 1
+            fi
+          fi
+      - name: Restore (with retries)
+        run: |
+          set -euo pipefail
+          max_attempts=3
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "Restore attempt $attempt/$max_attempts"
+            if dotnet restore Dizimo/Dizimo.csproj; then
+              echo "Restore succeeded"
+              break
+            fi
+            attempt=$((attempt+1))
+            if [ $attempt -le $max_attempts ]; then
+              echo "Restore failed, sleeping 5s before retry..."
+              sleep 5
+            else
+              echo "Restore failed after $max_attempts attempts"
+              exit 1
+            fi
+          done
       - name: Export Android signing secrets to GITHUB_ENV
         run: |
           echo "Exporting Android signing secrets to GITHUB_ENV"
