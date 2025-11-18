@@ -57,13 +57,38 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Force .NET 10 SDK for this job (temporary global.json)
+        run: |
+          echo "Detected SDKs:";
+          dotnet --list-sdks || true
+          sdk_ver=$(dotnet --list-sdks | head -n1 | awk '{print $1}')
+          if [ -z "$sdk_ver" ]; then
+            echo "No SDKs detected, aborting"
+            exit 1
+          fi
+          echo "Writing temporary global.json with SDK $sdk_ver"
+          printf '{"sdk":{"version":"%s"}}' "$sdk_ver" > global.json
+          cat global.json
+
       - name: Install MAUI workloads
         run: |
           dotnet workload install maui
           dotnet workload install android
 
-      - name: Restore solution
-        run: dotnet restore
+      - name: Diagnostics: dotnet SDKs & workloads
+        run: |
+          echo "=== dotnet --list-sdks ==="
+          dotnet --list-sdks || true
+          echo "=== dotnet --list-runtimes ==="
+          dotnet --list-runtimes || true
+          echo "=== dotnet workload list ==="
+          dotnet workload list || true
+
+      - name: Restore libraries and tests (project-scoped)
+        run: |
+          dotnet restore src/Dizimo.Core/Dizimo.Core.csproj
+          dotnet restore tools/validate/Validate.csproj
+          dotnet restore tests/Dizimo.Tests/Dizimo.Tests.csproj
 
       - name: Build libraries
         run: |
@@ -91,6 +116,18 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - name: Force .NET 10 SDK for this job (temporary global.json)
+        run: |
+          echo "Detected SDKs:";
+          dotnet --list-sdks || true
+          sdk_ver=$(dotnet --list-sdks | head -n1 | awk '{print $1}')
+          if [ -z "$sdk_ver" ]; then
+            echo "No SDKs detected, aborting"
+            exit 1
+          fi
+          echo "Writing temporary global.json with SDK $sdk_ver"
+          printf '{"sdk":{"version":"%s"}}' "$sdk_ver" > global.json
+          cat global.json
       - name: Install workloads and Android SDK
         run: |
           sudo apt-get update && sudo apt-get install -y openjdk-11-jdk
@@ -125,14 +162,14 @@ jobs:
               exit 1
             fi
           fi
-      - name: Restore (with retries)
+      - name: Restore (with retries, target net10.0-android)
         run: |
           set -euo pipefail
           max_attempts=3
           attempt=1
           while [ $attempt -le $max_attempts ]; do
-            echo "Restore attempt $attempt/$max_attempts"
-            if dotnet restore Dizimo/Dizimo.csproj; then
+            echo "Restore attempt $attempt/$max_attempts (targeting net10.0-android)"
+            if dotnet restore Dizimo/Dizimo.csproj -f net10.0-android; then
               echo "Restore succeeded"
               break
             fi
@@ -142,6 +179,12 @@ jobs:
               sleep 5
             else
               echo "Restore failed after $max_attempts attempts"
+              echo "=== dotnet --info ==="
+              dotnet --info || true
+              echo "=== dotnet workload list ==="
+              dotnet workload list || true
+              echo "=== ls Dizimo/*proj ==="
+              ls -la Dizimo || true
               exit 1
             fi
           done
