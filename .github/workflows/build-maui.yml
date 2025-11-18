@@ -41,22 +41,13 @@ jobs:
       - name: Force .NET 10 SDK for this job (temporary global.json)
         shell: pwsh
         run: |
-          Write-Host "Detected SDKs:";
-          dotnet --list-sdks | ForEach-Object { Write-Host "  $_" }
-          # Prefer an installed 10.x SDK on Windows (PowerShell friendly)
-          $sdks = dotnet --list-sdks
-          $sdk_ver = $sdks -split "\n" | Where-Object { $_ -match '^10\.' } | ForEach-Object { ($_ -split ' ')[0] } | Select-Object -First 1
-          if (-not $sdk_ver) {
-            Write-Host "No 10.x SDK detected, continuing with installed SDKs (dotnet --list-sdks above)"
-          }
-          else {
-            Write-Host "Writing temporary global.json with SDK $sdk_ver"
-            $json = '{"sdk":{"version":"' + $sdk_ver + '"}}'
-            Set-Content -Path global.json -Value $json -Encoding UTF8
-            Get-Content global.json
-            Write-Host "Verifying dotnet now uses SDK $sdk_ver"
-            dotnet --info
-          }
+          Write-Host "Pinning SDK to 10.0.100 via temporary global.json"
+          $sdk_ver = '10.0.100'
+          $json = '{"sdk":{"version":"' + $sdk_ver + '"}}'
+          Set-Content -Path global.json -Value $json -Encoding UTF8
+          Write-Host "Wrote global.json:"; Get-Content global.json
+          Write-Host "dotnet --info (verify active SDK)";
+          dotnet --info || true
 
       - name: Install MAUI workloads
         run: |
@@ -86,8 +77,16 @@ jobs:
 
       - name: Build libraries
         run: |
-          dotnet build Dizimo\src\Dizimo.Core\Dizimo.Core.csproj -c Release
-          dotnet build Dizimo\tools\validate\Validate.csproj -c Release
+          echo "Building libraries (output -> build_libraries.log)"
+          dotnet build Dizimo\src\Dizimo.Core\Dizimo.Core.csproj -c Release -v:detailed > build_libraries.log 2>&1 || true
+          dotnet build Dizimo\tools\validate\Validate.csproj -c Release -v:detailed >> build_libraries.log 2>&1 || true
+
+      - name: Upload build libraries log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-libraries-log
+          path: build_libraries.log
 
       - name: Run unit tests
         run: |
@@ -99,7 +98,7 @@ jobs:
             Write-Host 'Dizimo\tests\Dizimo.Tests not found'
           }
           Write-Host "Building test project (Release)"
-          dotnet build 'Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj' -c Release
+          dotnet build 'Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj' -c Release -v:detailed
           Write-Host "Listing bin/Release after build"
           if (Test-Path 'Dizimo\tests\Dizimo.Tests\bin\Release') {
             Get-ChildItem 'Dizimo\tests\Dizimo.Tests\bin\Release' -Recurse -Force
@@ -107,7 +106,17 @@ jobs:
             Write-Host 'Dizimo\tests\Dizimo.Tests\bin\Release not found after build'
           }
           Write-Host "Running tests"
-          dotnet test 'Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj' -c Release --logger "trx;LogFileName=Dizimo.Tests.trx"
+          dotnet test 'Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj' -c Release --logger "trx;LogFileName=Dizimo.Tests.trx" | Tee-Object -FilePath tests_run.log
+
+      - name: Upload test run logs and TRX
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: |
+            Dizimo/tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
+            tests_run.log
+            build_libraries.log
 
       - name: Publish test results
         uses: actions/upload-artifact@v4
