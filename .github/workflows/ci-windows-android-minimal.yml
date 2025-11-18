@@ -76,7 +76,12 @@ jobs:
       - name: Install JDK and Android workload
         run: |
           sudo apt-get update && sudo apt-get install -y openjdk-11-jdk
+          # Ensure workloads are restored/installed for MAUI Android
+          dotnet workload restore || true
+          dotnet workload install maui-android || true
           dotnet workload install android || true
+          echo "=== dotnet workload list ==="
+          dotnet workload list || true
 
       - name: Restore (msbuild Restore with TargetFramework)
         run: |
