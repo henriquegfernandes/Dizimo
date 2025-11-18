@@ -57,6 +57,20 @@
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
+        <!-- Exclude repository-level test and tools folders from the app project compile items.
+                 These folders contain separate projects (tests, tools) and should not be compiled
+                 into the MAUI application TFMs. This prevents build from attempting to compile
+                 test code (xUnit) or tools (top-level programs) when targeting Android/iOS. -->
+        <ItemGroup>
+            <Compile Remove="tests\**\*.cs" />
+            <None Remove="tests\**\*.*" />
+            <EmbeddedResource Remove="tests\**\*.*" />
+
+            <Compile Remove="tools\**\*.cs" />
+            <None Remove="tools\**\*.*" />
+            <EmbeddedResource Remove="tools\**\*.*" />
+        </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
         <PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)"/>
