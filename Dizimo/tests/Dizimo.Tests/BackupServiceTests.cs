@@ -35,6 +35,9 @@ namespace Dizimo.Tests
             await _bs.ExportJsonAsync(tmp);
 
             // simulate fresh DB: remove and recreate
+            // Ensure any lingering file handles are released before deleting the sqlite file
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
             File.Delete(_db);
             await _dr.InitAsync();
             await _or.InitAsync();
