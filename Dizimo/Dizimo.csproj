@@ -86,4 +86,16 @@
         <PackageReference Include="Syncfusion.Maui.Toolkit" Version="1.0.7"/>
     </ItemGroup>
 
+    <!-- Reference the core class library instead of compiling its sources inline -->
+    <ItemGroup>
+        <ProjectReference Include="src/Dizimo.Core/Dizimo.Core.csproj" />
+    </ItemGroup>
+
+    <!-- Ensure source tree under src/ isn't compiled directly into the MAUI app (avoids duplicate types) -->
+    <ItemGroup>
+        <Compile Remove="src/**" />
+        <None Remove="src/**" />
+        <EmbeddedResource Remove="src/**" />
+    </ItemGroup>
+
 </Project>
