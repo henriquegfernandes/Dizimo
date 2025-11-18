@@ -22,14 +22,22 @@ jobs:
 
       - name: Install dotnet-format
         run: |
-          dotnet tool install -g dotnet-format --version 6.* || dotnet tool update -g dotnet-format
+          # Pin to 5.* to avoid NuGet warning about 6.* not being available; 5.x is stable here
+          dotnet tool install -g dotnet-format --version 5.* || dotnet tool update -g dotnet-format --version 5.*
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Run dotnet format (apply changes)
         run: |
-          dotnet tool install -g dotnet-format --version 6.* || dotnet tool update -g dotnet-format
+          # Ensure the formatter is installed (pin to 5.x)
+          dotnet tool install -g dotnet-format --version 5.* || dotnet tool update -g dotnet-format --version 5.*
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
-          dotnet format
+
+          # Restore solution first so dotnet-format can open an MSBuild workspace
+          dotnet --info
+          dotnet restore --verbosity minimal
+
+          # Run the formatter
+          dotnet format --verify-no-changes || dotnet format
 
       - name: Create diff if formatting changed
         id: create_diff
