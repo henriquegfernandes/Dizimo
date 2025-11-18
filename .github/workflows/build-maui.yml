@@ -75,7 +75,7 @@ jobs:
           dotnet workload install maui
           dotnet workload install android
 
-      - name: Diagnostics: dotnet SDKs & workloads
+      - name: "Diagnostics: dotnet SDKs & workloads"
         run: |
           echo "=== dotnet --list-sdks ==="
           dotnet --list-sdks || true
