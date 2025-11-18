@@ -162,3 +162,4 @@ O workflow de CI agora gera arquivos TRX para os testes (`Dizimo.Core` e `Dizimo
 4. Se preferir, rode os testes localmente com `dotnet test` e compare o resultado com o TRX disponível.
 
 Observação: os TRX carregados no workflow são úteis para depurar testes que falharam no ambiente CI e contêm stack traces e detalhes de falha.
+ci: trigger run 20251118T191711Z
