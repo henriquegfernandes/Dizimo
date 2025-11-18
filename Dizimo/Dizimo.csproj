@@ -61,15 +61,16 @@
                  These folders contain separate projects (tests, tools) and should not be compiled
                  into the MAUI application TFMs. This prevents build from attempting to compile
                  test code (xUnit) or tools (top-level programs) when targeting Android/iOS. -->
-        <ItemGroup>
-            <Compile Remove="tests\**\*.cs" />
-            <None Remove="tests\**\*.*" />
-            <EmbeddedResource Remove="tests\**\*.*" />
+            <ItemGroup>
+                <!-- Use forward slashes for MSBuild globbing -->
+                <Compile Remove="tests/**/*.cs" />
+                <None Remove="tests/**" />
+                <EmbeddedResource Remove="tests/**" />
 
-            <Compile Remove="tools\**\*.cs" />
-            <None Remove="tools\**\*.*" />
-            <EmbeddedResource Remove="tools\**\*.*" />
-        </ItemGroup>
+                <Compile Remove="tools/**/*.cs" />
+                <None Remove="tools/**" />
+                <EmbeddedResource Remove="tools/**" />
+            </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
