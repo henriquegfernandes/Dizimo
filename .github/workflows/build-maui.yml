@@ -9,39 +9,7 @@ on:
       - 'Dizimo/**'
 
 jobs:
-  build-macos:
-    name: Build (macOS)
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Install MAUI workloads
-        run: |
-          dotnet workload install maui
-          dotnet workload install android
-          dotnet workload install ios
-          dotnet workload install maccatalyst
-
-      - name: Restore
-        run: dotnet restore Dizimo/Dizimo.csproj
-
-      - name: Build iOS
-        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-ios -c Release
-
-      - name: Build MacCatalyst
-        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-maccatalyst -c Release
-
-      - name: Publish artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: maui-macos-artifacts
-          path: |
-            Dizimo/bin/Release/net10.0-maccatalyst
+  # Note: macOS/iOS builds removed per request (we'll build Windows + Android only)
 
   build-windows:
     name: Build (Windows)
@@ -63,8 +31,18 @@ jobs:
       - name: Restore
         run: dotnet restore Dizimo/Dizimo.csproj
 
+      - name: Decode Android keystore (if provided)
+        if: secrets.ANDROID_KEYSTORE
+        run: |
+          echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+
       - name: Build Android (Windows)
-        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
+        run: |
+          if [ -f keystore.jks ]; then
+            dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=keystore.jks -p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS -p:AndroidSigningKeyStorePassword=$ANDROID_KEYSTORE_PASSWORD -p:AndroidSigningKeyPassword=$ANDROID_KEY_PASSWORD
+          else
+            dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
+          fi
 
       - name: Build Windows
         run: dotnet build Dizimo/Dizimo.csproj -f net10.0-windows10.0.19041.0 -c Release
@@ -93,8 +71,18 @@ jobs:
           dotnet workload install android
       - name: Restore
         run: dotnet restore Dizimo/Dizimo.csproj
+      - name: Decode Android keystore (if provided)
+        if: secrets.ANDROID_KEYSTORE
+        run: |
+          echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+
       - name: Build Android
-        run: dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
+        run: |
+          if [ -f keystore.jks ]; then
+            dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=keystore.jks -p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS -p:AndroidSigningKeyStorePassword=$ANDROID_KEYSTORE_PASSWORD -p:AndroidSigningKeyPassword=$ANDROID_KEY_PASSWORD
+          else
+            dotnet build Dizimo/Dizimo.csproj -f net10.0-android -c Release
+          fi
       - name: Publish artifacts
         uses: actions/upload-artifact@v4
         with:
