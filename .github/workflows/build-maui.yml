@@ -91,14 +91,23 @@ jobs:
 
       - name: Run unit tests
         run: |
-          echo "Working directory: $(pwd)"
-          echo "Listing Dizimo/tests project folder and bin/Release folders for test artifact diagnostics"
-          dir Dizimo\tests\Dizimo.Tests || true
-          dir Dizimo\tests\Dizimo.Tests\bin\Release || true
-          echo "Building test project (Release)"
-          dotnet build Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj -c Release
-          echo "Running tests"
-          dotnet test Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj -c Release --logger "trx;LogFileName=Dizimo.Tests.trx"
+          Write-Host "Working directory: $(Get-Location)"
+          Write-Host "Listing Dizimo/tests project folder for diagnostics"
+          if (Test-Path 'Dizimo\tests\Dizimo.Tests') {
+            Get-ChildItem 'Dizimo\tests\Dizimo.Tests' -Force
+          } else {
+            Write-Host 'Dizimo\tests\Dizimo.Tests not found'
+          }
+          Write-Host "Building test project (Release)"
+          dotnet build 'Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj' -c Release
+          Write-Host "Listing bin/Release after build"
+          if (Test-Path 'Dizimo\tests\Dizimo.Tests\bin\Release') {
+            Get-ChildItem 'Dizimo\tests\Dizimo.Tests\bin\Release' -Recurse -Force
+          } else {
+            Write-Host 'Dizimo\tests\Dizimo.Tests\bin\Release not found after build'
+          }
+          Write-Host "Running tests"
+          dotnet test 'Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj' -c Release --logger "trx;LogFileName=Dizimo.Tests.trx"
 
       - name: Publish test results
         uses: actions/upload-artifact@v4
