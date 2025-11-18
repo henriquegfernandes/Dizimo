@@ -1,4 +1,4 @@
-name: CI - Windows + Android (minimal)
+name: CI - Windows (minimal)
 
 on:
   push:
@@ -56,5 +56,3 @@ jobs:
         with:
           name: test-trx
           path: Dizimo/tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
-
-  # Android job removed at user's request — keep only Windows build & test for now
