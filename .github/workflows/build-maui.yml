@@ -61,14 +61,19 @@ jobs:
         run: |
           echo "Detected SDKs:";
           dotnet --list-sdks || true
-          sdk_ver=$(dotnet --list-sdks | head -n1 | awk '{print $1}')
+          # Prefer an installed 10.x SDK; fall back only if none found
+          sdk_ver=$(dotnet --list-sdks | awk '/^10\./{print $1; exit}')
           if [ -z "$sdk_ver" ]; then
-            echo "No SDKs detected, aborting"
-            exit 1
+            # try finding any 10.0 SDK variant explicitly
+            sdk_ver=$(dotnet --list-sdks | awk '/^10\.0\./{print $1; exit}') || true
           fi
-          echo "Writing temporary global.json with SDK $sdk_ver"
-          printf '{"sdk":{"version":"%s"}}' "$sdk_ver" > global.json
-          cat global.json
+          if [ -z "$sdk_ver" ]; then
+            echo "No 10.x SDK detected, continuing with installed SDKs (dotnet --list-sdks above)"
+          else
+            echo "Writing temporary global.json with SDK $sdk_ver"
+            printf '{"sdk":{"version":"%s"}}' "$sdk_ver" > global.json
+            cat global.json
+          fi
 
       - name: Install MAUI workloads
         run: |
@@ -120,14 +125,18 @@ jobs:
         run: |
           echo "Detected SDKs:";
           dotnet --list-sdks || true
-          sdk_ver=$(dotnet --list-sdks | head -n1 | awk '{print $1}')
+          # Prefer an installed 10.x SDK (explicit match). This avoids creating a global.json that pins
+          # the job to an older SDK (which causes MSBuild to run from 8.x and mis-handle net10.0-android)
+          sdk_ver=$(dotnet --list-sdks | awk '/^10\./{print $1; exit}') || true
           if [ -z "$sdk_ver" ]; then
-            echo "No SDKs detected, aborting"
+            echo "No 10.x SDK detected. Listing available SDKs above. Aborting to make the failure explicit."
             exit 1
           fi
           echo "Writing temporary global.json with SDK $sdk_ver"
           printf '{"sdk":{"version":"%s"}}' "$sdk_ver" > global.json
           cat global.json
+          echo "Verifying dotnet now uses SDK $sdk_ver"
+          dotnet --info
       - name: Install workloads and Android SDK
         run: |
           sudo apt-get update && sudo apt-get install -y openjdk-11-jdk
@@ -169,9 +178,15 @@ jobs:
           attempt=1
           while [ $attempt -le $max_attempts ]; do
             echo "Restore attempt $attempt/$max_attempts (targeting net10.0-android)"
-            if dotnet restore Dizimo/Dizimo.csproj -f net10.0-android; then
+            logfile="restore_attempt_${attempt}.log"
+            # Avoid passing the framework token directly to restore; older SDKs/MSBuild can treat it as a positional
+            # argument which results in MSB1008 (Only one project can be specified). Do a plain project-scoped restore
+            # and let the SDK handle TFMs.
+            if dotnet restore Dizimo/Dizimo.csproj -v:detailed > "$logfile" 2>&1; then
               echo "Restore succeeded"
               break
+            else
+              echo "Restore failed; saving log to $logfile"
             fi
             attempt=$((attempt+1))
             if [ $attempt -le $max_attempts ]; then
@@ -185,9 +200,19 @@ jobs:
               dotnet workload list || true
               echo "=== ls Dizimo/*proj ==="
               ls -la Dizimo || true
+              echo "Contents of last restore log:"
+              tail -n +1 "$logfile" || true
               exit 1
             fi
           done
+
+      - name: Upload restore logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-restore-logs
+          path: |
+            restore_attempt_*.log
       - name: Export Android signing secrets to GITHUB_ENV
         run: |
           echo "Exporting Android signing secrets to GITHUB_ENV"
