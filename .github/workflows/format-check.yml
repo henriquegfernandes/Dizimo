@@ -18,7 +18,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Install dotnet-format
         run: |
@@ -32,12 +32,34 @@ jobs:
           dotnet tool install -g dotnet-format --version 5.* || dotnet tool update -g dotnet-format --version 5.*
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
-          # Restore solution first so dotnet-format can open an MSBuild workspace
+          # Use .NET 10 SDK so projects targeting net10.0 can be restored.
           dotnet --info
-          dotnet restore --verbosity minimal
 
-          # Run the formatter
-          dotnet format --verify-no-changes || dotnet format
+          # Restore and format each non-MAUI project individually to avoid evaluating the MAUI Android TFM
+          # Exclude the MAUI app project (Dizimo/Dizimo.csproj) which targets net10.0-android and requires workloads.
+          mapfile -t projects < <(git ls-files '*.csproj' | grep -v '^Dizimo/Dizimo.csproj$')
+
+          if [ ${#projects[@]} -eq 0 ]; then
+            echo "No projects found to restore/format.";
+            exit 0;
+          fi
+
+          format_failed=0
+          for p in "${projects[@]}"; do
+            echo "Restoring $p"
+            dotnet restore "$p" --verbosity minimal || { echo "Restore failed for $p"; exit 1; }
+
+            echo "Running dotnet format --verify-no-changes on $p"
+            if ! dotnet format "$p" --verify-no-changes; then
+              format_failed=1
+              echo "Applying formatting to $p"
+              dotnet format "$p" || true
+            fi
+          done
+
+          if [ "$format_failed" -eq 1 ]; then
+            echo "One or more projects required formatting changes.";
+          fi
 
       - name: Create diff if formatting changed
         id: create_diff
