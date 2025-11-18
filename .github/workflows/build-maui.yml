@@ -13,13 +13,6 @@ jobs:
     name: Quick unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Cache NuGet packages (Windows)
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.USERPROFILE }}\\.nuget\\packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
-
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -51,6 +44,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache NuGet packages (Windows)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.USERPROFILE }}\\.nuget\\packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+
       - name: Export Android signing secrets to GITHUB_ENV
         run: |
           # Write repository secrets into GITHUB_ENV at runtime so they are available to later steps.
@@ -115,19 +114,19 @@ jobs:
 
       - name: Build libraries
         run: |
-          dotnet build src/Dizimo.Core/Dizimo.Core.csproj -c Release
-          dotnet build tools/validate/Validate.csproj -c Release
+          dotnet build Dizimo\src\Dizimo.Core\Dizimo.Core.csproj -c Release
+          dotnet build Dizimo\tools\validate\Validate.csproj -c Release
 
       - name: Run unit tests
         run: |
-          dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release --no-build --logger "trx;LogFileName=Dizimo.Tests.trx"
+          dotnet test Dizimo\tests\Dizimo.Tests\Dizimo.Tests.csproj -c Release --no-build --logger "trx;LogFileName=Dizimo.Tests.trx"
 
       - name: Publish test results
         uses: actions/upload-artifact@v4
         with:
           name: test-trx
           path: |
-            tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
+            Dizimo/tests/Dizimo.Tests/TestResults/Dizimo.Tests.trx
 
   # Optional: Android-specific job on Ubuntu (if you want a Linux runner for Android builds)
   build-android-linux:
