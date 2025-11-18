@@ -83,10 +83,13 @@ jobs:
           echo "=== dotnet workload list ==="
           dotnet workload list || true
 
-      - name: Restore core library (net9.0)
+      - name: Restore and build core library (net9.0)
+        working-directory: Dizimo/src/Dizimo.Core
         run: |
-          echo "Restoring Dizimo.Core (net9.0) before Android build"
-          dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj --framework net9.0 -v minimal || dotnet restore Dizimo/src/Dizimo.Core/Dizimo.Core.csproj -v minimal
+          echo "Restoring Dizimo.Core (net9.0) before Android build (working dir: $PWD)"
+          dotnet restore --framework net9.0 --verbosity minimal || dotnet restore --verbosity minimal
+          echo "Building Dizimo.Core to ensure obj/project.assets.json is generated"
+          dotnet build -c Release --no-restore || dotnet build -c Release
 
       - name: "Diagnostic: list Dizimo folder"
         run: |
