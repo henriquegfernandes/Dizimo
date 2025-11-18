@@ -1,0 +1,46 @@
+name: Validate Standalone Build
+
+on:
+  push:
+    paths:
+      - 'Dizimo/tools/validate-standalone/**'
+  pull_request:
+    paths:
+      - 'Dizimo/tools/validate-standalone/**'
+
+jobs:
+  build-validate-standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Dizimo/tools/validate-standalone/ValidateStandalone.csproj
+
+      - name: Build
+        run: dotnet build Dizimo/tools/validate-standalone/ValidateStandalone.csproj --configuration Release --no-restore
+
+      - name: Install dotnet-format
+        run: |
+          dotnet tool install -g dotnet-format --version 6.* || dotnet tool update -g dotnet-format
+          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Run formatting check (dotnet-format)
+        run: |
+          dotnet format --verify-no-changes Dizimo/tools/validate-standalone/ValidateStandalone.csproj
+
+      - name: Build with warnings as errors
+        run: |
+          dotnet build Dizimo/tools/validate-standalone/ValidateStandalone.csproj --configuration Release --no-restore -warnaserror
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-standalone-dll
+          path: Dizimo/tools/validate-standalone/bin/Release/net9.0/ValidateStandalone.dll
