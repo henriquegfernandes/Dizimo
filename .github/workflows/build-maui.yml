@@ -26,11 +26,13 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore
-        run: dotnet restore
+      - name: Restore test and core projects
+        run: |
+          dotnet restore tests/Dizimo.Tests/Dizimo.Tests.csproj
+          dotnet restore src/Dizimo.Core/Dizimo.Core.csproj
 
       - name: Run tests (fast)
-        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release --no-build
+        run: dotnet test tests/Dizimo.Tests/Dizimo.Tests.csproj -c Release
 
   # Note: macOS/iOS builds removed per request (we'll build Windows + Android only)
 
