@@ -16,6 +16,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set Android signing env
+        run: |
+          echo "ANDROID_KEYSTORE=${{ secrets.ANDROID_KEYSTORE }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV || true
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV || true
+          echo "Android signing environment variables configured"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -32,9 +39,13 @@ jobs:
         run: dotnet restore Dizimo/Dizimo.csproj
 
       - name: Decode Android keystore (if provided)
-        if: ${{ secrets.ANDROID_KEYSTORE != '' }}
         run: |
-          echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+          if [ -n "$ANDROID_KEYSTORE" ]; then
+            echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+            echo "Decoded keystore.jks"
+          else
+            echo "No ANDROID_KEYSTORE provided; skipping decode"
+          fi
         shell: bash
 
       - name: Build Android (Windows)
@@ -74,9 +85,13 @@ jobs:
       - name: Restore
         run: dotnet restore Dizimo/Dizimo.csproj
       - name: Decode Android keystore (if provided)
-        if: ${{ secrets.ANDROID_KEYSTORE != '' }}
         run: |
-          echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+          if [ -n "$ANDROID_KEYSTORE" ]; then
+            echo "$ANDROID_KEYSTORE" | base64 --decode > keystore.jks
+            echo "Decoded keystore.jks"
+          else
+            echo "No ANDROID_KEYSTORE provided; skipping decode"
+          fi
 
       - name: Build Android
         run: |
