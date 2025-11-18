@@ -16,13 +16,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set Android signing env
+      - name: Set Android signing env (placeholder)
         run: |
-          echo "ANDROID_KEYSTORE=${{ secrets.ANDROID_KEYSTORE }}" >> $GITHUB_ENV || true
-          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV || true
-          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV || true
-          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV || true
-          echo "Android signing environment variables configured"
+          echo "Android signing is disabled in this workflow by default."
+          echo "To enable signing, update the workflow to write your repository secrets into GITHUB_ENV or provide them as step env variables."
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
