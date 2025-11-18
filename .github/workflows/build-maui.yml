@@ -63,22 +63,24 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Force .NET 10 SDK for this job (temporary global.json)
+        shell: pwsh
         run: |
-          echo "Detected SDKs:";
-          dotnet --list-sdks || true
-          # Prefer an installed 10.x SDK; fall back only if none found
-          sdk_ver=$(dotnet --list-sdks | awk '/^10\./{print $1; exit}')
-          if [ -z "$sdk_ver" ]; then
-            # try finding any 10.0 SDK variant explicitly
-            sdk_ver=$(dotnet --list-sdks | awk '/^10\.0\./{print $1; exit}') || true
-          fi
-          if [ -z "$sdk_ver" ]; then
-            echo "No 10.x SDK detected, continuing with installed SDKs (dotnet --list-sdks above)"
-          else
-            echo "Writing temporary global.json with SDK $sdk_ver"
-            printf '{"sdk":{"version":"%s"}}' "$sdk_ver" > global.json
-            cat global.json
-          fi
+          Write-Host "Detected SDKs:";
+          dotnet --list-sdks | ForEach-Object { Write-Host "  $_" }
+          # Prefer an installed 10.x SDK on Windows (PowerShell friendly)
+          $sdks = dotnet --list-sdks
+          $sdk_ver = $sdks -split "\n" | Where-Object { $_ -match '^10\.' } | ForEach-Object { ($_ -split ' ')[0] } | Select-Object -First 1
+          if (-not $sdk_ver) {
+            Write-Host "No 10.x SDK detected, continuing with installed SDKs (dotnet --list-sdks above)"
+          }
+          else {
+            Write-Host "Writing temporary global.json with SDK $sdk_ver"
+            $json = '{"sdk":{"version":"' + $sdk_ver + '"}}'
+            Set-Content -Path global.json -Value $json -Encoding UTF8
+            Get-Content global.json
+            Write-Host "Verifying dotnet now uses SDK $sdk_ver"
+            dotnet --info
+          }
 
       - name: Install MAUI workloads
         run: |
