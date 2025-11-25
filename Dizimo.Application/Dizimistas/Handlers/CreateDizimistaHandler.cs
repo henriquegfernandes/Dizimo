@@ -1,6 +1,7 @@
 using System;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
+using Dizimo.Application.Dizimistas.Commands;
 using System.Threading.Tasks;
 
 namespace Dizimo.Application.Dizimistas.Handlers;
