@@ -1,3 +1,5 @@
+using System;
+
 namespace Dizimo.Domain.Entities;
 
 public class Dizimista

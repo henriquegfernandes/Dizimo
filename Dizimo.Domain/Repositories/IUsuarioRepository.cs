@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Dizimo.Domain.Entities;
 
 namespace Dizimo.Domain.Repositories;
 
