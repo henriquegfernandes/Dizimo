@@ -1,10 +1,11 @@
-namespace Dizimo.Pages;
-
-public partial class TaskDetailPage : ContentPage
+namespace Dizimo.Pages
 {
-    public TaskDetailPage(TaskDetailPageModel model)
+    public partial class TaskDetailPage : ContentPage
     {
-        InitializeComponent();
-        BindingContext = model;
+        public TaskDetailPage(TaskDetailPageModel model)
+        {
+            InitializeComponent();
+            BindingContext = model;
+        }
     }
 }

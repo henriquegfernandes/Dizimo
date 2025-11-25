@@ -1,10 +1,11 @@
-namespace Dizimo.Pages;
-
-public partial class ManageMetaPage : ContentPage
+namespace Dizimo.Pages
 {
-    public ManageMetaPage(ManageMetaPageModel model)
+    public partial class ManageMetaPage : ContentPage
     {
-        InitializeComponent();
-        BindingContext = model;
+        public ManageMetaPage(ManageMetaPageModel model)
+        {
+            InitializeComponent();
+            BindingContext = model;
+        }
     }
 }

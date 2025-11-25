@@ -1,10 +1,11 @@
-namespace Dizimo.Pages;
-
-public partial class ProjectListPage : ContentPage
+namespace Dizimo.Pages
 {
-    public ProjectListPage(ProjectListPageModel model)
+    public partial class ProjectListPage : ContentPage
     {
-        BindingContext = model;
-        InitializeComponent();
+        public ProjectListPage(ProjectListPageModel model)
+        {
+            BindingContext = model;
+            InitializeComponent();
+        }
     }
 }

@@ -1,11 +1,12 @@
 using Syncfusion.Maui.Toolkit.Charts;
 
-namespace Dizimo.Pages.Controls;
-
-public class LegendExt : ChartLegend
+namespace Dizimo.Pages.Controls
 {
-    protected override double GetMaximumSizeCoefficient()
+    public class LegendExt : ChartLegend
     {
-        return 0.5;
+        protected override double GetMaximumSizeCoefficient()
+        {
+            return 0.5;
+        }
     }
 }

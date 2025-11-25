@@ -26,19 +26,59 @@
         ContentTemplate="{DataTemplate pages:ManageMetaPage}"
         Route="manage" />
 
+    <ShellContent
+        Title="Dizimistas"
+        Icon="person.png"
+        ContentTemplate="{DataTemplate pages:DizimistaListPage}"
+        Route="dizimistas"
+        Style="{StaticResource ShellContentStyle}" />
+
+    <ShellContent
+        Title="Ofertas"
+        Icon="money.png"
+        ContentTemplate="{DataTemplate pages:OfertaListPage}"
+        Route="ofertas"
+        Style="{StaticResource ShellContentStyle}" />
+
+    <ShellContent
+        Title="Usuários"
+        Icon="admin.png"
+        ContentTemplate="{DataTemplate pages:UsuarioListPage}"
+        Route="usuarios"
+        IsVisible="{Binding IsAdmin}"
+        Style="{StaticResource ShellContentStyle}" />
+
+    <Shell.FlyoutHeader>
+        <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
+            <Image Source="avatar.png" HeightRequest="32" WidthRequest="32" VerticalOptions="Center" />
+            <StackLayout>
+                <Label Text="Usuário: " FontAttributes="Bold" />
+                <Label Text="{Binding UsuarioNome}" />
+                <Label Text="{Binding UsuarioPerfil}" FontSize="12" TextColor="Gray" />
+            </StackLayout>
+        </StackLayout>
+    </Shell.FlyoutHeader>
+
     <Shell.FlyoutFooter>
         <Grid Padding="15">
-            <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
-                VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
-                SegmentWidth="40" SegmentHeight="40">
-                <sf:SfSegmentedControl.ItemsSource>
-                    <x:Array Type="{x:Type sf:SfSegmentItem}">
-                        <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode"/>
-                        <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode"/>
-                    </x:Array>
-                </sf:SfSegmentedControl.ItemsSource>
-            </sf:SfSegmentedControl>
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
+                <Button Text="Logout" Command="{Binding LogoutCommand}" />
+                <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
+                    VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
+                    SegmentWidth="40" SegmentHeight="40">
+                    <sf:SfSegmentedControl.ItemsSource>
+                        <x:Array Type="{x:Type sf:SfSegmentItem}">
+                            <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode"/>
+                            <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode"/>
+                        </x:Array>
+                    </sf:SfSegmentedControl.ItemsSource>
+                </sf:SfSegmentedControl>
+            </StackLayout>
         </Grid>
+        <Button Text="Configurar Pasta de Backup" Command="{Binding EscolherPastaCommand}" />
+        <Label Text="Pasta atual: {Binding BackupFolderPath}" FontSize="12" />
+        <Button Text="Backup para Pasta" Command="{Binding BackupCommand}" />
+        <Button Text="Restaurar da Pasta" Command="{Binding RestoreCommand}" />
     </Shell.FlyoutFooter>
 
 </Shell>

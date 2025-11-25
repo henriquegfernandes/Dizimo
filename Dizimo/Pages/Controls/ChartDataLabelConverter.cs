@@ -2,32 +2,33 @@ using System;
 using System.Globalization;
 using Dizimo.Models;
 
-namespace Dizimo.Pages.Controls;
-
-public class ChartDataLabelConverter : IValueConverter
+namespace Dizimo.Pages.Controls
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public class ChartDataLabelConverter : IValueConverter
     {
-        if (value is CategoryChartData categoryData && parameter is string parameterValue)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (string.Equals(parameterValue, "title", StringComparison.OrdinalIgnoreCase))
+            if (value is CategoryChartData categoryData && parameter is string parameterValue)
             {
-                return categoryData.Title;
-            }
+                if (string.Equals(parameterValue, "title", StringComparison.OrdinalIgnoreCase))
+                {
+                    return categoryData.Title;
+                }
 
-            if (string.Equals(parameterValue, "count", StringComparison.OrdinalIgnoreCase))
-            {
-                return categoryData.Count.ToString();
+                if (string.Equals(parameterValue, "count", StringComparison.OrdinalIgnoreCase))
+                {
+                    return categoryData.Count.ToString();
+                }
+
+                return value?.ToString();
             }
 
             return value?.ToString();
         }
 
-        return value?.ToString();
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException("ChartDataLabelConverter does not support ConvertBack.");
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

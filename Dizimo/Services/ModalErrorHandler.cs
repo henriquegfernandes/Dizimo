@@ -1,32 +1,33 @@
-namespace Dizimo.Services;
-
-/// <summary>
-/// Modal Error Handler.
-/// </summary>
-public class ModalErrorHandler : IErrorHandler
+namespace Dizimo.Services
 {
-    SemaphoreSlim _semaphore = new(1, 1);
-
     /// <summary>
-    /// Handle error in UI.
+    /// Modal Error Handler.
     /// </summary>
-    /// <param name="ex">Exception.</param>
-    public void HandleError(Exception ex)
+    public class ModalErrorHandler : IErrorHandler
     {
-        DisplayAlertAsync(ex).FireAndForgetSafeAsync();
-    }
+        SemaphoreSlim _semaphore = new(1, 1);
 
-    async Task DisplayAlertAsync(Exception ex)
-    {
-        try
+        /// <summary>
+        /// Handle error in UI.
+        /// </summary>
+        /// <param name="ex">Exception.</param>
+        public void HandleError(Exception ex)
         {
-            await _semaphore.WaitAsync();
-            if (Shell.Current is Shell shell)
-                await shell.DisplayAlertAsync("Error", ex.Message, "OK");
+            DisplayAlertAsync(ex).FireAndForgetSafeAsync();
         }
-        finally
+
+        async Task DisplayAlertAsync(Exception ex)
         {
-            _semaphore.Release();
+            try
+            {
+                await _semaphore.WaitAsync();
+                if (Shell.Current is Shell shell)
+                    await shell.DisplayAlertAsync("Error", ex.Message, "OK");
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
     }
 }

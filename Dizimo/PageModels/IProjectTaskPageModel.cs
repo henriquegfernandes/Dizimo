@@ -1,10 +1,11 @@
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Models;
 
-namespace Dizimo.PageModels;
-
-public interface IProjectTaskPageModel
+namespace Dizimo.PageModels
 {
-    IAsyncRelayCommand<ProjectTask> NavigateToTaskCommand { get; }
-    bool IsBusy { get; }
+    public interface IProjectTaskPageModel
+    {
+        IAsyncRelayCommand<ProjectTask> NavigateToTaskCommand { get; }
+        bool IsBusy { get; }
+    }
 }

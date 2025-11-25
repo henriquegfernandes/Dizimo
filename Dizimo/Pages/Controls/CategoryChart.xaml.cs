@@ -1,9 +1,10 @@
-namespace Dizimo.Pages.Controls;
-
-public partial class CategoryChart
+namespace Dizimo.Pages.Controls
 {
-    public CategoryChart()
+    public partial class CategoryChart
     {
-        InitializeComponent();
+        public CategoryChart()
+        {
+            InitializeComponent();
+        }
     }
 }

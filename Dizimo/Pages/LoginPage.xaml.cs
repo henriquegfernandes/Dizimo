@@ -1,12 +1,9 @@
-using Dizimo.PageModels;
-
 namespace Dizimo.Pages;
 
 public partial class LoginPage : ContentPage
 {
-    public LoginPage(LoginPageModel vm)
+    public LoginPage()
     {
         InitializeComponent();
-        BindingContext = vm;
     }
 }

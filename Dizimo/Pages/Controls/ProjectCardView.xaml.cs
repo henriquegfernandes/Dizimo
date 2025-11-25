@@ -1,9 +1,10 @@
-namespace Dizimo.Pages.Controls;
-
-public partial class ProjectCardView
+namespace Dizimo.Pages.Controls
 {
-    public ProjectCardView()
+    public partial class ProjectCardView
     {
-        InitializeComponent();
+        public ProjectCardView()
+        {
+            InitializeComponent();
+        }
     }
 }

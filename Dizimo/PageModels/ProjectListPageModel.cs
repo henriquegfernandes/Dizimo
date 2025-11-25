@@ -2,36 +2,39 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Data;
 using Dizimo.Models;
-using Dizimo.Core.Services;
+using Dizimo.Services;
 
-namespace Dizimo.PageModels;
-
-public partial class ProjectListPageModel : ObservableObject
+namespace Dizimo.PageModels
 {
-    private readonly ProjectRepository _projectRepository;
-
-    [ObservableProperty] private List<Project> _projects = [];
-
-    [ObservableProperty] private Project? selectedProject;
-
-    public ProjectListPageModel(ProjectRepository projectRepository)
+    public partial class ProjectListPageModel : ObservableObject
     {
-        _projectRepository = projectRepository;
-    }
+        private readonly ProjectRepository _projectRepository;
 
-    [RelayCommand]
-    private async Task Appearing()
-    {
-        Projects = await _projectRepository.ListAsync();
-    }
+        [ObservableProperty]
+        private List<Project> _projects = [];
 
-    [RelayCommand]
-    Task? NavigateToProject(Project project)
-        => project is null ? Task.CompletedTask : Shell.Current.GoToAsync($"project?id={project.ID}");
+        [ObservableProperty]
+        private Project? selectedProject;
 
-    [RelayCommand]
-    async Task AddProject()
-    {
-        await Shell.Current.GoToAsync($"project");
+        public ProjectListPageModel(ProjectRepository projectRepository)
+        {
+            _projectRepository = projectRepository;
+        }
+
+        [RelayCommand]
+        private async Task Appearing()
+        {
+            Projects = await _projectRepository.ListAsync();
+        }
+
+        [RelayCommand]
+        Task? NavigateToProject(Project project)
+            => project is null ? Task.CompletedTask : Shell.Current.GoToAsync($"project?id={project.ID}");
+
+        [RelayCommand]
+        async Task AddProject()
+        {
+            await Shell.Current.GoToAsync($"project");
+        }
     }
 }

@@ -3,6 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Dizimo"
              x:Class="Dizimo.App">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Resources/Styles/ShellContentStyle.xaml" />
+    </ResourceDictionary.MergedDictionaries>
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

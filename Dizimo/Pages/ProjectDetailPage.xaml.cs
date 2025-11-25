@@ -1,13 +1,14 @@
 using Dizimo.Models;
 
-namespace Dizimo.Pages;
-
-public partial class ProjectDetailPage : ContentPage
+namespace Dizimo.Pages
 {
-    public ProjectDetailPage(ProjectDetailPageModel model)
+    public partial class ProjectDetailPage : ContentPage
     {
-        InitializeComponent();
+        public ProjectDetailPage(ProjectDetailPageModel model)
+        {
+            InitializeComponent();
 
-        BindingContext = model;
+            BindingContext = model;
+        }
     }
 }

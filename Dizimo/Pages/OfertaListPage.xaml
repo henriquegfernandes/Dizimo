@@ -1,0 +1,37 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             x:Class="Dizimo.Pages.OfertaListPage">
+    <ContentPage.BindingContext>
+        <vm:OfertaListViewModel />
+    </ContentPage.BindingContext>
+    <StackLayout>
+        <Label Text="Ofertas" FontSize="24" HorizontalOptions="Center" />
+        <StackLayout Orientation="Horizontal" Padding="8">
+            <DatePicker Date="{Binding FiltroData}" />
+            <Entry Placeholder="Código Dizimista" Text="{Binding FiltroCodigoDizimista}" WidthRequest="120" Keyboard="Numeric" />
+            <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" />
+        </StackLayout>
+        <CollectionView ItemsSource="{Binding Ofertas}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal" Padding="8">
+                        <Label Text="{Binding DizimistaId}" WidthRequest="200" />
+                        <Label Text="{Binding Valor}" WidthRequest="100" />
+                        <Label Text="{Binding Data, StringFormat='dd/MM/yyyy'}" WidthRequest="100" />
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="Carregar" Command="{Binding CarregarOfertasCommand}" />
+        <Button Text="Exportar CSV" Command="{Binding ExportarCommand}" />
+        <Button Text="Importar CSV" Command="{Binding ImportarCommand}" />
+        <Button Text="Baixar Modelo CSV" Command="{Binding BaixarModeloCommand}" />
+        <Button Text="Nova Oferta" Clicked="OnNovaOfertaClicked" />
+        <Button Text="Editar Selecionada" Command="{Binding EditarOfertaCommand}" IsEnabled="{Binding SelectedOferta, Converter={StaticResource NullToBoolConverter}}" />
+        <Button Text="Excluir Selecionada" Command="{Binding ExcluirOfertaCommand}" IsEnabled="{Binding SelectedOferta, Converter={StaticResource NullToBoolConverter}}" />
+        <Button Text="Relatório por Data" Command="{Binding GerarRelatorioPorDataCommand}" />
+        <Button Text="Exportar Relatório por Data" Command="{Binding ExportarRelatorioPorDataCommand}" />
+        <Label Text="{Binding TotalOfertasPorData, StringFormat='Total: {0:C}'}" FontSize="18" />
+    </StackLayout>
+</ContentPage>

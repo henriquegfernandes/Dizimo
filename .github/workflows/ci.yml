@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --no-build --configuration Release --logger trx
+
+      - name: Publish Windows App
+        run: dotnet publish Dizimo/Dizimo.csproj -c Release -r win10-x64 --output ./publish-win --self-contained false
+
+      - name: Zip Windows App Artifact
+        run: Compress-Archive -Path ./publish-win/* -DestinationPath ./Dizimo-Windows-App.zip
+
+      - name: Upload Windows App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dizimo-Windows-App
+          path: ./Dizimo-Windows-App.zip
+
+      - name: Create Release and Upload Artifact
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Release ${{ github.run_number }}"
+          tag_name: "v${{ github.run_number }}"
+          files: ./Dizimo-Windows-App.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

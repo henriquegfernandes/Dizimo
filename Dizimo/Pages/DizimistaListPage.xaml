@@ -1,32 +1,61 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Dizimo.Pages.DizimistaListPage"
-             Title="Dizimistas">
-    <ContentPage.Content>
-        <StackLayout Padding="12">
-            <SearchBar x:Name="SearchBar" Placeholder="Pesquisar por nome ou cÃ³digo" />
-            <CollectionView x:Name="CollectionView" ItemsSource="{Binding Dizimistas}" SelectionChanged="CollectionView_SelectionChanged">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame Padding="10" Margin="4">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Label Text="{Binding Nome}" FontSize="16" />
-                                <Label Grid.Column="1" Text="{Binding Codigo}" FontSize="14" HorizontalOptions="End" />
-                            </Grid>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-            <Grid ColumnDefinitions="*,*,*">
-                <Button Text="Novo Dizimista" HorizontalOptions="Center" Grid.Column="0" Command="{Binding NewCommand}" />
-                <Button Text="Exportar Backup" HorizontalOptions="Center" Grid.Column="1" Command="{Binding ExportCommand}" />
-                <Button Text="Importar Backup" HorizontalOptions="Center" Grid.Column="2" Command="{Binding ImportCommand}" />
-            </Grid>
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             xmlns:local="clr-namespace:Dizimo.Converters"
+             x:Class="Dizimo.Pages.DizimistaListPage">
+    <ContentPage.BindingContext>
+        <vm:DizimistaListViewModel />
+    </ContentPage.BindingContext>
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <local:NullToBoolConverter x:Key="NullToBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <StackLayout>
+        <Label Text="Dizimistas" FontSize="24" HorizontalOptions="Center" />
+        <StackLayout Orientation="Horizontal" Padding="8">
+            <Entry Placeholder="Buscar por nome" Text="{Binding FiltroNome}" WidthRequest="200" />
+            <Entry Placeholder="Buscar por número" Text="{Binding FiltroNumeroCadastro}" WidthRequest="100" Keyboard="Numeric" />
+            <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" />
         </StackLayout>
-    </ContentPage.Content>
+        <CollectionView ItemsSource="{Binding Dizimistas}" SelectionMode="Single" SelectedItem="{Binding SelectedDizimista, Mode=TwoWay}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal" Padding="8">
+                        <Label Text="{Binding NumeroCadastro}" WidthRequest="60" />
+                        <Label Text="{Binding Nome}" WidthRequest="200" />
+                        <Label Text="{Binding DataNascimento, StringFormat='dd/MM/yyyy'}" WidthRequest="100" />
+                        <Label Text="{Binding Ativo, StringFormat='Ativo: {0}'}" WidthRequest="80" />
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="Carregar" Command="{Binding CarregarDizimistasCommand}" />
+        <Button Text="Novo Dizimista" Clicked="OnNovoDizimistaClicked" />
+        <Button Text="Editar Selecionado" Command="{Binding EditarDizimistaCommand}" IsEnabled="{Binding SelectedDizimista, Converter={StaticResource NullToBoolConverter}}" />
+        <Button Text="Excluir Selecionado" Command="{Binding ExcluirDizimistaCommand}" IsEnabled="{Binding SelectedDizimista, Converter={StaticResource NullToBoolConverter}}" />
+        <Button Text="Inativar Selecionado" Command="{Binding InativarDizimistaCommand}" IsEnabled="{Binding SelectedDizimista, Converter={StaticResource NullToBoolConverter}}" />
+        <Button Text="Exportar CSV" Command="{Binding ExportarCommand}" />
+        <Button Text="Importar CSV" Command="{Binding ImportarCommand}" />
+        <Button Text="Baixar Modelo CSV" Command="{Binding BaixarModeloCommand}" />
+        <StackLayout Orientation="Horizontal" Padding="8">
+            <Label Text="Mês aniversário:" />
+            <Entry Placeholder="Mês" Text="{Binding FiltroMesAniversario}" WidthRequest="60" Keyboard="Numeric" />
+            <Button Text="Relatório Aniversariantes" Command="{Binding GerarRelatorioAniversariantesCommand}" />
+        </StackLayout>
+        <CollectionView ItemsSource="{Binding Aniversariantes}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal" Padding="8">
+                        <Label Text="{Binding NumeroCadastro}" WidthRequest="60" />
+                        <Label Text="{Binding Nome}" WidthRequest="200" />
+                        <Label Text="{Binding DataNascimento, StringFormat='dd/MM/yyyy'}" WidthRequest="100" />
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="Relatório Geral" Command="{Binding GerarRelatorioGeralCommand}" />
+        <Button Text="Exportar Relatório Geral" Command="{Binding ExportarRelatorioGeralCommand}" />
+        <Button Text="Exportar Relatório Aniversariantes" Command="{Binding ExportarRelatorioAniversariantesCommand}" />
+    </StackLayout>
 </ContentPage>

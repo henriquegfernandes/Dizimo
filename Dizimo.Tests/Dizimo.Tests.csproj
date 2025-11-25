@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.5.5" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="19.2.0" />
+    <PackageReference Include="Moq" Version="4.20.100" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj" />
+    <ProjectReference Include="..\Dizimo.Application\Dizimo.Application.csproj" />
+    <ProjectReference Include="..\Dizimo.Infrastructure\Dizimo.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

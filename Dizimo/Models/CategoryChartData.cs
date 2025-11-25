@@ -1,13 +1,14 @@
-namespace Dizimo.Models;
-
-public class CategoryChartData
+namespace Dizimo.Models
 {
-    public string Title { get; set; } = string.Empty;
-    public int Count { get; set; }
-
-    public CategoryChartData(string title, int count)
+    public class CategoryChartData
     {
-        Title = title;
-        Count = count;
+        public string Title { get; set; } = string.Empty;
+        public int Count { get; set; }
+
+        public CategoryChartData(string title, int count)
+        {
+            Title = title;
+            Count = count;
+        }
     }
 }

@@ -1,0 +1,16 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             x:Class="Dizimo.Pages.DizimistaCadastroPage">
+    <ContentPage.BindingContext>
+        <vm:DizimistaCadastroViewModel />
+    </ContentPage.BindingContext>
+    <StackLayout Padding="16">
+        <Label Text="Cadastro de Dizimista" FontSize="24" HorizontalOptions="Center" />
+        <Entry Placeholder="Número Cadastro" Keyboard="Numeric" Text="{Binding NumeroCadastro}" />
+        <Entry Placeholder="Nome" Text="{Binding Nome}" />
+        <DatePicker Date="{Binding DataNascimento}" />
+        <Switch IsToggled="{Binding Ativo}" />
+        <Button Text="Salvar" Command="{Binding SalvarCommand}" />
+    </StackLayout>
+</ContentPage>

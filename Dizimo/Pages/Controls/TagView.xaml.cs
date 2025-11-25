@@ -1,9 +1,10 @@
-namespace Dizimo.Pages.Controls;
-
-public partial class TagView
+namespace Dizimo.Pages.Controls
 {
-    public TagView()
+    public partial class TagView
     {
-        InitializeComponent();
+        public TagView()
+        {
+            InitializeComponent();
+        }
     }
 }
