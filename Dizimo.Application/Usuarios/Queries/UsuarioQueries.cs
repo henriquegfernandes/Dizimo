@@ -1,3 +1,5 @@
+using System;
+
 namespace Dizimo.Application.Usuarios.Queries;
 
 public record GetUsuarioByIdQuery(Guid Id);

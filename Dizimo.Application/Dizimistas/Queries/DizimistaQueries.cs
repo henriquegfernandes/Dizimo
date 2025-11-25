@@ -1,3 +1,5 @@
+using System;
+
 namespace Dizimo.Application.Dizimistas.Queries;
 
 public record GetDizimistaByIdQuery(Guid Id);

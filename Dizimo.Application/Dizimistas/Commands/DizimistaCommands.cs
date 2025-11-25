@@ -1,3 +1,5 @@
+using System;
+
 namespace Dizimo.Application.Dizimistas.Commands;
 
 public record CreateDizimistaCommand(int NumeroCadastro, string Nome, DateTime DataNascimento);

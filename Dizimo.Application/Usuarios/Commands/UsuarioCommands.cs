@@ -1,3 +1,5 @@
+using System;
+
 namespace Dizimo.Application.Usuarios.Commands;
 
 public record CreateUsuarioCommand(string Nome, string Login, string Senha);

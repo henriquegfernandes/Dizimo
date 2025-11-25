@@ -1,3 +1,4 @@
+using System;
 using Dizimo.Domain.Repositories;
 using Dizimo.Application.Usuarios.Commands;
 using Dizimo.Domain.Entities;

@@ -1,3 +1,5 @@
+using System;
+
 namespace Dizimo.Application.Ofertas.Queries;
 
 public record GetOfertaByIdQuery(Guid Id);
