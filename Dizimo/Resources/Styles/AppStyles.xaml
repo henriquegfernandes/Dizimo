@@ -86,22 +86,23 @@
                 Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
                 Size="{StaticResource IconSize}" />
 
-        <FontImageSource x:Key="IconClean"
-                Glyph="{x:Static f:FluentUI.broom_32_regular}"
-                FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                Size="{StaticResource size240}" />
+    <FontImageSource x:Key="IconClean"
+            Glyph="{x:Static f:FluentUI.broom_32_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
 
-        <FontImageSource x:Key="IconLight"
-                Glyph="{x:Static f:FluentUI.weather_sunny_28_regular}"
-                FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                Size="{StaticResource size240}" />
-        <FontImageSource x:Key="IconDark"
-                Glyph="{x:Static f:FluentUI.weather_moon_28_regular}"
-                FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                Size="{StaticResource size240}" />
+    <FontImageSource x:Key="IconLight"
+            Glyph="{x:Static f:FluentUI.weather_sunny_28_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
+    
+    <FontImageSource x:Key="IconDark"
+            Glyph="{x:Static f:FluentUI.weather_moon_28_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
 
     <FontImageSource x:Key="IconPerson"
         Glyph="{x:Static f:FluentUI.person_24_regular}"
@@ -314,6 +315,14 @@
         <Setter Property="TransitionMode" Value="SlideOnTop"/>
         <Setter Property="PullingThreshold" Value="100"/>
         <Setter Property="ProgressColor" Value="{StaticResource Primary}"/>
+    </Style>
+
+    <!-- Título global -->
+    <Style TargetType="Label" x:Key="AppTitle">
+        <Setter Property="TextColor" Value="{StaticResource TitleTextColor}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HorizontalOptions" Value="Center" />
     </Style>
 
 </ResourceDictionary>

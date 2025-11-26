@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:local="clr-namespace:Dizimo.Converters"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
              x:Class="Dizimo.Pages.DizimistaListPage">
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -12,105 +13,71 @@
     <ScrollView>
         <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
             <Label Text="Dizimistas" FontSize="24" HorizontalOptions="Center" />
-            <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="4*,4*,2*">
-                <Entry Placeholder="Buscar por nome" Text="{Binding FiltroNome}" Grid.Column="0"/>
-                <Entry Placeholder="Buscar por número" Text="{Binding FiltroNumeroCadastro}" Keyboard="Numeric" Grid.Column="1"/>
-                <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" Grid.Column="2">
-                    <Button.ImageSource>
-                        <FontImageSource Glyph="&#xF002;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                    </Button.ImageSource>
-                </Button>
-            </Grid>
-            <CollectionView ItemsSource="{Binding Dizimistas}" SelectionMode="Multiple" SelectedItems="{Binding DizimistasSelecionados, Mode=TwoWay}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,2*,4*,2*,2*">
-                            <CheckBox IsChecked="{Binding IsSelecionado, Mode=TwoWay}" Grid.Column="0" />
-                            <Label Text="{Binding NumeroCadastro}" WidthRequest="60" Grid.Column="1" />
-                            <Label Text="{Binding Nome}" WidthRequest="200" Grid.Column="2" />
-                            <Label Text="{Binding DataNascimento, StringFormat='dd/MM/yyyy'}" WidthRequest="100" Grid.Column="3" />
-                            <Label Text="{Binding Ativo, StringFormat='Ativo: {0}'}" WidthRequest="80" Grid.Column="4"/>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-            <Button Text="Carregar" Command="{Binding CarregarDizimistasCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF021;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <Button Text="+ Novo Dizimista" Clicked="OnNovoDizimistaClicked">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="+" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <StackLayout Orientation="Horizontal" Padding="8" Spacing="16">
-                <Button Text="Editar Selecionado" Command="{Binding EditarDizimistaCommand}" IsEnabled="{Binding DizimistasSelecionados.Count, Converter={StaticResource NullToBoolConverter}}">
-                    <Button.ImageSource>
-                        <FontImageSource Glyph="&#xF044;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                    </Button.ImageSource>
-                </Button>
-                <Button Text="Excluir Selecionado" Command="{Binding ExcluirDizimistaCommand}" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource NullToBoolConverter}}">
-                    <Button.ImageSource>
-                        <FontImageSource Glyph="&#xF1F8;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                    </Button.ImageSource>
-                </Button>
-                <Button Text="Inativar Selecionado" Command="{Binding InativarDizimistaCommand}" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource NullToBoolConverter}}">
-                    <Button.ImageSource>
-                        <FontImageSource Glyph="&#xF070;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                    </Button.ImageSource>
-                </Button>
+            <StackLayout Padding="16" Spacing="12">
+                <!-- Filtros -->
+                <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                    <Entry Placeholder="Buscar por nome" Text="{Binding FiltroNome}" WidthRequest="200" />
+                    <Entry Placeholder="Buscar por número" Text="{Binding FiltroNumeroCadastro}" WidthRequest="100" Keyboard="Numeric" />
+                    <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" />
+                </StackLayout>
+
+                <!-- Linha de botões de exportação/importação/modelo -->
+                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="24" Margin="0,0,0,12">
+                    <Button ImageSource="export.png" Command="{Binding ExportarCommand}" ToolTip="Exportar CSV" BackgroundColor="#E3F2FD" CornerRadius="20">
+                        <Button.Triggers>
+                            <Trigger TargetType="Button" Property="IsPointerOver" Value="True">
+                                <Setter Property="Scale" Value="1.1" />
+                                <Setter Property="BackgroundColor" Value="#BBDEFB" />
+                            </Trigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button ImageSource="import.png" Command="{Binding ImportarCommand}" ToolTip="Importar CSV" BackgroundColor="#E8F5E9" CornerRadius="20">
+                        <Button.Triggers>
+                            <Trigger TargetType="Button" Property="IsPointerOver" Value="True">
+                                <Setter Property="Scale" Value="1.1" />
+                                <Setter Property="BackgroundColor" Value="#C8E6C9" />
+                            </Trigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button ImageSource="template.png" Command="{Binding BaixarModeloCommand}" ToolTip="Baixar Modelo" BackgroundColor="#FFF3E0" CornerRadius="20">
+                        <Button.Triggers>
+                            <Trigger TargetType="Button" Property="IsPointerOver" Value="True">
+                                <Setter Property="Scale" Value="1.1" />
+                                <Setter Property="BackgroundColor" Value="#FFE0B2" />
+                            </Trigger>
+                        </Button.Triggers>
+                    </Button>
+                </StackLayout>
+
+                <!-- Lista paginada com infinite scroll e animação -->
+                <CollectionView ItemsSource="{Binding Dizimistas}"
+                                RemainingItemsThreshold="5"
+                                RemainingItemsThresholdReachedCommand="{Binding CarregarMaisDizimistasCommand}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedDizimista, Mode=TwoWay}"
+                                Margin="0,0,0,8">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Padding="12" Margin="0,0,0,12" HasShadow="True" CornerRadius="16" BackgroundColor="#FAFAFA">
+                                <Frame.Triggers>
+                                    <DataTrigger TargetType="Frame" Binding="{Binding Ativo}" Value="False">
+                                        <Setter Property="BackgroundColor" Value="#FFEBEE" />
+                                    </DataTrigger>
+                                </Frame.Triggers>
+                                <StackLayout Orientation="Horizontal" Spacing="16">
+                                    <Label Text="{Binding NumeroCadastro}" FontAttributes="Bold" WidthRequest="60" />
+                                    <Label Text="{Binding Nome}" FontSize="18" WidthRequest="200" />
+                                    <Label Text="{Binding DataNascimento, StringFormat='dd/MM/yyyy'}" WidthRequest="100" />
+                                    <Label Text="{Binding Ativo, StringFormat='Ativo: {0}'}" WidthRequest="80" />
+                                </StackLayout>
+                                <Frame.Behaviors>
+                                    <toolkit:AnimationBehavior AnimationType="FadeIn" Duration="400" Delay="100" />
+                                </Frame.Behaviors>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </StackLayout>
-            <Button Text="Exportar CSV" Command="{Binding ExportarCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF56E;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <Button Text="Importar CSV" Command="{Binding ImportarCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF574;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <Button Text="Baixar Modelo CSV" Command="{Binding BaixarModeloCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF019;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <StackLayout Orientation="Horizontal" Padding="8">
-                <Label Text="Mês aniversário:" />
-                <Entry Placeholder="Mês" Text="{Binding FiltroMesAniversario}" WidthRequest="60" Keyboard="Numeric" />
-                <Button Text="Relatório Aniversariantes" Command="{Binding GerarRelatorioAniversariantesCommand}">
-                    <Button.ImageSource>
-                        <FontImageSource Glyph="&#xF073;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                    </Button.ImageSource>
-                </Button>
-            </StackLayout>
-            <CollectionView ItemsSource="{Binding Aniversariantes}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <StackLayout Orientation="Horizontal" Padding="8">
-                            <Label Text="{Binding NumeroCadastro}" WidthRequest="60" />
-                            <Label Text="{Binding Nome}" WidthRequest="200" />
-                            <Label Text="{Binding DataNascimento, StringFormat='dd/MM/yyyy'}" WidthRequest="100" />
-                        </StackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-            <Button Text="Relatório Geral" Command="{Binding GerarRelatorioGeralCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF080;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <Button Text="Exportar Relatório Geral" Command="{Binding ExportarRelatorioGeralCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF56E;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
-            <Button Text="Exportar Relatório Aniversariantes" Command="{Binding ExportarRelatorioAniversariantesCommand}">
-                <Button.ImageSource>
-                    <FontImageSource Glyph="&#xF56E;" FontFamily="FontAwesome" Color="{DynamicResource ButtonIconColor}" />
-                </Button.ImageSource>
-            </Button>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

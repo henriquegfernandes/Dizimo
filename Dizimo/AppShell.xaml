@@ -59,6 +59,12 @@
         Route="backupconfig"
         IsVisible="{Binding IsAdmin}" />
 
+    <ShellContent
+        Title="Relatórios"
+        Icon="report.png"
+        ContentTemplate="{DataTemplate pages:RelatorioPage}"
+        Route="relatorios" />
+
     <Shell.FlyoutHeader>
         <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
             <Image Source="avatar.png" HeightRequest="32" WidthRequest="32" VerticalOptions="Center" />

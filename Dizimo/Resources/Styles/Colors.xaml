@@ -5,6 +5,18 @@
 
     <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
 
+    <!-- Bordô principal -->
+    <Color x:Key="PrimaryColor">#800000</Color>
+    <Color x:Key="PrimaryColorDark">#4B0000</Color>
+    <Color x:Key="PrimaryColorLight">#B22222</Color>
+    <!-- Cinza escuro para inputs -->
+    <Color x:Key="InputBackgroundLight">#222222</Color>
+    <Color x:Key="InputBackgroundDark">#333333</Color>
+    <!-- Outros tons -->
+    <Color x:Key="AccentColor">#800000</Color>
+    <Color x:Key="ButtonTextColor">#FFFFFF</Color>
+    <Color x:Key="TitleTextColor">#800000</Color>
+
     <Color x:Key="Primary">#512BD4</Color>
     <Color x:Key="PrimaryDark">#ac99ea</Color>
     <Color x:Key="PrimaryDarkText">#242424</Color>
