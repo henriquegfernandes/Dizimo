@@ -47,15 +47,22 @@
 
     <ShellContent
         Title="Usuários"
-        Icon="{StaticResource IconAdmin}"
+        Icon="{StaticResource IconUserCog}"
         ContentTemplate="{DataTemplate pages:UsuarioListPage}"
         Route="usuarios"
+        IsVisible="{Binding IsAdmin}" />
+
+    <ShellContent
+        Title="Configuração de Backup"
+        Icon="{StaticResource IconBackup}"
+        ContentTemplate="{DataTemplate pages:BackupConfigPage}"
+        Route="backupconfig"
         IsVisible="{Binding IsAdmin}" />
 
     <Shell.FlyoutHeader>
         <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
             <Image Source="avatar.png" HeightRequest="32" WidthRequest="32" VerticalOptions="Center" />
-            <StackLayout>
+            <StackLayout Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
                 <Label Text="Usuário: " FontAttributes="Bold" />
                 <Label Text="{Binding UsuarioNome}" />
                 <Label Text="{Binding UsuarioPerfil}" FontSize="12" TextColor="Gray" />
@@ -80,10 +87,6 @@
                     </sf:SfSegmentedControl>
                 </StackLayout>
             </Grid>
-            <Button Text="Configurar Pasta de Backup" Command="{Binding EscolherPastaCommand}" />
-            <Label Text="Pasta atual: {Binding BackupFolderPath}" FontSize="12" />
-            <Button Text="Backup para Pasta" Command="{Binding BackupCommand}" />
-            <Button Text="Restaurar da Pasta" Command="{Binding RestoreCommand}" />
         </VerticalStackLayout>
     </Shell.FlyoutFooter>
 

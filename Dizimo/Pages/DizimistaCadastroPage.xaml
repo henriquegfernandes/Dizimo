@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -6,16 +7,33 @@
              xmlns:fonts="clr-namespace:Fonts"
              x:Class="Dizimo.Pages.DizimistaCadastroPage">
     <Grid>
-        <ScrollView>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <!-- Botï¿½o de excluir no canto superior direito -->
+        <Button Grid.Row="0" Grid.Column="1" HorizontalOptions="End" VerticalOptions="Start" Command="{Binding ExcluirCommand}">
+            <Button.ImageSource>
+                <FontImageSource Glyph="&#xF1F8;" FontFamily="FontAwesome" Color="Red" />
+            </Button.ImageSource>
+        </Button>
+        <ScrollView Grid.Row="1" Grid.ColumnSpan="2">
             <VerticalStackLayout Padding="{StaticResource LayoutPadding}" Spacing="{StaticResource LayoutSpacing}">
-                <sf:SfTextInputLayout Hint="Número de Cadastro" >
-                    <Entry Placeholder="Número Cadastro" Keyboard="Numeric" Text="{Binding NumeroCadastro}"/>
+                <sf:SfTextInputLayout Hint="NÃºmero de Cadastro" >
+                    <Entry Placeholder="NÃºmero Cadastro" Keyboard="Numeric" Text="{Binding NumeroCadastro}"/>
                 </sf:SfTextInputLayout>
                 <sf:SfTextInputLayout Hint="Nome" >
                     <Entry Text="{Binding Nome}" SemanticProperties.Description="Name"/>
                 </sf:SfTextInputLayout>
                 <DatePicker Date="{Binding DataNascimento}"/>
-                <Switch IsToggled="{Binding Ativo}" />
+                <StackLayout Orientation="Horizontal" Spacing="8">
+                    <Label Text="Ativo" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding Ativo}" />
+                </StackLayout>
                 <Button Text="Salvar" Command="{Binding SalvarCommand}" />
            </VerticalStackLayout>
        </ScrollView>
