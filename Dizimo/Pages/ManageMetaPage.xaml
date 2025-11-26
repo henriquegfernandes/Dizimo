@@ -68,7 +68,7 @@
                             </Entry>
 
                             <BoxView HeightRequest="30" WidthRequest="30" VerticalOptions="Center" 
-                                Color="{Binding Text, Source={x:Reference ColorEntry}, x:DataType=Entry}" Grid.Column="2"
+                                Color="{Binding Color}" Grid.Column="2"
                                 SemanticProperties.HeadingLevel="None" />
 
                             <Button 
@@ -111,7 +111,7 @@
                             </Entry>
 
                             <BoxView HeightRequest="30" WidthRequest="30" VerticalOptions="Center" 
-                                Color="{Binding Text, Source={x:Reference ColorEntry}, x:DataType=Entry}" Grid.Column="2"
+                                Color="{Binding Color}" Grid.Column="2"
                                 SemanticProperties.HeadingLevel="None" />
         
                             <Button 

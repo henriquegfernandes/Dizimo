@@ -4,13 +4,9 @@ using Dizimo.Domain.Entities;
 using Dizimo.Application.Dizimistas.Queries;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Commands;
-using Dizimo.Infrastructure.Services;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using System.Linq;
-using System.IO;
 using Dizimo.Application.Relatorios;
+using Dizimo.Domain.Repositories;
 
 namespace Dizimo.ViewModels;
 
@@ -23,27 +19,68 @@ public partial class DizimistaListViewModel : ObservableObject
     private readonly IUnitOfWork _unitOfWork;
     private readonly RelatorioAniversariantesService _relatorioAniversariantesService;
 
-    [ObservableProperty]
-    private ObservableCollection<Dizimista> dizimistas = new();
+    public List<Dizimista> TodosDizimistas { get; private set; } = new();
 
-    [ObservableProperty]
-    private Dizimista? selectedDizimista;
+    // IDE0044: Tornar campo somente leitura
+    private ObservableCollection<Dizimista> _dizimistas = new();
 
-    [ObservableProperty]
-    private string filtroNome = string.Empty;
+    // IDE0044: Tornar campo somente leitura
+    private Dizimista? _selectedDizimista;
 
-    [ObservableProperty]
-    private string filtroNumeroCadastro = string.Empty;
+    // IDE0044: Tornar campo somente leitura
+    private string _filtroNome = string.Empty;
 
-    private List<Dizimista> todosDizimistas = new();
+    // IDE0044: Tornar campo somente leitura
+    private string _filtroNumeroCadastro = string.Empty;
 
-    [ObservableProperty]
-    private ObservableCollection<Dizimista> aniversariantes = new();
+    public ObservableCollection<Dizimista> Aniversariantes { get; private set; } = new();
 
-    [ObservableProperty]
-    private int filtroMesAniversario = DateTime.Today.Month;
+    // IDE0044: Tornar campo somente leitura
+    private int _filtroMesAniversario = DateTime.Today.Month;
 
-    public DizimistaListViewModel(GetDizimistaHandlers handlers, DeleteDizimistaHandler deleteHandler, InativarDizimistaHandler inativarHandler, DizimistaCsvService csvService, IUnitOfWork unitOfWork, RelatorioAniversariantesService relatorioAniversariantesService)
+    // Propriedades pÃºblicas para acesso aos campos privados
+    public ObservableCollection<Dizimista> Dizimistas
+    {
+        get => _dizimistas;
+        private set
+        {
+            // NÃ£o Ã© possÃ­vel usar ref em campo readonly, entÃ£o substitua o campo inteiro.
+            // Remova o modificador 'readonly' do campo '_dizimistas' para permitir a atribuiÃ§Ã£o.
+            SetProperty(ref _dizimistas, value);
+        }
+    }
+
+    public Dizimista? SelectedDizimista
+    {
+        get => _selectedDizimista;
+        set => SetProperty(ref _selectedDizimista, value);
+    }
+
+    public string FiltroNome
+    {
+        get => _filtroNome;
+        set => SetProperty(ref _filtroNome, value);
+    }
+
+    public string FiltroNumeroCadastro
+    {
+        get => _filtroNumeroCadastro;
+        set => SetProperty(ref _filtroNumeroCadastro, value);
+    }
+
+    public int FiltroMesAniversario
+    {
+        get => _filtroMesAniversario;
+        set => SetProperty(ref _filtroMesAniversario, value);
+    }
+
+    public DizimistaListViewModel(
+        GetDizimistaHandlers handlers,
+        DeleteDizimistaHandler deleteHandler,
+        InativarDizimistaHandler inativarHandler,
+        DizimistaCsvService csvService,
+        IUnitOfWork unitOfWork,
+        RelatorioAniversariantesService relatorioAniversariantesService)
     {
         _handlers = handlers;
         _deleteHandler = deleteHandler;
@@ -51,20 +88,21 @@ public partial class DizimistaListViewModel : ObservableObject
         _csvService = csvService;
         _unitOfWork = unitOfWork;
         _relatorioAniversariantesService = relatorioAniversariantesService;
+        Dizimistas = new ObservableCollection<Dizimista>();
     }
 
     [RelayCommand]
     public async Task CarregarDizimistasAsync()
     {
         var lista = await _handlers.Handle(new GetAllDizimistasQuery());
-        todosDizimistas = lista.ToList();
+        TodosDizimistas = lista is List<Dizimista> l ? l : lista.ToList();
         AplicarFiltros();
     }
 
     [RelayCommand]
     public void AplicarFiltros()
     {
-        var filtrados = todosDizimistas.AsEnumerable();
+        IEnumerable<Dizimista> filtrados = TodosDizimistas;
         if (!string.IsNullOrWhiteSpace(FiltroNome))
             filtrados = filtrados.Where(d => d.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase));
         if (int.TryParse(FiltroNumeroCadastro, out var num))
@@ -87,18 +125,22 @@ public partial class DizimistaListViewModel : ObservableObject
     {
         if (SelectedDizimista != null)
         {
-            bool confirm = await Application.Current.MainPage.DisplayAlert("Confirmação", $"Deseja excluir o dizimista '{SelectedDizimista.Nome}'?", "Sim", "Não");
-            if (confirm)
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
             {
-                try
+                bool confirm = await mainPage.DisplayAlertAsync("ConfirmaÃ§Ã£o", $"Deseja excluir o dizimista '{SelectedDizimista.Nome}'?", "Sim", "NÃ£o");
+                if (confirm)
                 {
-                    await _deleteHandler.Handle(new DeleteDizimistaCommand(SelectedDizimista.Id));
-                    await CarregarDizimistasAsync();
-                    await Application.Current.MainPage.DisplayAlert("Sucesso", "Dizimista excluído com sucesso.", "OK");
-                }
-                catch (Exception ex)
-                {
-                    await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao excluir: {ex.Message}", "OK");
+                    try
+                    {
+                        await _deleteHandler.Handle(new DeleteDizimistaCommand(SelectedDizimista.Id));
+                        await CarregarDizimistasAsync();
+                        await mainPage.DisplayAlertAsync("Sucesso", "Dizimista excluÃ­do com sucesso.", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
+                    }
                 }
             }
         }
@@ -109,18 +151,22 @@ public partial class DizimistaListViewModel : ObservableObject
     {
         if (SelectedDizimista != null)
         {
-            bool confirm = await Application.Current.MainPage.DisplayAlert("Confirmação", $"Deseja inativar o dizimista '{SelectedDizimista.Nome}'?", "Sim", "Não");
-            if (confirm)
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
             {
-                try
+                bool confirm = await mainPage.DisplayAlertAsync("ConfirmaÃ§Ã£o", $"Deseja inativar o dizimista '{SelectedDizimista.Nome}'?", "Sim", "NÃ£o");
+                if (confirm)
                 {
-                    await _inativarHandler.Handle(new InativarDizimistaCommand(SelectedDizimista.Id));
-                    await CarregarDizimistasAsync();
-                    await Application.Current.MainPage.DisplayAlert("Sucesso", "Dizimista inativado com sucesso.", "OK");
-                }
-                catch (Exception ex)
-                {
-                    await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao inativar: {ex.Message}", "OK");
+                    try
+                    {
+                        await _inativarHandler.Handle(new InativarDizimistaCommand(SelectedDizimista.Id));
+                        await CarregarDizimistasAsync();
+                        await mainPage.DisplayAlertAsync("Sucesso", "Dizimista inativado com sucesso.", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao inativar: {ex.Message}", "OK");
+                    }
                 }
             }
         }
@@ -134,11 +180,20 @@ public partial class DizimistaListViewModel : ObservableObject
             var csv = await _csvService.ExportarAsync();
             var filePath = Path.Combine(FileSystem.Current.AppDataDirectory, "dizimistas_export.csv");
             File.WriteAllText(filePath, csv);
-            await Application.Current.MainPage.DisplayAlert("Exportação", $"Arquivo exportado para: {filePath}", "OK");
+
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", $"Arquivo exportado para: {filePath}", "OK");
+            }
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao exportar: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
+            }
         }
     }
 
@@ -150,7 +205,11 @@ public partial class DizimistaListViewModel : ObservableObject
             var filePath = Path.Combine(FileSystem.Current.AppDataDirectory, "dizimistas_import.csv");
             if (!File.Exists(filePath))
             {
-                await Application.Current.MainPage.DisplayAlert("Importação", $"Coloque o arquivo 'dizimistas_import.csv' em: {filePath}", "OK");
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("ImportaÃ§Ã£o", $"Coloque o arquivo 'dizimistas_import.csv' em: {filePath}", "OK");
+                }
                 return;
             }
             var csv = File.ReadAllText(filePath);
@@ -161,11 +220,19 @@ public partial class DizimistaListViewModel : ObservableObject
             }
             await _unitOfWork.SaveChangesAsync();
             await CarregarDizimistasAsync();
-            await Application.Current.MainPage.DisplayAlert("Importação", $"Importação concluída com sucesso.", "OK");
+            var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPageSuccess != null)
+            {
+                await mainPageSuccess.DisplayAlertAsync("ImportaÃ§Ã£o", $"ImportaÃ§Ã£o concluÃ­da com sucesso.", "OK");
+            }
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao importar: {ex.Message}", "OK");
+            var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPageError != null)
+            {
+                await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
+            }
         }
     }
 
@@ -176,19 +243,30 @@ public partial class DizimistaListViewModel : ObservableObject
         {
             var modeloPath = Path.Combine(FileSystem.Current.AppDataDirectory, "dizimistas_modelo.csv");
             var modeloOrigem = Path.Combine(AppContext.BaseDirectory, "dizimistas_modelo.csv");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (File.Exists(modeloOrigem))
             {
                 File.Copy(modeloOrigem, modeloPath, true);
-                await Application.Current.MainPage.DisplayAlert("Modelo", $"Arquivo modelo salvo em: {modeloPath}", "OK");
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Modelo", $"Arquivo modelo salvo em: {modeloPath}", "OK");
+                }
             }
             else
             {
-                await Application.Current.MainPage.DisplayAlert("Modelo", "Arquivo modelo não encontrado.", "OK");
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Modelo", "Arquivo modelo nÃ£o encontrado.", "OK");
+                }
             }
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
+            }
         }
     }
 
@@ -197,14 +275,22 @@ public partial class DizimistaListViewModel : ObservableObject
     {
         var lista = await _relatorioAniversariantesService.GetAniversariantesAsync(FiltroMesAniversario);
         Aniversariantes = new ObservableCollection<Dizimista>(lista);
-        await Application.Current.MainPage.DisplayAlert("Relatório Aniversariantes", $"{Aniversariantes.Count} aniversariantes encontrados para o mês {FiltroMesAniversario}", "OK");
+        var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (mainPage != null)
+        {
+            await mainPage.DisplayAlertAsync("RelatÃ³rio Aniversariantes", $"{Aniversariantes.Count} aniversariantes encontrados para o mÃªs {FiltroMesAniversario}", "OK");
+        }
     }
 
     [RelayCommand]
     public async Task GerarRelatorioGeralAsync()
     {
         await CarregarDizimistasAsync();
-        await Application.Current.MainPage.DisplayAlert("Relatório Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
+        var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (mainPage != null)
+        {
+            await mainPage.DisplayAlertAsync("RelatÃ³rio Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
+        }
     }
 
     [RelayCommand]
@@ -220,11 +306,19 @@ public partial class DizimistaListViewModel : ObservableObject
             }
             var filePath = System.IO.Path.Combine(FileSystem.Current.AppDataDirectory, "relatorio_dizimistas.csv");
             System.IO.File.WriteAllText(filePath, sb.ToString());
-            await Application.Current.MainPage.DisplayAlert("Exportação", $"Relatório geral exportado para: {filePath}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", $"RelatÃ³rio geral exportado para: {filePath}", "OK");
+            }
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao exportar relatório: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar relatÃ³rio: {ex.Message}", "OK");
+            }
         }
     }
 
@@ -241,11 +335,19 @@ public partial class DizimistaListViewModel : ObservableObject
             }
             var filePath = System.IO.Path.Combine(FileSystem.Current.AppDataDirectory, "relatorio_aniversariantes.csv");
             System.IO.File.WriteAllText(filePath, sb.ToString());
-            await Application.Current.MainPage.DisplayAlert("Exportação", $"Relatório de aniversariantes exportado para: {filePath}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", $"RelatÃ³rio de aniversariantes exportado para: {filePath}", "OK");
+            }
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao exportar relatório: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar relatÃ³rio: {ex.Message}", "OK");
+            }
         }
     }
 }

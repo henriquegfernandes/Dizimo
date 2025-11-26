@@ -1,11 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Usuarios.Queries;
 using Dizimo.Application.Usuarios.Handlers;
-using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
-using Dizimo.Infrastructure.Services;
 
 namespace Dizimo.ViewModels;
 
@@ -22,6 +19,14 @@ public partial class LoginViewModel : ObservableObject
     {
         _getUsuarioHandlers = getUsuarioHandlers;
         _sessaoService = sessaoService;
+        ResetLoginState();
+    }
+
+    public void ResetLoginState()
+    {
+        Login = string.Empty;
+        Senha = string.Empty;
+        IsLoginFailed = false;
     }
 
     [RelayCommand]
@@ -31,12 +36,25 @@ public partial class LoginViewModel : ObservableObject
         if (usuario != null && usuario.Ativo && usuario.SenhaHash == SessaoService.HashSenha(Senha))
         {
             _sessaoService.Login(usuario.Id, usuario.Perfil);
-            await Shell.Current.GoToAsync("//dizimistas");
+            // Atualiza o BindingContext do AppShell após login
+            if (Shell.Current is AppShell appShell)
+            {
+                var app = Microsoft.Maui.Controls.Application.Current as App;
+                var mainVm = app?.Services.GetService<MainViewModel>();
+                var backupVm = app?.Services.GetService<LocalBackupViewModel>();
+                if (mainVm != null && backupVm != null)
+                    appShell.BindingContext = new ShellViewModel(mainVm, backupVm);
+            }
+            await Shell.Current.GoToAsync("//main");
         }
         else
         {
             IsLoginFailed = true;
-            await Application.Current.MainPage.DisplayAlert("Erro", "Login ou senha inv�lidos.", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Erro", "Login ou senha inválidos.", "OK");
+            }
         }
     }
 }

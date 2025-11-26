@@ -1,6 +1,6 @@
+using System.Threading.Tasks;
 using Dizimo.Domain.Repositories;
 using Dizimo.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Dizimo.Infrastructure.Repositories;
 
@@ -19,5 +19,8 @@ public class UnitOfWork : IUnitOfWork
         Usuarios = new UsuarioRepository(_context);
     }
 
-    public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
+    public Task<int> SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
+    }
 }

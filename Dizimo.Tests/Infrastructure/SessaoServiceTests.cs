@@ -1,4 +1,4 @@
-using Dizimo.Infrastructure.Services;
+using Dizimo.Services;
 using Xunit;
 
 namespace Dizimo.Tests.Infrastructure;

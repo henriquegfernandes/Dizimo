@@ -2,14 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              x:Class="Dizimo.Pages.OfertaListPage">
-    <ContentPage.BindingContext>
-        <vm:OfertaListViewModel />
-    </ContentPage.BindingContext>
-    <StackLayout>
+    <StackLayout Spacing="10" Padding="15">
         <Label Text="Ofertas" FontSize="24" HorizontalOptions="Center" />
         <StackLayout Orientation="Horizontal" Padding="8">
             <DatePicker Date="{Binding FiltroData}" />
-            <Entry Placeholder="Código Dizimista" Text="{Binding FiltroCodigoDizimista}" WidthRequest="120" Keyboard="Numeric" />
+            <Entry Placeholder="Código Dizimista" Text="{Binding FiltroCodigoDizimista}" Keyboard="Numeric" />
             <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" />
         </StackLayout>
         <CollectionView ItemsSource="{Binding Ofertas}">

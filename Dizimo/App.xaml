@@ -4,7 +4,8 @@
              xmlns:local="clr-namespace:Dizimo"
              x:Class="Dizimo.App">
     <Application.Resources>
-        <ResourceDictionary>
+        <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/ShellContentStyle.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

@@ -1,9 +1,13 @@
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace Dizimo.Infrastructure.Services;
+namespace Dizimo.Services;
 
 public class OfertaCsvService
 {
@@ -26,7 +30,7 @@ public class OfertaCsvService
     {
         var result = new List<Oferta>();
         var lines = csv.Split('\n');
-        foreach (var line in lines.Skip(1)) // pula cabeçalho
+        foreach (var line in lines.Skip(1)) // pula cabeï¿½alho
         {
             var parts = line.Split(',');
             if (parts.Length < 3) continue;

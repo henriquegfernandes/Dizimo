@@ -1,15 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-android</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="xunit" Version="2.5.5" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.5" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="19.2.0" />
-    <PackageReference Include="Moq" Version="4.20.100" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
+	<ProjectReference Include="..\Dizimo\Dizimo.csproj" />
     <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj" />
     <ProjectReference Include="..\Dizimo.Application\Dizimo.Application.csproj" />
     <ProjectReference Include="..\Dizimo.Infrastructure\Dizimo.Infrastructure.csproj" />

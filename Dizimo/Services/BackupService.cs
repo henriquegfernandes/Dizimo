@@ -1,8 +1,6 @@
 using Azure.Storage.Blobs;
-using System.Threading.Tasks;
-using System.IO;
 
-namespace Dizimo.Infrastructure.Services;
+namespace Dizimo.Services;
 
 public class BackupService
 {

@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Infrastructure.Services;
 using Microsoft.Maui.Controls;
 
 namespace Dizimo.ViewModels;
@@ -19,11 +18,15 @@ public partial class BackupViewModel : ObservableObject
         try
         {
             await _backupService.BackupToCloudAsync();
-            await Application.Current.MainPage.DisplayAlert("Backup", "Backup realizado com sucesso na nuvem.", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Backup", "Backup realizado com sucesso na nuvem.", "OK");
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao realizar backup: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao realizar backup: {ex.Message}", "OK");
         }
     }
 
@@ -33,11 +36,15 @@ public partial class BackupViewModel : ObservableObject
         try
         {
             await _backupService.RestoreFromCloudAsync();
-            await Application.Current.MainPage.DisplayAlert("Backup", "Restauração realizada com sucesso.", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Backup", "RestauraÃ§Ã£o realizada com sucesso.", "OK");
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao restaurar backup: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao restaurar backup: {ex.Message}", "OK");
         }
     }
 }

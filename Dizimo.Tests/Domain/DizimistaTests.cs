@@ -1,4 +1,5 @@
 using Dizimo.Domain.Entities;
+using System;
 using Xunit;
 
 namespace Dizimo.Tests.Domain;

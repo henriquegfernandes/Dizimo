@@ -3,7 +3,7 @@ using Dizimo.Domain.Repositories;
 using System.Globalization;
 using System.Text;
 
-namespace Dizimo.Infrastructure.Services;
+namespace Dizimo.Services;
 
 public class DizimistaCsvService
 {
@@ -26,7 +26,7 @@ public class DizimistaCsvService
     {
         var result = new List<Dizimista>();
         var lines = csv.Split('\n');
-        foreach (var line in lines.Skip(1)) // pula cabeçalho
+        foreach (var line in lines.Skip(1)) // pula cabeï¿½alho
         {
             var parts = line.Split(',');
             if (parts.Length < 4) continue;

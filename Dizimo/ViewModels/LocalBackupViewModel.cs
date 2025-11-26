@@ -1,22 +1,25 @@
+using CommunityToolkit.Maui.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Infrastructure.Services;
-using Microsoft.Maui.Storage;
-using Microsoft.Maui.Controls;
 
 namespace Dizimo.ViewModels;
 
 public partial class LocalBackupViewModel : ObservableObject
 {
     private readonly LocalBackupService _backupService;
+
+    private string? _backupFolderPath;
+
     public LocalBackupViewModel(LocalBackupService backupService)
     {
         _backupService = backupService;
-        BackupFolderPath = _backupService.BackupFolderPath;
     }
 
-    [ObservableProperty]
-    private string backupFolderPath;
+    public string? BackupFolderPath
+    {
+        get => _backupFolderPath;
+        set => SetProperty(ref _backupFolderPath, value);
+    }
 
     [RelayCommand]
     public async Task EscolherPastaAsync()
@@ -24,9 +27,13 @@ public partial class LocalBackupViewModel : ObservableObject
         var folder = await FolderPicker.Default.PickAsync();
         if (folder != null)
         {
-            BackupFolderPath = folder.Path;
-            _backupService.SetBackupFolder(folder.Path);
-            await Application.Current.MainPage.DisplayAlert("Backup", $"Pasta de backup configurada: {folder.Path}", "OK");
+            _backupService.SetBackupFolder(folder.Folder?.Path ?? string.Empty);
+            BackupFolderPath = folder.Folder?.Path;
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.Count > 0
+                ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
+                : null;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Backup", $"Pasta de backup configurada: {folder.Folder?.Path}", "OK");
         }
     }
 
@@ -36,11 +43,19 @@ public partial class LocalBackupViewModel : ObservableObject
         try
         {
             await _backupService.BackupAsync();
-            await Application.Current.MainPage.DisplayAlert("Backup", "Backup realizado com sucesso na pasta configurada.", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.Count > 0
+                ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
+                : null;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Backup", "Backup realizado com sucesso na pasta configurada.", "OK");
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao realizar backup: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.Count > 0
+                ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
+                : null;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao realizar backup: {ex.Message}", "OK");
         }
     }
 
@@ -50,11 +65,19 @@ public partial class LocalBackupViewModel : ObservableObject
         try
         {
             await _backupService.RestoreAsync();
-            await Application.Current.MainPage.DisplayAlert("Backup", "Restauração realizada com sucesso.", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.Count > 0
+                ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
+                : null;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Backup", "RestauraÃ§Ã£o realizada com sucesso.", "OK");
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Erro", $"Erro ao restaurar backup: {ex.Message}", "OK");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.Count > 0
+                ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
+                : null;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao restaurar backup: {ex.Message}", "OK");
         }
     }
 }

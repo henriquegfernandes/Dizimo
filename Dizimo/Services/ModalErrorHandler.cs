@@ -1,3 +1,5 @@
+using Microsoft.Maui.Controls;
+
 namespace Dizimo.Services
 {
     /// <summary>
@@ -21,8 +23,8 @@ namespace Dizimo.Services
             try
             {
                 await _semaphore.WaitAsync();
-                if (Shell.Current is Shell shell)
-                    await shell.DisplayAlertAsync("Error", ex.Message, "OK");
+                if (Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page is Page page)
+                    await page.DisplayAlertAsync("Error", ex.Message, "OK");
             }
             finally
             {

@@ -1,4 +1,5 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
     <Style x:Key="ShellContentStyle" TargetType="ShellContent">
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -6,8 +7,6 @@
                     <VisualState x:Name="Normal" />
                     <VisualState x:Name="Selected">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="#E0E0E0" />
-                            <Setter Property="FontAttributes" Value="Bold" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>

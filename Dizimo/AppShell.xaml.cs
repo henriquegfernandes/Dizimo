@@ -1,7 +1,9 @@
-﻿using CommunityToolkit.Maui.Alerts;
-using CommunityToolkit.Maui.Core;
+﻿using Microsoft.Maui;
+using Microsoft.Maui.Controls;
 using Dizimo.ViewModels;
 using Font = Microsoft.Maui.Font;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 
 namespace Dizimo
 {
@@ -10,11 +12,19 @@ namespace Dizimo
         public AppShell()
         {
             InitializeComponent();
-            var currentTheme = Application.Current!.RequestedTheme;
-            ThemeSegmentedControl.SelectedIndex = currentTheme == AppTheme.Light ? 0 : 1;
-            var mainVm = Application.Current.Services.GetService<MainViewModel>();
-            var backupVm = Application.Current.Services.GetService<LocalBackupViewModel>();
-            BindingContext = new { mainVm, backupVm };
+            Routing.RegisterRoute("login", typeof(Dizimo.Pages.LoginPage));
+            var app = Microsoft.Maui.Controls.Application.Current as App;
+            if (app is null)
+                throw new InvalidOperationException("Application.Current não está inicializado ou não é do tipo App.");
+
+            // Força modo claro ao iniciar
+            Microsoft.Maui.Controls.Application.Current.UserAppTheme = AppTheme.Light;
+
+            var currentTheme = Microsoft.Maui.Controls.Application.Current?.RequestedTheme ?? AppTheme.Light;
+            ThemeSegmentedControl.SelectedIndex = 0; // Sempre inicia no claro
+            var mainVm = app.Services.GetService<MainViewModel>();
+            var backupVm = app.Services.GetService<LocalBackupViewModel>();
+            BindingContext = new ShellViewModel(mainVm, backupVm);
         }
         public static async Task DisplaySnackbarAsync(string message)
         {
@@ -49,7 +59,8 @@ namespace Dizimo
 
         private void SfSegmentedControl_SelectionChanged(object? sender, Syncfusion.Maui.Toolkit.SegmentedControl.SelectionChangedEventArgs e)
         {
-            Application.Current!.UserAppTheme = e.NewIndex == 0 ? AppTheme.Light : AppTheme.Dark;
+            if (Microsoft.Maui.Controls.Application.Current?.UserAppTheme != null)
+                Microsoft.Maui.Controls.Application.Current.UserAppTheme = e.NewIndex == 0 ? AppTheme.Light : AppTheme.Dark;
         }
     }
 }

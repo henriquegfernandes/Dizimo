@@ -7,9 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Dizimo.Domain.Repositories;
 using Dizimo.ViewModels;
 using Dizimo.Application.Dizimistas.Handlers;
-using Dizimo.Infrastructure.Services;
+using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Relatorios;
 using Microsoft.Maui.LifecycleEvents;
+using Microsoft.Maui.Controls;
+using Dizimo.Pages;
+using Microsoft.Extensions.DependencyInjection;
+using Dizimo.Application.Usuarios.Handlers;
 
 namespace Dizimo
 {
@@ -57,7 +61,9 @@ namespace Dizimo
             builder.Services.AddDbContext<DizimoDbContext>(options =>
                 options.UseSqlite($"Data Source={dbPath}")
             );
+            // Repositórios e UoW devem ser Scoped para compartilhar o contexto
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
             builder.Services.AddSingleton<ProjectRepository>();
             builder.Services.AddSingleton<TaskRepository>();
@@ -70,22 +76,32 @@ namespace Dizimo
             builder.Services.AddSingleton<ManageMetaPageModel>();
             builder.Services.AddSingleton<MainViewModel>();
             builder.Services.AddSingleton<LocalBackupViewModel>();
+            builder.Services.AddSingleton<AppShell>();
+            builder.Services.AddSingleton<DizimistaListPage>();
+            builder.Services.AddSingleton<UsuarioListPage>();
+            builder.Services.AddSingleton<OfertaListPage>();
+            
 
             builder.ConfigureLifecycleEvents(events =>
             {
-#if WINDOWS
-                events.AddWindows(windows =>
-                {
-                    windows.OnStopped(async app =>
-                    {
-                        var backupVm = app.Services.GetService<LocalBackupViewModel>();
-                        if (backupVm != null)
-                        {
-                            await backupVm.BackupAsync();
-                        }
-                    });
-                });
-#endif
+//#if WINDOWS
+//                events.AddWindows(windows =>
+//                {
+//                    windows.OnClosed(() =>
+//                    {
+//                        var serviceProvider = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services;
+//                        if (serviceProvider is not null)
+//                        {
+//                            var backupVm = serviceProvider.GetService<LocalBackupViewModel>();
+//                            if (backupVm is not null)
+//                            {
+//                                // Executa o backup de forma síncrona, pois OnClosed não suporta async
+//                                backupVm.BackupAsync().GetAwaiter().GetResult();
+//                            }
+//                        }
+//                    });
+//                });
+//#endif
             });
 
             builder.Services.AddTransientWithShellRoute<ProjectDetailPage, ProjectDetailPageModel>("project");
@@ -97,6 +113,7 @@ namespace Dizimo
             builder.Services.AddScoped<UpdateDizimistaHandler>();
             builder.Services.AddScoped<DeleteDizimistaHandler>();
             builder.Services.AddScoped<InativarDizimistaHandler>();
+            builder.Services.AddScoped<GetUsuarioHandlers>();
             builder.Services.AddTransient<DizimistaListViewModel>();
             builder.Services.AddTransient<DizimistaCadastroViewModel>();
 
@@ -111,11 +128,18 @@ namespace Dizimo
             builder.Services.AddTransientWithShellRoute<OfertaListPage, OfertaListViewModel>("ofertas");
             builder.Services.AddTransientWithShellRoute<OfertaCadastroPage, OfertaCadastroViewModel>("oferta-cadastro");
 
+            builder.Services.AddScoped<CreateOfertaHandler>();
             builder.Services.AddScoped<UpdateOfertaHandler>();
             builder.Services.AddScoped<DeleteOfertaHandler>();
             builder.Services.AddScoped<GetOfertaHandlers>();
             builder.Services.AddScoped<RelatorioOfertasService>();
             builder.Services.AddScoped<RelatorioAniversariantesService>();
+
+            builder.Services.AddScoped<GetUsuarioHandlers>();
+            builder.Services.AddScoped<CreateUsuarioHandler>();
+            builder.Services.AddScoped<UpdateUsuarioHandler>();
+            builder.Services.AddScoped<DeleteUsuarioHandler>();
+            builder.Services.AddScoped<InativarUsuarioHandler>();
 
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransientWithShellRoute<LoginPage, LoginViewModel>("login");
@@ -126,11 +150,23 @@ namespace Dizimo
             builder.Services.AddSingleton<SessaoService>();
 
             // Configuração do serviço de backup
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "dizimo.db");
             builder.Services.AddSingleton(new LocalBackupService(dbPath));
-            builder.Services.AddSingleton<LocalBackupViewModel>();
 
-            return builder.Build();
+            builder.ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("Font Awesome 6 Pro-Regular-400.otf", "FontAwesome");
+            });
+
+            var app = builder.Build();
+
+            // Aplicar migrações automaticamente ao iniciar
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<DizimoDbContext>();
+                db.Database.Migrate();
+            }
+
+            return app;
         }
     }
 }

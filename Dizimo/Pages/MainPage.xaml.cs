@@ -1,5 +1,6 @@
 ﻿using Dizimo.Models;
 using Dizimo.PageModels;
+using Microsoft.Maui.Controls;
 
 namespace Dizimo.Pages
 {
@@ -9,6 +10,11 @@ namespace Dizimo.Pages
         {
             InitializeComponent();
             BindingContext = model;
+        }
+
+        private void OnMenuButtonClicked(object sender, EventArgs e)
+        {
+            Shell.Current.FlyoutIsPresented = true;
         }
     }
 }

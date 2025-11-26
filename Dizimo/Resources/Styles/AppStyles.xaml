@@ -103,6 +103,24 @@
                 Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
                 Size="{StaticResource size240}" />
 
+    <FontImageSource x:Key="IconPerson"
+        Glyph="{x:Static f:FluentUI.person_24_regular}"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconMoney"
+        Glyph="{x:Static f:FluentUI.money_24_regular}"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconAdmin"
+        Glyph="&#xEBD3;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
     <Style TargetType="Label">
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}" />

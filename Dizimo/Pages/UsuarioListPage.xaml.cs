@@ -1,25 +1,49 @@
-using Microsoft.Maui.Controls;
-using Dizimo.Infrastructure.Services;
+using Dizimo.ViewModels;
+using Dizimo.Application.Usuarios.Handlers;
 
 namespace Dizimo.Pages;
 
 public partial class UsuarioListPage : ContentPage
 {
-    private readonly SessaoService _sessaoService;
-
-    public UsuarioListPage()
+    public UsuarioListPage(
+        GetUsuarioHandlers getHandlers,
+        CreateUsuarioHandler createHandler,
+        UpdateUsuarioHandler updateHandler,
+        DeleteUsuarioHandler deleteHandler,
+        InativarUsuarioHandler inativarHandler,
+        SessaoService sessaoService)
     {
         InitializeComponent();
-        _sessaoService = Application.Current.Services.GetService<SessaoService>();
+
+        BindingContext = new UsuarioListViewModel(
+            getHandlers,
+            createHandler,
+            updateHandler,
+            deleteHandler,
+            inativarHandler,
+            sessaoService
+        );
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (!_sessaoService.IsAdmin)
+        if (BindingContext is UsuarioListViewModel vm)
         {
-            DisplayAlert("Acesso negado", "Apenas administradores podem acessar esta p·gina.", "OK");
-            Shell.Current.GoToAsync("//login");
+            var sessaoServiceField = typeof(UsuarioListViewModel)
+                .GetField("_sessaoService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            var sessaoService = sessaoServiceField?.GetValue(vm) as SessaoService;
+
+            if (sessaoService != null && !sessaoService.IsAdmin)
+            {
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainWindow = windows != null && windows.Count > 0 ? windows[0] : null;
+                var mainPage = mainWindow?.Page;
+                if (mainPage != null)
+                    await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta p√°gina.", "OK");
+                await Shell.Current.GoToAsync("//login");
+            }
         }
     }
 }

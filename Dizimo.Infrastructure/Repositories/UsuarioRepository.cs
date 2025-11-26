@@ -2,6 +2,9 @@ using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Dizimo.Infrastructure.Persistence;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
 namespace Dizimo.Infrastructure.Repositories;
 

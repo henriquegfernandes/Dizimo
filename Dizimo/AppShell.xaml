@@ -9,6 +9,13 @@
     Title="Dizimo">
 
     <ShellContent
+        Title="Login"
+        Icon="login.png"
+        ContentTemplate="{DataTemplate pages:LoginPage}"
+        Route="login"
+        IsVisible="False"/>
+
+    <ShellContent
         Title="Dashboard"
         Icon="{StaticResource IconDashboard}"
         ContentTemplate="{DataTemplate pages:MainPage}"
@@ -28,25 +35,22 @@
 
     <ShellContent
         Title="Dizimistas"
-        Icon="person.png"
+        Icon="{StaticResource IconPerson}"
         ContentTemplate="{DataTemplate pages:DizimistaListPage}"
-        Route="dizimistas"
-        Style="{StaticResource ShellContentStyle}" />
+        Route="dizimistas" />
 
     <ShellContent
         Title="Ofertas"
-        Icon="money.png"
+        Icon="{StaticResource IconMoney}"
         ContentTemplate="{DataTemplate pages:OfertaListPage}"
-        Route="ofertas"
-        Style="{StaticResource ShellContentStyle}" />
+        Route="ofertas" />
 
     <ShellContent
         Title="Usuários"
-        Icon="admin.png"
+        Icon="{StaticResource IconAdmin}"
         ContentTemplate="{DataTemplate pages:UsuarioListPage}"
         Route="usuarios"
-        IsVisible="{Binding IsAdmin}"
-        Style="{StaticResource ShellContentStyle}" />
+        IsVisible="{Binding IsAdmin}" />
 
     <Shell.FlyoutHeader>
         <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
@@ -60,25 +64,27 @@
     </Shell.FlyoutHeader>
 
     <Shell.FlyoutFooter>
-        <Grid Padding="15">
-            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
-                <Button Text="Logout" Command="{Binding LogoutCommand}" />
-                <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
-                    VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
-                    SegmentWidth="40" SegmentHeight="40">
-                    <sf:SfSegmentedControl.ItemsSource>
-                        <x:Array Type="{x:Type sf:SfSegmentItem}">
-                            <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode"/>
-                            <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode"/>
-                        </x:Array>
-                    </sf:SfSegmentedControl.ItemsSource>
-                </sf:SfSegmentedControl>
-            </StackLayout>
-        </Grid>
-        <Button Text="Configurar Pasta de Backup" Command="{Binding EscolherPastaCommand}" />
-        <Label Text="Pasta atual: {Binding BackupFolderPath}" FontSize="12" />
-        <Button Text="Backup para Pasta" Command="{Binding BackupCommand}" />
-        <Button Text="Restaurar da Pasta" Command="{Binding RestoreCommand}" />
+        <VerticalStackLayout Padding="15" Spacing="10">
+            <Grid>
+                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Button Text="Logout" Command="{Binding LogoutCommand}" />
+                    <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
+                        VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
+                        SegmentWidth="40" SegmentHeight="40">
+                        <sf:SfSegmentedControl.ItemsSource>
+                            <x:Array Type="{x:Type sf:SfSegmentItem}">
+                                <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode"/>
+                                <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode"/>
+                            </x:Array>
+                        </sf:SfSegmentedControl.ItemsSource>
+                    </sf:SfSegmentedControl>
+                </StackLayout>
+            </Grid>
+            <Button Text="Configurar Pasta de Backup" Command="{Binding EscolherPastaCommand}" />
+            <Label Text="Pasta atual: {Binding BackupFolderPath}" FontSize="12" />
+            <Button Text="Backup para Pasta" Command="{Binding BackupCommand}" />
+            <Button Text="Restaurar da Pasta" Command="{Binding RestoreCommand}" />
+        </VerticalStackLayout>
     </Shell.FlyoutFooter>
 
 </Shell>

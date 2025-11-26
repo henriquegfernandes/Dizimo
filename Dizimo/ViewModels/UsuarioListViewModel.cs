@@ -4,12 +4,8 @@ using Dizimo.Domain.Entities;
 using Dizimo.Application.Usuarios.Handlers;
 using Dizimo.Application.Usuarios.Commands;
 using Dizimo.Application.Usuarios.Queries;
-using Dizimo.Domain.Repositories;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
-using System;
-using Dizimo.Infrastructure.Services;
 
 namespace Dizimo.ViewModels;
 
@@ -89,12 +85,16 @@ public partial class UsuarioListViewModel : ObservableObject
     {
         if (SelectedUsuario != null)
         {
-            bool confirm = await Application.Current.MainPage.DisplayAlert("ConfirmaÁ„o", $"Deseja excluir o usu·rio '{SelectedUsuario.Nome}'?", "Sim", "N„o");
-            if (confirm)
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
             {
-                await _deleteHandler.Handle(new DeleteUsuarioCommand(SelectedUsuario.Id));
-                await CarregarUsuariosAsync();
-                LimparCampos();
+                bool confirm = await mainPage.DisplayAlertAsync("Confirma√ß√£o", $"Deseja excluir o usu√°rio '{SelectedUsuario.Nome}'?", "Sim", "N√£o");
+                if (confirm)
+                {
+                    await _deleteHandler.Handle(new DeleteUsuarioCommand(SelectedUsuario.Id));
+                    await CarregarUsuariosAsync();
+                    LimparCampos();
+                }
             }
         }
     }
@@ -104,12 +104,16 @@ public partial class UsuarioListViewModel : ObservableObject
     {
         if (SelectedUsuario != null)
         {
-            bool confirm = await Application.Current.MainPage.DisplayAlert("ConfirmaÁ„o", $"Deseja inativar o usu·rio '{SelectedUsuario.Nome}'?", "Sim", "N„o");
-            if (confirm)
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
             {
-                await _inativarHandler.Handle(new InativarUsuarioCommand(SelectedUsuario.Id));
-                await CarregarUsuariosAsync();
-                LimparCampos();
+                bool confirm = await mainPage.DisplayAlertAsync("Confirma√ß√£o", $"Deseja inativar o usu√°rio '{SelectedUsuario.Nome}'?", "Sim", "N√£o");
+                if (confirm)
+                {
+                    await _inativarHandler.Handle(new InativarUsuarioCommand(SelectedUsuario.Id));
+                    await CarregarUsuariosAsync();
+                    LimparCampos();
+                }
             }
         }
     }

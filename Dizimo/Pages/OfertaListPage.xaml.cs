@@ -1,5 +1,7 @@
-using Microsoft.Maui.Controls;
-using Dizimo.Infrastructure.Services;
+using Dizimo.ViewModels;
+using Dizimo.Domain.Repositories;
+using Dizimo.Application.Ofertas.Handlers;
+using Dizimo.Application.Relatorios;
 
 namespace Dizimo.Pages;
 
@@ -7,19 +9,20 @@ public partial class OfertaListPage : ContentPage
 {
     private readonly SessaoService _sessaoService;
 
-    public OfertaListPage()
+    public OfertaListPage(SessaoService sessaoService, OfertaListViewModel viewModel)
     {
         InitializeComponent();
-        _sessaoService = Application.Current.Services.GetService<SessaoService>();
+        _sessaoService = sessaoService;
+        BindingContext = viewModel;
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
         if (!_sessaoService.IsLogado)
         {
-            DisplayAlert("Acesso negado", "Faça login para acessar o sistema.", "OK");
-            Shell.Current.GoToAsync("//login");
+            await DisplayAlertAsync("Acesso negado", "FaÃ§a login para acessar o sistema.", "OK");
+            await Shell.Current.GoToAsync("login");
         }
     }
 
