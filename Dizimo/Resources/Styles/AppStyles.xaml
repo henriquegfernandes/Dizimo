@@ -123,7 +123,7 @@
         Size="{StaticResource IconSize}" />
 
     <FontImageSource x:Key="IconUserCog"
-        Glyph="&#xEBD3;"
+        Glyph="&#xf013d;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
         Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
@@ -132,6 +132,42 @@
         Glyph="{x:Static f:FluentUI.save_24_regular}"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
         Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+    
+    <FontImageSource x:Key="IconEdit"
+        Glyph="&#xE5B4;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconExport"
+        Glyph="&#xE0Ca;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconImport"
+        Glyph="&#xf15a;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+    
+    <FontImageSource x:Key="IconDownload"
+        Glyph="&#xf152;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconReport"
+        Glyph="&#xe4d9;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconTrash"
+        Glyph="&#xf01c5;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
 
     <Style TargetType="Label">

@@ -37,7 +37,7 @@
         Title="Dizimistas"
         Icon="{StaticResource IconPerson}"
         ContentTemplate="{DataTemplate pages:DizimistaListPage}"
-        Route="dizimistas" />
+        Route="dizimista-list" />
 
     <ShellContent
         Title="Ofertas"
@@ -61,7 +61,7 @@
 
     <ShellContent
         Title="Relatórios"
-        Icon="report.png"
+        Icon="{StaticResource IconReport}"
         ContentTemplate="{DataTemplate pages:RelatorioPage}"
         Route="relatorios" />
 
@@ -79,11 +79,15 @@
     <Shell.FlyoutFooter>
         <VerticalStackLayout Padding="15" Spacing="10">
             <Grid>
-                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
+                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center" Spacing="15">
                     <Button Text="Logout" Command="{Binding LogoutCommand}" />
                     <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
                         VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
-                        SegmentWidth="40" SegmentHeight="40">
+                        SegmentWidth="40" SegmentHeight="40"
+                        DisabledSegmentBackground="WhiteSmoke"
+                        DisabledSegmentTextColor="#800000"
+                        SegmentBackground="#800000"
+                        Background="#800000">
                         <sf:SfSegmentedControl.ItemsSource>
                             <x:Array Type="{x:Type sf:SfSegmentItem}">
                                 <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode"/>

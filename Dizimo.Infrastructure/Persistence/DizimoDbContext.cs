@@ -14,6 +14,6 @@ public class DizimoDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        // Configurações adicionais podem ser feitas aqui
+        modelBuilder.Entity<Dizimista>().OwnsOne(d => d.Endereco);
     }
 }

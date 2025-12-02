@@ -4,9 +4,6 @@ using Dizimo.Domain.Entities;
 using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Queries;
-using System;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
 
 namespace Dizimo.ViewModels;
 
@@ -16,12 +13,26 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     private readonly UpdateDizimistaHandler _updateHandler;
     private readonly GetDizimistaHandlers _getHandler;
 
-    [ObservableProperty] private int numeroCadastro;
-    [ObservableProperty] private string nome = string.Empty;
-    [ObservableProperty] private DateTime dataNascimento = DateTime.Today;
-    [ObservableProperty] private bool ativo = true;
-    [ObservableProperty] private Guid id;
-    [ObservableProperty] private bool isEditMode;
+    [ObservableProperty] private int _numeroCadastro;
+    [ObservableProperty] private string _nome = string.Empty;
+    [ObservableProperty] private DateTime _dataNascimento = DateTime.Today;
+    [ObservableProperty] private bool _ativo = true;
+    [ObservableProperty] private Guid _id;
+    [ObservableProperty] private bool _isEditMode;
+    [ObservableProperty] private string _telefone = string.Empty;
+    [ObservableProperty] private string _whatsapp = string.Empty;
+    [ObservableProperty] private DateTime _dataCadastro = DateTime.Today;
+    [ObservableProperty] private string _rua = string.Empty;
+    [ObservableProperty] private string _numero = string.Empty;
+    [ObservableProperty] private string _bairro = string.Empty;
+    [ObservableProperty] private string _cidade = "Osasco";
+    [ObservableProperty] private string _uf = "SP";
+    [ObservableProperty] private string _cep = string.Empty;
+
+    public List<string> EstadosBrasileiros { get; } = new()
+    {
+        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+    };
 
     public DizimistaCadastroViewModel(CreateDizimistaHandler createHandler, UpdateDizimistaHandler updateHandler, GetDizimistaHandlers getHandler)
     {
@@ -29,6 +40,16 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         _updateHandler = updateHandler;
         _getHandler = getHandler;
     }
+
+    public Endereco Endereco => new Endereco
+    {
+        Rua = Rua,
+        Numero = Numero,
+        Bairro = Bairro,
+        Cidade = Cidade,
+        UF = Uf,
+        CEP = Cep
+    };
 
     public async void ApplyQueryAttributes(IDictionary<string, object> query)
     {
@@ -42,6 +63,15 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
                 Nome = dizimista.Nome;
                 DataNascimento = dizimista.DataNascimento;
                 Ativo = dizimista.Ativo;
+                Telefone = dizimista.Telefone;
+                Whatsapp = dizimista.Whatsapp;
+                DataCadastro = dizimista.DataCadastro;
+                Rua = dizimista.Endereco?.Rua ?? string.Empty;
+                Numero = dizimista.Endereco?.Numero ?? string.Empty;
+                Bairro = dizimista.Endereco?.Bairro ?? string.Empty;
+                Cidade = dizimista.Endereco?.Cidade ?? "Osasco";
+                Uf = dizimista.Endereco?.UF ?? "SP";
+                Cep = dizimista.Endereco?.CEP ?? string.Empty;
                 IsEditMode = true;
             }
         }
@@ -52,6 +82,15 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             Nome = string.Empty;
             DataNascimento = DateTime.Today;
             Ativo = true;
+            Telefone = string.Empty;
+            Whatsapp = string.Empty;
+            DataCadastro = DateTime.Today;
+            Rua = string.Empty;
+            Numero = string.Empty;
+            Bairro = string.Empty;
+            Cidade = "Osasco";
+            Uf = "SP";
+            Cep = string.Empty;
             IsEditMode = false;
         }
     }
@@ -61,11 +100,11 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     {
         if (IsEditMode)
         {
-            await _updateHandler.Handle(new UpdateDizimistaCommand(Id, NumeroCadastro, Nome, DataNascimento, Ativo));
+            await _updateHandler.Handle(new UpdateDizimistaCommand(Id, NumeroCadastro, Nome, DataNascimento, Ativo, Endereco, Telefone, Whatsapp, DataCadastro));
         }
         else
         {
-            await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento));
+            await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento, Endereco, Telefone, Whatsapp, DataCadastro));
         }
         await Shell.Current.GoToAsync("..", true);
     }

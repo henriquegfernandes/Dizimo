@@ -23,4 +23,14 @@ public class UnitOfWork : IUnitOfWork
     {
         return _context.SaveChangesAsync();
     }
+
+    public async Task ClearDbContextAsync()
+    {
+        // Descarta todas as entidades rastreadas para garantir que o próximo acesso seja do banco
+        foreach (var entry in _context.ChangeTracker.Entries())
+        {
+            entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+        }
+        await Task.CompletedTask;
+    }
 }

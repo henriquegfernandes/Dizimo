@@ -438,27 +438,11 @@
         <Setter Property="WaveColor" Value="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}" />
     </Style>
 
-    <!-- Botão padrão -->
-    <Style TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}" />
-        <Setter Property="TextColor" Value="{StaticResource ButtonTextColor}" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="FontSize" Value="18" />
-    </Style>
     <!-- Título -->
     <Style TargetType="Label" x:Key="TitleLabel">
         <Setter Property="TextColor" Value="{StaticResource TitleTextColor}" />
         <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
-    </Style>
-    <!-- Entry padrão -->
-    <Style TargetType="Entry">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource InputBackgroundLight}, Dark={StaticResource InputBackgroundDark}}" />
-        <Setter Property="TextColor" Value="#FFF" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="Margin" Value="0,4,0,4" />
-        <Setter Property="HeightRequest" Value="44" />
     </Style>
 
 </ResourceDictionary>

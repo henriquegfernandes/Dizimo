@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -6,7 +7,7 @@
         <Label Text="Ofertas" FontSize="24" HorizontalOptions="Center" />
         <StackLayout Orientation="Horizontal" Padding="8">
             <DatePicker Date="{Binding FiltroData}" />
-            <Entry Placeholder="Código Dizimista" Text="{Binding FiltroCodigoDizimista}" Keyboard="Numeric" />
+            <Entry Placeholder="CÃ³digo Dizimista" Text="{Binding FiltroCodigoDizimista}" Keyboard="Numeric" />
             <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" />
         </StackLayout>
         <CollectionView ItemsSource="{Binding Ofertas}">
@@ -27,8 +28,8 @@
         <Button Text="Nova Oferta" Clicked="OnNovaOfertaClicked" />
         <Button Text="Editar Selecionada" Command="{Binding EditarOfertaCommand}" IsEnabled="{Binding SelectedOferta, Converter={StaticResource NullToBoolConverter}}" />
         <Button Text="Excluir Selecionada" Command="{Binding ExcluirOfertaCommand}" IsEnabled="{Binding SelectedOferta, Converter={StaticResource NullToBoolConverter}}" />
-        <Button Text="Relatório por Data" Command="{Binding GerarRelatorioPorDataCommand}" />
-        <Button Text="Exportar Relatório por Data" Command="{Binding ExportarRelatorioPorDataCommand}" />
+        <Button Text="RelatÃ³rio por Data" Command="{Binding GerarRelatorioPorDataCommand}" />
+        <Button Text="Exportar RelatÃ³rio por Data" Command="{Binding ExportarRelatorioPorDataCommand}" />
         <Label Text="{Binding TotalOfertasPorData, StringFormat='Total: {0:C}'}" FontSize="18" />
     </StackLayout>
 </ContentPage>

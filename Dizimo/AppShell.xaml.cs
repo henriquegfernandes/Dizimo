@@ -18,12 +18,19 @@ namespace Dizimo
                 throw new InvalidOperationException("Application.Current não está inicializado ou não é do tipo App.");
 
             // Força modo claro ao iniciar
-            Microsoft.Maui.Controls.Application.Current.UserAppTheme = AppTheme.Light;
+            if (Microsoft.Maui.Controls.Application.Current != null)
+            {
+                Microsoft.Maui.Controls.Application.Current.UserAppTheme = AppTheme.Light;
+            }
 
             var currentTheme = Microsoft.Maui.Controls.Application.Current?.RequestedTheme ?? AppTheme.Light;
             ThemeSegmentedControl.SelectedIndex = 0; // Sempre inicia no claro
             var mainVm = app.Services.GetService<MainViewModel>();
             var backupVm = app.Services.GetService<LocalBackupViewModel>();
+            if (mainVm is null)
+                throw new InvalidOperationException("MainViewModel não foi registrado ou está nulo.");
+            if (backupVm is null)
+                throw new InvalidOperationException("LocalBackupViewModel não foi registrado ou está nulo.");
             BindingContext = new ShellViewModel(mainVm, backupVm);
         }
         public static async Task DisplaySnackbarAsync(string message)

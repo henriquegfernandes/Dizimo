@@ -4,80 +4,108 @@
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:local="clr-namespace:Dizimo.Converters"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+             xmlns:fonts="clr-namespace:Fonts"
              x:Class="Dizimo.Pages.DizimistaListPage">
     <ContentPage.Resources>
         <ResourceDictionary>
             <local:NullToBoolConverter x:Key="NullToBoolConverter" />
+            <local:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
+            <local:AtivoToStatusConverter x:Key="AtivoToStatusConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
-    <ScrollView>
-        <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
-            <Label Text="Dizimistas" FontSize="24" HorizontalOptions="Center" />
-            <StackLayout Padding="16" Spacing="12">
-                <!-- Filtros -->
-                <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-                    <Entry Placeholder="Buscar por nome" Text="{Binding FiltroNome}" WidthRequest="200" />
-                    <Entry Placeholder="Buscar por número" Text="{Binding FiltroNumeroCadastro}" WidthRequest="100" Keyboard="Numeric" />
-                    <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" />
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
+                <Label Text="Dizimistas" FontSize="24" HorizontalOptions="Center" />
+                <StackLayout Padding="16" Spacing="12">
+                    <!-- Filtros -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="4*,3*,3*">
+                        <Entry Placeholder="Buscar por nome" Text="{Binding FiltroNome}" Grid.Column="0"
+                               BackgroundColor="#E0E0E0" 
+                               TextColor="#333333" 
+                               Completed="OnFiltroCompleted" />
+                        <Entry Placeholder="Buscar por número" Text="{Binding FiltroNumeroCadastro}" Keyboard="Numeric" Grid.Column="1"
+                               BackgroundColor="#E0E0E0" 
+                               TextColor="#333333" 
+                               Completed="OnFiltroCompleted" />
+                        <Button Text="Filtrar" Command="{Binding AplicarFiltrosCommand}" Grid.Column="2" />
+                    </Grid>
+                    <!-- Linha de botões de exportação/importação/modelo e filtro de ativos/inativos -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="3*,3*,3*,3*">
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,0,0,8" Grid.Column="0">
+                            <Label Text="Mostrar:" VerticalOptions="Center" />
+                            <Picker ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding StatusSelecionado}" BackgroundColor="#E0E0E0" />
+                        </StackLayout>
+                        <Button Text="Exportar CSV" Command="{Binding ExportarCommand}" ImageSource="{StaticResource IconExport}" ToolTipProperties.Text="Exportar CSV" CornerRadius="20" Grid.Column="1" />
+                        <Button Text="Baixar modelo" Command="{Binding BaixarModeloCommand}" ImageSource="{StaticResource IconDownload}" ToolTipProperties.Text="Baixar Modelo" CornerRadius="20" Grid.Column="2" />
+                        <Button Text="Importar CSV" Command="{Binding ImportarCommand}" ImageSource="{StaticResource IconImport}" ToolTipProperties.Text="Importar CSV" CornerRadius="20" Grid.Column="3" />
+                    </Grid>
+                    <!-- Linha de título da lista -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,2*,3*,2*,1*,1*" Padding="8" BackgroundColor="#F0F0F0">
+                        <Label Text="" Grid.Column="0" />
+                        <Label Text="Nº Cadastro" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Nome" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Nascimento" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Status" Grid.Column="4" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="" Grid.Column="5" />
+                    </Grid>
+                    <!-- Lista paginada com infinite scroll e animação -->
+                    <CollectionView ItemsSource="{Binding Dizimistas}"
+                                    RemainingItemsThreshold="5"
+                                    RemainingItemsThresholdReachedCommand="{Binding CarregarMaisDizimistasCommand}"
+                                    SelectionMode="Multiple"
+                                    SelectionChanged="OnSelectionChanged"
+                                    Margin="0,0,0,8">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,2*,3*,2*,1*,1*" Padding="8">
+                                    <Label Text="{Binding NumeroCadastro}" Grid.Column="1" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding Nome}" Grid.Column="2" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding DataNascimento, StringFormat='{0:dd/MM/yyyy}'}" Grid.Column="3" HorizontalTextAlignment="Center" />
+                                    <Label Grid.Column="4" Text="{Binding Ativo, Converter={StaticResource AtivoToStatusConverter}}" HorizontalTextAlignment="Center" />
+                                    <Button Grid.Column="5"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DizimistaListViewModel}}, Path=EditarDizimistaCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Clicked="OnEditarDizimistaClicked"
+                                            ImageSource="{StaticResource IconEdit}"
+                                            Padding="0"
+                                            HeightRequest="32"
+                                            WidthRequest="32"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <!-- Botões de excluir/inativar -->
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="24" Margin="0,8,0,0">
+                        <Button Text="Excluir Selecionados" Command="{Binding ExcluirDizimistasSelecionadosCommand}" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}">
+                            <Button.ImageSource>
+                                <FontImageSource Glyph="&#xE74D;" FontFamily="{x:Static fonts:FluentUI.FontFamily}" Color="{DynamicResource ButtonIconColor}" />
+                            </Button.ImageSource>
+                        </Button>
+                        <Button Text="Inativar Selecionados" Command="{Binding InativarDizimistasSelecionadosCommand}" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}">
+                            <Button.ImageSource>
+                                <FontImageSource Glyph="&#xE7B0;" FontFamily="{x:Static fonts:FluentUI.FontFamily}" Color="{DynamicResource ButtonIconColor}" />
+                            </Button.ImageSource>
+                        </Button>
+                    </StackLayout>
                 </StackLayout>
-
-                <!-- Linha de botões de exportação/importação/modelo -->
-                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="24" Margin="0,0,0,12">
-                    <Button ImageSource="export.png" Command="{Binding ExportarCommand}" ToolTip="Exportar CSV" BackgroundColor="#E3F2FD" CornerRadius="20">
-                        <Button.Triggers>
-                            <Trigger TargetType="Button" Property="IsPointerOver" Value="True">
-                                <Setter Property="Scale" Value="1.1" />
-                                <Setter Property="BackgroundColor" Value="#BBDEFB" />
-                            </Trigger>
-                        </Button.Triggers>
-                    </Button>
-                    <Button ImageSource="import.png" Command="{Binding ImportarCommand}" ToolTip="Importar CSV" BackgroundColor="#E8F5E9" CornerRadius="20">
-                        <Button.Triggers>
-                            <Trigger TargetType="Button" Property="IsPointerOver" Value="True">
-                                <Setter Property="Scale" Value="1.1" />
-                                <Setter Property="BackgroundColor" Value="#C8E6C9" />
-                            </Trigger>
-                        </Button.Triggers>
-                    </Button>
-                    <Button ImageSource="template.png" Command="{Binding BaixarModeloCommand}" ToolTip="Baixar Modelo" BackgroundColor="#FFF3E0" CornerRadius="20">
-                        <Button.Triggers>
-                            <Trigger TargetType="Button" Property="IsPointerOver" Value="True">
-                                <Setter Property="Scale" Value="1.1" />
-                                <Setter Property="BackgroundColor" Value="#FFE0B2" />
-                            </Trigger>
-                        </Button.Triggers>
-                    </Button>
-                </StackLayout>
-
-                <!-- Lista paginada com infinite scroll e animação -->
-                <CollectionView ItemsSource="{Binding Dizimistas}"
-                                RemainingItemsThreshold="5"
-                                RemainingItemsThresholdReachedCommand="{Binding CarregarMaisDizimistasCommand}"
-                                SelectionMode="Single"
-                                SelectedItem="{Binding SelectedDizimista, Mode=TwoWay}"
-                                Margin="0,0,0,8">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Frame Padding="12" Margin="0,0,0,12" HasShadow="True" CornerRadius="16" BackgroundColor="#FAFAFA">
-                                <Frame.Triggers>
-                                    <DataTrigger TargetType="Frame" Binding="{Binding Ativo}" Value="False">
-                                        <Setter Property="BackgroundColor" Value="#FFEBEE" />
-                                    </DataTrigger>
-                                </Frame.Triggers>
-                                <StackLayout Orientation="Horizontal" Spacing="16">
-                                    <Label Text="{Binding NumeroCadastro}" FontAttributes="Bold" WidthRequest="60" />
-                                    <Label Text="{Binding Nome}" FontSize="18" WidthRequest="200" />
-                                    <Label Text="{Binding DataNascimento, StringFormat='dd/MM/yyyy'}" WidthRequest="100" />
-                                    <Label Text="{Binding Ativo, StringFormat='Ativo: {0}'}" WidthRequest="80" />
-                                </StackLayout>
-                                <Frame.Behaviors>
-                                    <toolkit:AnimationBehavior AnimationType="FadeIn" Duration="400" Delay="100" />
-                                </Frame.Behaviors>
-                            </Frame>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </StackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+        <!-- Botão flutuante de adicionar dizimista -->
+        <Button
+            Command="{Binding NovoDizimistaCommand}"
+            Clicked="OnNovoDizimistaClicked"
+            IsEnabled="True"
+            ImageSource="{StaticResource IconAdd}"
+            CornerRadius="28"
+            HeightRequest="56"
+            WidthRequest="56"
+            VerticalOptions="End"
+            HorizontalOptions="End"
+            Margin="24"
+            BackgroundColor="{DynamicResource Primary}"
+            TextColor="White"
+            FontSize="28"
+            SemanticProperties.Description="Adicionar dizimista" />
+    </Grid>
 </ContentPage>

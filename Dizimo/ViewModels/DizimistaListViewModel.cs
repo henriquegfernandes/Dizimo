@@ -7,6 +7,9 @@ using Dizimo.Application.Dizimistas.Commands;
 using System.Collections.ObjectModel;
 using Dizimo.Application.Relatorios;
 using Dizimo.Domain.Repositories;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Input;
 
 namespace Dizimo.ViewModels
 {
@@ -71,6 +74,40 @@ namespace Dizimo.ViewModels
         private const int tamanhoPagina = 20;
         private bool carregandoMais = false;
 
+        public List<string> StatusOptions { get; } = new() { "Todos", "Ativos", "Inativos" };
+        private string _statusSelecionado = "Todos";
+        public string StatusSelecionado
+        {
+            get => _statusSelecionado;
+            set
+            {
+                if (SetProperty(ref _statusSelecionado, value))
+                    AplicarFiltros();
+            }
+        }
+
+        private ObservableCollection<Dizimista> _dizimistasSelecionados = new();
+        public ObservableCollection<Dizimista> DizimistasSelecionados
+        {
+            get => _dizimistasSelecionados;
+            set
+            {
+                if (_dizimistasSelecionados != null)
+                    _dizimistasSelecionados.CollectionChanged -= DizimistasSelecionados_CollectionChanged;
+                SetProperty(ref _dizimistasSelecionados, value);
+                if (_dizimistasSelecionados != null)
+                    _dizimistasSelecionados.CollectionChanged += DizimistasSelecionados_CollectionChanged;
+                OnPropertyChanged(nameof(DizimistasSelecionados));
+                OnPropertyChanged(nameof(DizimistasSelecionados.Count));
+            }
+        }
+
+        private void DizimistasSelecionados_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(DizimistasSelecionados));
+            OnPropertyChanged(nameof(DizimistasSelecionados.Count));
+        }
+
         public DizimistaListViewModel(
             GetDizimistaHandlers handlers,
             DeleteDizimistaHandler deleteHandler,
@@ -79,12 +116,12 @@ namespace Dizimo.ViewModels
             IUnitOfWork unitOfWork,
             RelatorioAniversariantesService relatorioAniversariantesService)
         {
-            _handlers = handlers;
-            _deleteHandler = deleteHandler;
-            _inativarHandler = inativarHandler;
-            _csvService = csvService;
-            _unitOfWork = unitOfWork;
-            _relatorioAniversariantesService = relatorioAniversariantesService;
+            _handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
+            _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
+            _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
+            _csvService = csvService ?? throw new ArgumentNullException(nameof(csvService));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _relatorioAniversariantesService = relatorioAniversariantesService ?? throw new ArgumentNullException(nameof(relatorioAniversariantesService));
             Dizimistas = new ObservableCollection<Dizimista>();
         }
 
@@ -92,13 +129,17 @@ namespace Dizimo.ViewModels
         public async Task CarregarDizimistasAsync()
         {
             paginaAtual = 1;
+            await _unitOfWork.ClearDbContextAsync(); // Garante que o contexto não use cache
             var lista = await _handlers.Handle(new GetAllDizimistasQuery());
-            // CS0103: The name 'todosDizimistas' does not exist in the current context
-            // CA1826: Do not use Enumerable methods on indexable collections. Instead use the collection directly.
             TodosDizimistas = lista is List<Dizimista> dizimistaList ? dizimistaList : lista.ToList();
-            Dizimistas = new ObservableCollection<Dizimista>(TodosDizimistas.Count > tamanhoPagina
+            Dizimistas.Clear();
+            var novaLista = TodosDizimistas.Count > tamanhoPagina
                 ? TodosDizimistas.GetRange(0, tamanhoPagina)
-                : TodosDizimistas);
+                : TodosDizimistas;
+            foreach (var d in novaLista)
+            {
+                Dizimistas.Add(d);
+            }
         }
 
         [RelayCommand]
@@ -130,71 +171,29 @@ namespace Dizimo.ViewModels
                 filtrados = filtrados.Where(d => d.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase));
             if (int.TryParse(FiltroNumeroCadastro, out var num))
                 filtrados = filtrados.Where(d => d.NumeroCadastro == num);
-
+            if (StatusSelecionado == "Ativos")
+                filtrados = filtrados.Where(d => d.Ativo);
+            else if (StatusSelecionado == "Inativos")
+                filtrados = filtrados.Where(d => !d.Ativo);
             // CA1826: Do not use Enumerable methods on indexable collections. Instead use the collection directly.
             var filteredList = filtrados is List<Dizimista> dizimistaList ? dizimistaList : filtrados.ToList();
             Dizimistas = new ObservableCollection<Dizimista>(filteredList);
         }
 
         [RelayCommand]
-        public async Task EditarDizimistaAsync()
+        public async Task NovoDizimistaCommand()
         {
-            if (SelectedDizimista != null)
+            System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
+            await Shell.Current.GoToAsync("dizimista-cadastro");
+        }
+
+        [RelayCommand]
+        public async Task EditarDizimistaCommand(Dizimista dizimista)
+        {
+            if (dizimista != null)
             {
-                var query = $"dizimista-cadastro?id={SelectedDizimista.Id}";
+                var query = $"dizimista-cadastro?id={dizimista.Id}";
                 await Shell.Current.GoToAsync(query);
-            }
-        }
-
-        [RelayCommand]
-        public async Task ExcluirDizimistaAsync()
-        {
-            if (SelectedDizimista != null)
-            {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir o dizimista '{SelectedDizimista.Nome}'?", "Sim", "Não");
-                    if (confirm)
-                    {
-                        try
-                        {
-                            await _deleteHandler.Handle(new DeleteDizimistaCommand(SelectedDizimista.Id));
-                            await CarregarDizimistasAsync();
-                            await mainPage.DisplayAlertAsync("Sucesso", "Dizimista excluído com sucesso.", "OK");
-                        }
-                        catch (Exception ex)
-                        {
-                            await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
-                        }
-                    }
-                }
-            }
-        }
-
-        [RelayCommand]
-        public async Task InativarDizimistaAsync()
-        {
-            if (SelectedDizimista != null)
-            {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja inativar o dizimista '{SelectedDizimista.Nome}'?", "Sim", "Não");
-                    if (confirm)
-                    {
-                        try
-                        {
-                            await _inativarHandler.Handle(new InativarDizimistaCommand(SelectedDizimista.Id));
-                            await CarregarDizimistasAsync();
-                            await mainPage.DisplayAlertAsync("Sucesso", "Dizimista inativado com sucesso.", "OK");
-                        }
-                        catch (Exception ex)
-                        {
-                            await mainPage.DisplayAlertAsync("Erro", $"Erro ao inativar: {ex.Message}", "OK");
-                        }
-                    }
-                }
             }
         }
 
@@ -375,6 +374,42 @@ namespace Dizimo.ViewModels
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar relatório: {ex.Message}", "OK");
                 }
             }
+        }
+
+        [RelayCommand]
+        public async Task ExcluirDizimistasSelecionadosAsync()
+        {
+            if (DizimistasSelecionados.Count == 0) return;
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
+                if (!confirm) return;
+            }
+            foreach (var dizimista in DizimistasSelecionados.ToList())
+            {
+                await _deleteHandler.Handle(new DeleteDizimistaCommand(dizimista.Id));
+            }
+            await CarregarDizimistasAsync();
+            DizimistasSelecionados.Clear();
+        }
+
+        [RelayCommand]
+        public async Task InativarDizimistasSelecionadosAsync()
+        {
+            if (DizimistasSelecionados.Count == 0) return;
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
+                if (!confirm) return;
+            }
+            foreach (var dizimista in DizimistasSelecionados.ToList())
+            {
+                await _inativarHandler.Handle(new InativarDizimistaCommand(dizimista.Id));
+            }
+            await CarregarDizimistasAsync();
+            DizimistasSelecionados.Clear();
         }
     }
 }

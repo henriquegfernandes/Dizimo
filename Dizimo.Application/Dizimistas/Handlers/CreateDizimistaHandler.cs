@@ -19,7 +19,11 @@ public class CreateDizimistaHandler
             NumeroCadastro = command.NumeroCadastro,
             Nome = command.Nome,
             DataNascimento = command.DataNascimento,
-            Ativo = true
+            Ativo = true,
+            Endereco = command.Endereco,
+            Telefone = command.Telefone,
+            Whatsapp = command.Whatsapp,
+            DataCadastro = command.DataCadastro
         };
         await _unitOfWork.Dizimistas.AddAsync(dizimista);
         await _unitOfWork.SaveChangesAsync();

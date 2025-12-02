@@ -8,4 +8,5 @@ public interface IUnitOfWork
     IOfertaRepository Ofertas { get; }
     IUsuarioRepository Usuarios { get; }
     Task<int> SaveChangesAsync();
+    Task ClearDbContextAsync();
 }

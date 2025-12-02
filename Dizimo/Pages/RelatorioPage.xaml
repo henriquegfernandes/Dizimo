@@ -1,15 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Dizimo.ViewModels"
              x:Class="Dizimo.Pages.RelatorioPage">
-    <ContentPage.BindingContext>
-        <vm:DizimistaListViewModel />
-    </ContentPage.BindingContext>
     <StackLayout>
-        <Label Text="Relat髍ios de Dizimistas" FontSize="24" HorizontalOptions="Center" />
-        <Button Text="Relat髍io Geral" Command="{Binding GerarRelatorioGeralCommand}" />
-        <Button Text="Relat髍io Aniversariantes" Command="{Binding GerarRelatorioAniversariantesCommand}" />
-        <Button Text="Exportar Relat髍io Geral" Command="{Binding ExportarRelatorioGeralCommand}" />
-        <Button Text="Exportar Relat髍io Aniversariantes" Command="{Binding ExportarRelatorioAniversariantesCommand}" />
+        <Label Text="Relat贸rios de Dizimistas" FontSize="24" HorizontalOptions="Center" />
+        <Button Text="Relat贸rio Geral" Command="{Binding GerarRelatorioGeralCommand}" />
+        <Button Text="Relat贸rio Aniversariantes" Command="{Binding GerarRelatorioAniversariantesCommand}" />
+        <Button Text="Exportar Relat贸rio Geral" Command="{Binding ExportarRelatorioGeralCommand}" />
+        <Button Text="Exportar Relat贸rio Aniversariantes" Command="{Binding ExportarRelatorioAniversariantesCommand}" />
     </StackLayout>
 </ContentPage>

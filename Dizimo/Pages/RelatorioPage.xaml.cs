@@ -1,24 +1,44 @@
-namespace Dizimo.Pages;
+using Dizimo.Application.Dizimistas.Handlers;
+using Dizimo.Application.Relatorios;
+using Dizimo.Domain.Repositories;
+using Dizimo.ViewModels;
 
-public partial class RelatorioPage : ContentPage
+namespace Dizimo.Pages
 {
-    public RelatorioPage()
+    public partial class RelatorioPage : ContentPage
     {
-        InitializeComponent();
-    }
-
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        if (!IsUsuarioLogado())
+        public RelatorioPage(
+            GetDizimistaHandlers handlers,
+            DeleteDizimistaHandler deleteHandler,
+            InativarDizimistaHandler inativarHandler,
+            DizimistaCsvService csvService,
+            IUnitOfWork unitOfWork,
+            RelatorioAniversariantesService relatorioAniversariantesService)
         {
-            DisplayAlert("Acesso negado", "Faça login para acessar os relatórios.", "OK");
-            Shell.Current.GoToAsync("//login");
+            InitializeComponent();
+            BindingContext = new DizimistaListViewModel(
+                handlers,
+                deleteHandler,
+                inativarHandler,
+                csvService,
+                unitOfWork,
+                relatorioAniversariantesService
+            );
         }
-    }
 
-    private bool IsUsuarioLogado()
-    {
-        return Preferences.ContainsKey("UsuarioId");
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            if (!IsUsuarioLogado())
+            {
+                await DisplayAlertAsync("Acesso negado", "Faça login para acessar os relatórios.", "OK");
+                await Shell.Current.GoToAsync("login");
+            }
+        }
+
+        private bool IsUsuarioLogado()
+        {
+            return Preferences.ContainsKey("UsuarioId");
+        }
     }
 }

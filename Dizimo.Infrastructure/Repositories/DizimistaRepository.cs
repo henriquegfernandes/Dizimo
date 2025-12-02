@@ -28,7 +28,16 @@ public class DizimistaRepository : IDizimistaRepository
             entity.Nome = dizimista.Nome;
             entity.DataNascimento = dizimista.DataNascimento;
             entity.Ativo = dizimista.Ativo;
-            // O contexto já está rastreando 'entity', não é necessário chamar Update
+            entity.Endereco.Rua = dizimista.Endereco.Rua;
+            entity.Endereco.Numero = dizimista.Endereco.Numero;
+            entity.Endereco.Bairro = dizimista.Endereco.Bairro;
+            entity.Endereco.Cidade = dizimista.Endereco.Cidade;
+            entity.Endereco.UF = dizimista.Endereco.UF;
+            entity.Endereco.CEP = dizimista.Endereco.CEP;
+            entity.Telefone = dizimista.Telefone;
+            entity.Whatsapp = dizimista.Whatsapp;
+            entity.DataCadastro = dizimista.DataCadastro;
+            _context.Dizimistas.Update(entity);
         }
     }
     public async Task DeleteAsync(Guid id)

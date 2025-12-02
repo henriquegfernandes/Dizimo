@@ -4,11 +4,13 @@ using Microsoft.Maui.Controls;
 
 namespace Dizimo.Converters
 {
-    public class NullToBoolConverter : IValueConverter
+    public class GreaterThanZeroToBoolConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return value != null;
+            if (value is int intValue)
+                return intValue > 0;
+            return false;
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

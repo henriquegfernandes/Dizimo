@@ -64,22 +64,22 @@ namespace Dizimo
             // Repositórios e UoW devem ser Scoped para compartilhar o contexto
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-
-            builder.Services.AddSingleton<ProjectRepository>();
-            builder.Services.AddSingleton<TaskRepository>();
-            builder.Services.AddSingleton<CategoryRepository>();
-            builder.Services.AddSingleton<TagRepository>();
-            builder.Services.AddSingleton<SeedDataService>();
+            // Remover Singletons relacionados a dados
+            builder.Services.AddScoped<ProjectRepository>();
+            builder.Services.AddScoped<TaskRepository>();
+            builder.Services.AddScoped<CategoryRepository>();
+            builder.Services.AddScoped<TagRepository>();
+            builder.Services.AddScoped<SeedDataService>();
             builder.Services.AddSingleton<ModalErrorHandler>();
-            builder.Services.AddSingleton<MainPageModel>();
-            builder.Services.AddSingleton<ProjectListPageModel>();
-            builder.Services.AddSingleton<ManageMetaPageModel>();
-            builder.Services.AddSingleton<MainViewModel>();
-            builder.Services.AddSingleton<LocalBackupViewModel>();
-            builder.Services.AddSingleton<AppShell>();
-            builder.Services.AddSingleton<DizimistaListPage>();
-            builder.Services.AddSingleton<UsuarioListPage>();
-            builder.Services.AddSingleton<OfertaListPage>();
+            builder.Services.AddTransient<MainPageModel>();
+            builder.Services.AddTransient<ProjectListPageModel>();
+            builder.Services.AddTransient<ManageMetaPageModel>();
+            builder.Services.AddTransient<MainViewModel>();
+            builder.Services.AddTransient<LocalBackupViewModel>();
+            builder.Services.AddTransient<AppShell>();
+            builder.Services.AddTransient<DizimistaListPage>();
+            builder.Services.AddTransient<UsuarioListPage>();
+            builder.Services.AddTransient<OfertaListPage>();
             
 
             builder.ConfigureLifecycleEvents(events =>

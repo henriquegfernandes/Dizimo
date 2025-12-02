@@ -18,7 +18,11 @@ public class UpdateDizimistaHandler
             NumeroCadastro = command.NumeroCadastro,
             Nome = command.Nome,
             DataNascimento = command.DataNascimento,
-            Ativo = command.Ativo
+            Ativo = command.Ativo,
+            Endereco = command.Endereco,
+            Telefone = command.Telefone,
+            Whatsapp = command.Whatsapp,
+            DataCadastro = command.DataCadastro
         };
         await _unitOfWork.Dizimistas.UpdateAsync(dizimista);
         await _unitOfWork.SaveChangesAsync();

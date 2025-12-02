@@ -1,12 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              x:Class="Dizimo.Pages.LoginPage">
     <StackLayout Padding="16" VerticalOptions="Center" Spacing="10">
         <Label Text="Login" FontSize="24" HorizontalOptions="Center" />
-        <Entry Placeholder="Usuário" Text="{Binding Login}" />
-        <Entry Placeholder="Senha" IsPassword="True" Text="{Binding Senha}" />
+        <Entry Placeholder="UsuÃ¡rio" Text="{Binding Login}" 
+               BackgroundColor="#E0E0E0" 
+               TextColor="#333333" />
+        <Entry Placeholder="Senha" IsPassword="True" Text="{Binding Senha}" 
+               BackgroundColor="#E0E0E0" 
+               TextColor="#333333" />
         <Button Text="Entrar" Command="{Binding LoginCommand}" />
-        <Label Text="Login ou senha inválidos." IsVisible="{Binding IsLoginFailed}" TextColor="Red" />
+        <Label Text="Login ou senha invÃ¡lidos." IsVisible="{Binding IsLoginFailed}" TextColor="Red" />
     </StackLayout>
 </ContentPage>
