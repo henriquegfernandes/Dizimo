@@ -29,6 +29,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     [ObservableProperty] private string _uf = "SP";
     [ObservableProperty] private string _cep = string.Empty;
 
+    private string _complemento = string.Empty;
+
     public List<string> EstadosBrasileiros { get; } = new()
     {
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
@@ -45,6 +47,7 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     {
         Rua = Rua,
         Numero = Numero,
+        Complemento = _complemento,
         Bairro = Bairro,
         Cidade = Cidade,
         UF = Uf,
@@ -68,6 +71,7 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
                 DataCadastro = dizimista.DataCadastro;
                 Rua = dizimista.Endereco?.Rua ?? string.Empty;
                 Numero = dizimista.Endereco?.Numero ?? string.Empty;
+                _complemento = dizimista.Endereco?.Complemento ?? string.Empty;
                 Bairro = dizimista.Endereco?.Bairro ?? string.Empty;
                 Cidade = dizimista.Endereco?.Cidade ?? "Osasco";
                 Uf = dizimista.Endereco?.UF ?? "SP";
@@ -87,6 +91,7 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             DataCadastro = DateTime.Today;
             Rua = string.Empty;
             Numero = string.Empty;
+            _complemento = string.Empty;
             Bairro = string.Empty;
             Cidade = "Osasco";
             Uf = "SP";

@@ -22,18 +22,11 @@ namespace Dizimo.ViewModels
         private readonly IUnitOfWork _unitOfWork;
         private readonly RelatorioAniversariantesService _relatorioAniversariantesService;
 
-        // IDE0028: Collection initialization can be simplified
         public List<Dizimista> TodosDizimistas { get; private set; } = new List<Dizimista>();
-
-        // IDE0028: Collection initialization can be simplified
         private ObservableCollection<Dizimista> _dizimistas = new ObservableCollection<Dizimista>();
-
-        // IDE0028: Collection initialization can be simplified
         public ObservableCollection<Dizimista> Aniversariantes { get; private set; } = new ObservableCollection<Dizimista>();
 
-        // IDE0028: Collection initialization can be simplified
         private string _filtroNome = string.Empty;
-        private string _filtroNumeroCadastro = string.Empty;
         private Dizimista? _selectedDizimista;
         private int _filtroMesAniversario = DateTime.Today.Month;
 
@@ -56,12 +49,6 @@ namespace Dizimo.ViewModels
         {
             get => _filtroNome;
             set => SetProperty(ref _filtroNome, value);
-        }
-
-        public string FiltroNumeroCadastro
-        {
-            get => _filtroNumeroCadastro;
-            set => SetProperty(ref _filtroNumeroCadastro, value);
         }
 
         public int FiltroMesAniversario
@@ -167,15 +154,21 @@ namespace Dizimo.ViewModels
         public void AplicarFiltros()
         {
             IEnumerable<Dizimista> filtrados = TodosDizimistas;
+            
+            // Filtro unificado: busca por nome OU número
             if (!string.IsNullOrWhiteSpace(FiltroNome))
-                filtrados = filtrados.Where(d => d.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase));
-            if (int.TryParse(FiltroNumeroCadastro, out var num))
-                filtrados = filtrados.Where(d => d.NumeroCadastro == num);
+            {
+                filtrados = filtrados.Where(d => 
+                    d.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
+                    d.NumeroCadastro.ToString().Contains(FiltroNome));
+            }
+            
+            // Filtro por status
             if (StatusSelecionado == "Ativos")
                 filtrados = filtrados.Where(d => d.Ativo);
             else if (StatusSelecionado == "Inativos")
                 filtrados = filtrados.Where(d => !d.Ativo);
-            // CA1826: Do not use Enumerable methods on indexable collections. Instead use the collection directly.
+            
             var filteredList = filtrados is List<Dizimista> dizimistaList ? dizimistaList : filtrados.ToList();
             Dizimistas = new ObservableCollection<Dizimista>(filteredList);
         }
@@ -192,8 +185,25 @@ namespace Dizimo.ViewModels
         {
             if (dizimista != null)
             {
-                var query = $"dizimista-cadastro?id={dizimista.Id}";
-                await Shell.Current.GoToAsync(query);
+                var navigationParameter = new Dictionary<string, object>
+                {
+                    { "id", dizimista.Id.ToString() }
+                };
+                await Shell.Current.GoToAsync("dizimista-cadastro", navigationParameter);
+            }
+        }
+
+        [RelayCommand]
+        public async Task VerDetalhesDizimistaCommand(Dizimista dizimista)
+        {
+            if (dizimista != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[INFO] VerDetalhesDizimistaCommand - ID: {dizimista.Id}");
+                var navigationParameter = new Dictionary<string, object>
+                {
+                    { "id", dizimista.Id.ToString() }
+                };
+                await Shell.Current.GoToAsync("dizimista-detalhes", navigationParameter);
             }
         }
 

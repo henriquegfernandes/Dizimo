@@ -65,6 +65,12 @@
         ContentTemplate="{DataTemplate pages:RelatorioPage}"
         Route="relatorios" />
 
+    <ShellContent
+        Title="Detalhes do Dizimista"
+        Icon="{StaticResource IconPerson}"
+        ContentTemplate="{DataTemplate pages:DizimistaDetalhesPage}"
+        Route="dizimista-detalhes" />
+
     <Shell.FlyoutHeader>
         <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
             <Image Source="avatar.png" HeightRequest="32" WidthRequest="32" VerticalOptions="Center" />

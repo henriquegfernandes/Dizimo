@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Dizimo.Converters"
+             x:Class="Dizimo.Pages.DizimistaDetalhesPage"
+             Title="Detalhes do Dizimista">
+    <ContentPage.Resources>
+        <converters:AtivoStatusConverter x:Key="AtivoStatusConverter" />
+        <converters:AtivoButtonTextConverter x:Key="AtivoButtonTextConverter" />
+    </ContentPage.Resources>
+    <ScrollView>
+        <Grid Padding="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="2*,2*" RowSpacing="10">
+            <!-- Botão de excluir no canto superior direito -->
+            <Button Text="Excluir"  Grid.Row="0" Grid.Column="1" HorizontalOptions="End" VerticalOptions="Start" Command="{Binding ExcluirCommand}" ImageSource="{StaticResource IconTrash}" />
+            <!-- Número de Cadastro -->
+            <Label Grid.Row="1" Grid.Column="0" Text="Nº Cadastro:" FontAttributes="Bold" VerticalOptions="Center"/>
+            <Label Grid.Row="1" Grid.Column="1" Text="{Binding Dizimista.NumeroCadastro}" VerticalOptions="Center"/>
+
+            <!-- Nome -->
+            <Label Grid.Row="2" Grid.Column="0" Text="Nome:" FontAttributes="Bold" VerticalOptions="Center"/>
+            <Label Grid.Row="2" Grid.Column="1" Text="{Binding Dizimista.Nome}" VerticalOptions="Center"/>
+
+            <!-- Data de Nascimento -->
+            <Label Grid.Row="3" Grid.Column="0" Text="Data Nascimento:" FontAttributes="Bold" VerticalOptions="Center"/>
+            <Label Grid.Row="3" Grid.Column="1" Text="{Binding Dizimista.DataNascimento, StringFormat='{0:dd/MM/yyyy}'}" VerticalOptions="Center"/>
+
+            <!-- Telefone -->
+            <Label Grid.Row="4" Grid.Column="0" Text="Telefone:" FontAttributes="Bold" VerticalOptions="Center"/>
+            <Label Grid.Row="4" Grid.Column="1" Text="{Binding Dizimista.Telefone}" VerticalOptions="Center"/>
+
+            <!-- WhatsApp -->
+            <Label Grid.Row="5" Grid.Column="0" Text="WhatsApp:" FontAttributes="Bold" VerticalOptions="Center"/>
+            <Label Grid.Row="5" Grid.Column="1" Text="{Binding Dizimista.Whatsapp}" VerticalOptions="Center"/>
+
+            <!-- Endereço -->
+            <Label Grid.Row="6" Grid.Column="0" Text="Endereço:" FontAttributes="Bold" VerticalOptions="Start" Margin="0,5,0,0"/>
+            <Label Grid.Row="6" Grid.Column="1" Text="{Binding EnderecoCompleto}" VerticalOptions="Start" Margin="0,5,0,0"/>
+
+            <!-- Status -->
+            <Label Grid.Row="7" Grid.Column="0" Text="Status:" FontAttributes="Bold" VerticalOptions="Center"/>
+            <Label Grid.Row="7" Grid.Column="1" Text="{Binding Dizimista.Ativo, Converter={StaticResource AtivoStatusConverter}}" VerticalOptions="Center"/>
+
+            <!-- Botões -->
+            <Grid Grid.Row="8" Grid.ColumnSpan="2" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20,0,0">
+                <Button Grid.Column="0" Text="Editar" Command="{Binding EditarCommand}"/>
+                <Button Grid.Column="1"
+                        Text="{Binding AtivarInativarText}"
+                        Command="{Binding AtivarInativarCommand}"/>
+            </Grid>
+        </Grid>
+    </ScrollView>
+</ContentPage>

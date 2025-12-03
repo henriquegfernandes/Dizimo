@@ -116,6 +116,8 @@ namespace Dizimo
             builder.Services.AddScoped<GetUsuarioHandlers>();
             builder.Services.AddTransient<DizimistaListViewModel>();
             builder.Services.AddTransient<DizimistaCadastroViewModel>();
+            builder.Services.AddScoped<DizimistaDetalhesViewModel>();
+            builder.Services.AddTransientWithShellRoute<DizimistaDetalhesPage, DizimistaDetalhesViewModel>("dizimista-detalhes");
 
             // Registro das páginas para navegação
             builder.Services.AddTransientWithShellRoute<DizimistaListPage, DizimistaListViewModel>("dizimistas");

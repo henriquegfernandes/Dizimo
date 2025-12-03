@@ -8,11 +8,9 @@ namespace Dizimo.Pages;
 
 public partial class DizimistaListPage : ContentPage
 {
-    // Remover o modificador 'readonly' do campo _sessaoService para permitir atribuição fora do construtor.
     private SessaoService? _sessaoService;
     private DizimistaListViewModel? _viewModel;
 
-    // Construtor padrão para inicialização automática do ViewModel
     public DizimistaListPage()
     {
         InitializeComponent();
@@ -25,17 +23,9 @@ public partial class DizimistaListPage : ContentPage
         {
             _viewModel = vm;
             System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext é DizimistaListViewModel.");
-            if (_viewModel != null)
-            {
-                if (_viewModel.NovoDizimistaCommand != null)
-                    System.Diagnostics.Debug.WriteLine($"[INFO] NovoDizimistaCommand existe na ViewModel!");
-                else
-                    System.Diagnostics.Debug.WriteLine("[ERRO] NovoDizimistaCommand está nulo no ViewModel!");
-            }
         }
         else
         {
-            // Inicializa o ViewModel se não estiver presente
             var handlers = (App.Current as App)?.Services.GetService<GetDizimistaHandlers>() ?? throw new InvalidOperationException("GetDizimistaHandlers não está registrado no contêiner de serviços.");
             var deleteHandler = (App.Current as App)?.Services.GetService<DeleteDizimistaHandler>() ?? throw new InvalidOperationException("DeleteDizimistaHandler não está registrado no contêiner de serviços.");
             var inativarHandler = (App.Current as App)?.Services.GetService<InativarDizimistaHandler>() ?? throw new InvalidOperationException("InativarDizimistaHandler não está registrado no contêiner de serviços.");
@@ -46,10 +36,6 @@ public partial class DizimistaListPage : ContentPage
             BindingContext = viewModel;
             _viewModel = viewModel;
             System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext inicializado no OnBindingContextChanged.");
-            if (_viewModel.NovoDizimistaCommand != null)
-                System.Diagnostics.Debug.WriteLine($"[INFO] NovoDizimistaCommand existe na ViewModel!");
-            else
-                System.Diagnostics.Debug.WriteLine("[ERRO] NovoDizimistaCommand está nulo no ViewModel!");
         }
     }
 
@@ -66,22 +52,16 @@ public partial class DizimistaListPage : ContentPage
             await Shell.Current.GoToAsync("//login");
             return;
         }
-        // Recarrega sempre a lista ao voltar para a página
         if (_viewModel != null)
             await _viewModel.CarregarDizimistasAsync();
     }
 
     private async void OnEditarDizimistaClicked(object sender, EventArgs e)
     {
-        if (sender is Button button && button.BindingContext != null)
+        if (sender is Button button && button.BindingContext is Dizimista dizimista)
         {
-            var dizimista = button.BindingContext;
-            if (dizimista != null)
-            {
-                var dizimistaId = dizimista.GetType().GetProperty("Id")?.GetValue(dizimista);
-                var query = $"dizimista-cadastro?id={dizimistaId}";
-                await Shell.Current.GoToAsync(query);
-            }
+            var query = $"dizimista-cadastro?id={dizimista.Id}";
+            await Shell.Current.GoToAsync(query);
         }
     }
 
@@ -105,5 +85,21 @@ public partial class DizimistaListPage : ContentPage
     {
         if (BindingContext is DizimistaListViewModel vm && vm.AplicarFiltrosCommand.CanExecute(null))
             vm.AplicarFiltrosCommand.Execute(null);
+    }
+
+    private async void OnVerDetalhesDizimistaClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is Dizimista dizimista)
+        {
+            System.Diagnostics.Debug.WriteLine($"[INFO] Ver detalhes do dizimista: {dizimista.Nome} (ID: {dizimista.Id})");
+            
+            var navigationParameter = new Dictionary<string, object>
+            {
+                { "id", dizimista.Id.ToString() }
+            };
+            
+            System.Diagnostics.Debug.WriteLine($"[INFO] Navegando para dizimista-detalhes com ID: {dizimista.Id}");
+            await Shell.Current.GoToAsync("dizimista-detalhes", navigationParameter);
+        }
     }
 }
