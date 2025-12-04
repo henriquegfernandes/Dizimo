@@ -31,7 +31,6 @@ namespace Dizimo.ViewModels
                 {
                     // Notificar mudanças nas propriedades computadas quando Dizimista muda
                     OnPropertyChanged(nameof(EnderecoCompleto));
-                    OnPropertyChanged(nameof(AtivarInativarText));
                     OnPropertyChanged(nameof(TelefoneFormatado));
                     OnPropertyChanged(nameof(WhatsappFormatado));
                     OnPropertyChanged(nameof(CepFormatado));
@@ -44,8 +43,6 @@ namespace Dizimo.ViewModels
             get => _ultimaOferta;
             set => SetProperty(ref _ultimaOferta, value);
         }
-
-        public string AtivarInativarText => _dizimista?.Ativo == true ? "Inativar" : "Ativar";
 
         public string TelefoneFormatado
         {
@@ -239,31 +236,6 @@ namespace Dizimo.ViewModels
             if (_dizimista != null)
             {
                 await Shell.Current.GoToAsync($"dizimista-cadastro?id={_dizimista.Id}");
-            }
-        }
-
-        [RelayCommand]
-        public async Task AtivarInativarAsync()
-        {
-            if (_dizimista != null)
-            {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Chamando handler para ID: {_dizimista.Id}");
-                    await _inativarHandler.Handle(new InativarDizimistaCommand(_dizimista.Id));
-                    System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Handler executado com sucesso");
-                    
-                    await _unitOfWork.ClearDbContextAsync();
-                    System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Recarregando dados do dizimista");
-                    await LoadDizimistaAsync(_currentDizimistaId);
-                    
-                    System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Dados recarregados. Novo status: {(_dizimista?.Ativo == true ? "Ativo" : "Inativo")}");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] AtivarInativarAsync - Erro ao processar: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
-                }
             }
         }
 

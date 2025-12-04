@@ -56,15 +56,6 @@ public partial class DizimistaListPage : ContentPage
             await _viewModel.CarregarDizimistasAsync();
     }
 
-    private async void OnEditarDizimistaClicked(object sender, EventArgs e)
-    {
-        if (sender is Button button && button.BindingContext is Dizimista dizimista)
-        {
-            var query = $"dizimista-cadastro?id={dizimista.Id}";
-            await Shell.Current.GoToAsync(query);
-        }
-    }
-
     private async void OnNovoDizimistaClicked(object sender, EventArgs e)
     {
         System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
