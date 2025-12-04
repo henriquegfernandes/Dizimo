@@ -9,4 +9,10 @@ public partial class DizimistaCadastroPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine("[INFO] Botão voltar clicado na página de cadastro");
+        await Shell.Current.GoToAsync("..", true);
+    }
 }

@@ -8,6 +8,7 @@ using Dizimo.Domain.Repositories;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Dizimo.ViewModels
 {
@@ -18,6 +19,7 @@ namespace Dizimo.ViewModels
         private readonly IUnitOfWork _unitOfWork;
         private Dizimista? _dizimista;
         private Guid _currentDizimistaId;
+        private string _ultimaOferta = string.Empty;
 
         public Dizimista? Dizimista
         {
@@ -25,12 +27,14 @@ namespace Dizimo.ViewModels
             set
             {
                 System.Diagnostics.Debug.WriteLine($"[INFO] DizimistaDetalhesViewModel.Dizimista sendo definido: {value?.Nome ?? "NULL"}");
-                if (SetProperty(ref _dizimista, value))
-                {
-                    OnPropertyChanged(nameof(AtivarInativarText));
-                    OnPropertyChanged(nameof(EnderecoCompleto));
-                }
+                SetProperty(ref _dizimista, value);
             }
+        }
+
+        public string UltimaOferta
+        {
+            get => _ultimaOferta;
+            set => SetProperty(ref _ultimaOferta, value);
         }
 
         public string AtivarInativarText => _dizimista?.Ativo == true ? "Inativar" : "Ativar";
@@ -75,11 +79,43 @@ namespace Dizimo.ViewModels
                     System.Diagnostics.Debug.WriteLine($"[INFO] Status Ativo: {dizimista.Ativo}");
                 }
                 Dizimista = dizimista;
+                
+                // Carregar última oferta
+                await CarregarUltimaOfertaAsync(id);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao carregar dizimista: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        private async Task CarregarUltimaOfertaAsync(Guid dizimistaId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[INFO] CarregarUltimaOfertaAsync chamado para ID: {dizimistaId}");
+                var ofertas = await _unitOfWork.Ofertas.GetByDizimistaAsync(dizimistaId);
+                
+                if (ofertas != null)
+                {
+                    var ultimaOferta = ofertas.OrderByDescending(o => o.Data).FirstOrDefault();
+                    if (ultimaOferta != null)
+                    {
+                        UltimaOferta = $"R$ {ultimaOferta.Valor:F2} em {ultimaOferta.Data:dd/MM/yyyy}";
+                        System.Diagnostics.Debug.WriteLine($"[INFO] Última oferta encontrada: {UltimaOferta}");
+                    }
+                    else
+                    {
+                        UltimaOferta = "Nenhuma oferta registrada";
+                        System.Diagnostics.Debug.WriteLine("[INFO] Nenhuma oferta encontrada");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao carregar última oferta: {ex.Message}");
+                UltimaOferta = "Erro ao carregar oferta";
             }
         }
 
@@ -103,11 +139,7 @@ namespace Dizimo.ViewModels
                     await _inativarHandler.Handle(new InativarDizimistaCommand(_dizimista.Id));
                     System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Handler executado com sucesso");
                     
-                    // Limpar o cache do DbContext antes de recarregar
-                    System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Limpando cache do DbContext");
                     await _unitOfWork.ClearDbContextAsync();
-                    
-                    // Recarregar os dados do dizimista
                     System.Diagnostics.Debug.WriteLine($"[INFO] AtivarInativarAsync - Recarregando dados do dizimista");
                     await LoadDizimistaAsync(_currentDizimistaId);
                     
@@ -117,6 +149,50 @@ namespace Dizimo.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERRO] AtivarInativarAsync - Erro ao processar: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
+                }
+            }
+        }
+
+        [RelayCommand]
+        public async Task ExcluirAsync()
+        {
+            if (_dizimista != null)
+            {
+                try
+                {
+                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    if (mainPage != null)
+                    {
+                        bool confirm = await mainPage.DisplayAlertAsync(
+                            "Confirmação de Exclusão",
+                            $"Deseja realmente excluir o dizimista {_dizimista.Nome}? Esta ação não pode ser desfeita.",
+                            "Sim",
+                            "Não");
+                        
+                        if (!confirm) return;
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[INFO] ExcluirAsync - Excluindo dizimista ID: {_dizimista.Id}");
+                    
+                    // Usar o UnitOfWork para excluir
+                    await _unitOfWork.Dizimistas.DeleteAsync(_dizimista.Id);
+                    await _unitOfWork.SaveChangesAsync();
+                    
+                    System.Diagnostics.Debug.WriteLine($"[INFO] ExcluirAsync - Dizimista excluído com sucesso");
+                    
+                    // Voltar para a lista
+                    await Shell.Current.GoToAsync("..", true);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] ExcluirAsync - Erro ao excluir: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
+                    
+                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    if (mainPage != null)
+                    {
+                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir dizimista: {ex.Message}", "OK");
+                    }
                 }
             }
         }

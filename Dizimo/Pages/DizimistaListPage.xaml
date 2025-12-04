@@ -38,28 +38,28 @@
                             <Label Text="Mostrar:" VerticalOptions="Center" />
                             <Picker ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding StatusSelecionado}" BackgroundColor="#E0E0E0" />
                         </StackLayout>
-                        <Button Text="Exportar CSV"
+                        <Button Text="Exportar Planilha"
                                 Command="{Binding ExportarCommand}" 
                                 ImageSource="{StaticResource IconExport}" 
-                                ToolTipProperties.Text="Exportar CSV" 
+                                ToolTipProperties.Text="Exportar Planilha" 
                                 CornerRadius="8"
                                 Padding="10"
                                 Grid.Column="1"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
-                        <Button Text="Baixar modelo"
+                        <Button Text="Baixar Planilha Modelo"
                                 Command="{Binding BaixarModeloCommand}" 
                                 ImageSource="{StaticResource IconDownload}" 
-                                ToolTipProperties.Text="Baixar Modelo" 
+                                ToolTipProperties.Text="Baixar Planilha Modelo" 
                                 CornerRadius="8"
                                 Padding="10"
                                 Grid.Column="2"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
-                        <Button Text="Importar CSV"
+                        <Button Text="Importar Planilha"
                                 Command="{Binding ImportarCommand}" 
                                 ImageSource="{StaticResource IconImport}" 
-                                ToolTipProperties.Text="Importar CSV" 
+                                ToolTipProperties.Text="Importar Planilha" 
                                 CornerRadius="8"
                                 Padding="10"
                                 Grid.Column="3"
@@ -67,7 +67,7 @@
                                 VerticalOptions="Center" />
                     </Grid>
                     <!-- Linha de título da lista -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,2*,3*,2*,1*,1*" Padding="8" BackgroundColor="#F0F0F0">
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,2*,3*,2*,1*,1*" Padding="8">
                         <Label Text="" Grid.Column="0" />
                         <Label Text="Nº Cadastro" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center" />
                         <Label Text="Nome" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
@@ -110,12 +110,10 @@
                                 Padding="12"
                                 CornerRadius="8"
                                 HorizontalOptions="Center"
-                                VerticalOptions="Center">
-                            <Button.ImageSource>
-                                <FontImageSource Glyph="&#xE74D;" FontFamily="{x:Static fonts:FluentUI.FontFamily}" Color="{DynamicResource ButtonIconColor}" />
-                            </Button.ImageSource>
+                                VerticalOptions="Center"
+                                ImageSource="{StaticResource IconTrash}">
                         </Button>
-                        <Button Text="Inativar" 
+                        <Button Text="Ativar/Inativar" 
                                 Command="{Binding InativarDizimistasSelecionadosCommand}" 
                                 IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
                                 Padding="12"

@@ -6,7 +6,17 @@
     xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.SegmentedControl;assembly=Syncfusion.Maui.Toolkit"
     xmlns:pages="clr-namespace:Dizimo.Pages"
     Shell.FlyoutBehavior="Flyout"
-    Title="Dizimo">
+    Title="Dizimo"
+    FlyoutHeaderBehavior="CollapseOnScroll"
+    TabBarBackgroundColor="{DynamicResource DarkBackground}">
+
+    <!-- Propriedades para os botões de navegação -->
+    <Shell.Resources>
+        <ResourceDictionary>
+            <Color x:Key="NavBarButtonColor">#800000</Color>
+            <Color x:Key="NavBarBackgroundColor">#222222</Color>
+        </ResourceDictionary>
+    </Shell.Resources>
 
     <ShellContent
         Title="Login"

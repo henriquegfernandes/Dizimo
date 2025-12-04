@@ -6,19 +6,37 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
              xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
              xmlns:fonts="clr-namespace:Fonts"
-             x:Class="Dizimo.Pages.DizimistaCadastroPage">
-    <Grid Padding="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <!-- Botão de excluir no canto superior direito -->
-        <Button Text="Excluir"  Grid.Row="0" Grid.Column="1" HorizontalOptions="End" VerticalOptions="Start" Command="{Binding ExcluirCommand}" ImageSource="{StaticResource IconTrash}" />
-        <ScrollView Grid.Row="1" Grid.ColumnSpan="2">
+             x:Class="Dizimo.Pages.DizimistaCadastroPage"
+             Title="">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Barra de navegação customizada -->
+        <Grid Grid.Row="0" Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <!-- Botão de voltar -->
+            <Button Grid.Column="0" 
+                    Text="←" 
+                    Clicked="OnBackButtonClicked"
+                    Style="{StaticResource NavButtonStyle}"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    Padding="0"
+                    FontSize="20"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center" />
+            
+            <!-- Título centralizado -->
+            <Label Grid.Column="1" 
+                   Text="Cadastro de Dizimista" 
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            
+            <!-- Espaço vazio à direita para manter a simetria -->
+            <StackLayout Grid.Column="2" />
+        </Grid>
+
+        <!-- Conteúdo da página -->
+        <ScrollView Grid.Row="1" Padding="16,12">
             <Grid Padding="0" RowSpacing="12" ColumnSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -38,60 +56,57 @@
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="2*" />
-					<ColumnDefinition Width="2*" />
-					<ColumnDefinition Width="2*" />
-					<ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
                 <!-- Nome -->
-                <sf:SfTextInputLayout Grid.Row="0" Grid.ColumnSpan="5" Hint="Nome">
+                <sf:SfTextInputLayout Grid.Row="0" Grid.ColumnSpan="2" Hint="Nome">
                     <Entry Text="{Binding Nome}" SemanticProperties.Description="Name" />
                 </sf:SfTextInputLayout>
                 <!-- Número Cadastro -->
-                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="5" Grid.ColumnSpan="1" Hint="Nª de Cadastro">
+                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="1" Hint="Nº de Cadastro">
                     <Entry Placeholder="Número de Cadastro" Keyboard="Numeric" Text="{Binding NumeroCadastro}" />
                 </sf:SfTextInputLayout>
                 <!-- Data de Nascimento -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Hint="Nascimento">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Hint="Nascimento">
                     <DatePicker Date="{Binding DataNascimento}" />
                 </sf:SfTextInputLayout>
                 <!-- Telefone -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Hint="Telefone">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="1" Hint="Telefone">
                     <Entry Text="{Binding Telefone}" Keyboard="Numeric" MaxLength="15" TextChanged="OnTelefoneTextChanged" />
                 </sf:SfTextInputLayout>
                 <!-- Whatsapp -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2" Hint="Whatsapp">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Hint="Whatsapp">
                     <Entry Text="{Binding Whatsapp}" Keyboard="Numeric" MaxLength="15" TextChanged="OnWhatsappTextChanged" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Rua -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.ColumnSpan="3" Hint="Rua">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.ColumnSpan="2" Hint="Rua">
                     <Entry Text="{Binding Rua}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Número -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="1" Hint="Número">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="1" Hint="Número">
                     <Entry Text="{Binding Numero}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Complemento -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2" Hint="Complemento">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.ColumnSpan="3" Hint="Complemento (Apto, Sala, etc)">
                     <Entry Text="{Binding Complemento}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Bairro -->
-                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Hint="Bairro">
+                <sf:SfTextInputLayout Grid.Row="4" Grid.Column="0" Hint="Bairro">
                     <Entry Text="{Binding Bairro}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Cidade -->
-                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Hint="Cidade">
+                <sf:SfTextInputLayout Grid.Row="4" Grid.Column="1" Hint="Cidade">
                     <Entry Text="{Binding Cidade}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: UF -->
-                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="4" Hint="UF">
+                <sf:SfTextInputLayout Grid.Row="4" Grid.Column="2" Hint="UF">
                     <Picker ItemsSource="{Binding EstadosBrasileiros}" SelectedItem="{Binding Uf, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: CEP -->
-                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="5" Hint="CEP">
+                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="0" Hint="CEP">
                     <Entry Text="{Binding Cep}" Keyboard="Numeric" MaxLength="9" TextChanged="OnCepTextChanged" />
                 </sf:SfTextInputLayout>
                 <!-- Data de Cadastro -->
-                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Hint="Cadastro">
+                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="1" Hint="Cadastro">
                     <DatePicker Date="{Binding DataCadastro}" />
                 </sf:SfTextInputLayout>
                 <!-- Ativo -->
@@ -100,7 +115,7 @@
                     <Switch IsToggled="{Binding Ativo}" />
                 </StackLayout>
                 <!-- Botão Salvar -->
-                <Button Grid.Row="6" Grid.Column="4" Grid.ColumnSpan="2" Text="Salvar" Command="{Binding SalvarCommand}" />
+                <Button Grid.Row="6" Grid.ColumnSpan="3" Text="Salvar" Command="{Binding SalvarCommand}" />
             </Grid>
         </ScrollView>
     </Grid>

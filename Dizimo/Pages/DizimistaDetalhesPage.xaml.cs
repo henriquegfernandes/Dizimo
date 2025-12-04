@@ -41,4 +41,10 @@ public partial class DizimistaDetalhesPage : ContentPage
         BindingContext = _viewModel;
         System.Diagnostics.Debug.WriteLine("[INFO] DizimistaDetalhesPage construtor executado");
     }
+
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine("[INFO] Botão voltar clicado");
+        await Shell.Current.GoToAsync("..", true);
+    }
 }
