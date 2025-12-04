@@ -73,7 +73,8 @@
         Title="Detalhes do Dizimista"
         Icon="{StaticResource IconPerson}"
         ContentTemplate="{DataTemplate pages:DizimistaDetalhesPage}"
-        Route="dizimista-detalhes" />
+        Route="dizimista-detalhes"
+        IsVisible="False" />
 
     <Shell.FlyoutHeader>
         <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">

@@ -1,11 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Dizimo.Pages.OfertaCadastroPage">
-    <StackLayout Padding="16">
-        <Label Text="Cadastro de Oferta" FontSize="24" HorizontalOptions="Center" />
-        <Picker Title="Dizimista" ItemsSource="{Binding Dizimistas}" ItemDisplayBinding="{Binding Nome}" SelectedItem="{Binding DizimistaId, Mode=TwoWay}" />
-        <Entry Placeholder="Valor" Keyboard="Numeric" Text="{Binding Valor}" />
-        <DatePicker Date="{Binding Data}" />
-        <Button Text="Salvar" Command="{Binding SalvarCommand}" />
-    </StackLayout>
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+             xmlns:fonts="clr-namespace:Fonts"
+             x:Class="Dizimo.Pages.OfertaCadastroPage"
+             Title="">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Barra de navegação customizada -->
+        <Grid Grid.Row="0" Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <!-- Botão de voltar -->
+            <Button Grid.Column="0" 
+                    Text="Voltar"
+                    ImageSource="{StaticResource IconLeftArrow}"
+                    Clicked="OnBackButtonClicked"
+                    Style="{StaticResource NavButtonStyle}"
+                    Padding="12"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center" />
+            
+            <!-- Título centralizado -->
+            <Label Grid.Column="1" 
+                   Text="Cadastro de Oferta" 
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            
+            <!-- Botão de excluir à direita (visível apenas em modo edição) -->
+            <Button Grid.Column="2"
+                    Text="Excluir"
+                    ImageSource="{StaticResource IconTrash}"
+                    Command="{Binding ExcluirCommand}"
+                    IsVisible="{Binding IsEditMode}"
+                    Style="{StaticResource NavButtonStyle}"
+                    Padding="12"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Conteúdo da página -->
+        <ScrollView Grid.Row="1" Padding="16,12">
+            <Grid Padding="0" RowSpacing="12" ColumnSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+					<ColumnDefinition Width="2*" />
+					<ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+                
+                <!-- Código do Dizimista com Busca Automática -->
+                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="0" Hint="Código do Dizimista">
+                    <Entry Placeholder="Digite o código" 
+                           Keyboard="Numeric" 
+                           Text="{Binding CodigoDizimista}"
+                           Unfocused="OnCodigoDizimistaUnfocused" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Nome do Dizimista (somente leitura) -->
+                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Hint="Dizimista">
+                    <Entry Text="{Binding NomeDizimista}" 
+                           IsReadOnly="True"
+                           BackgroundColor="#F0F0F0"
+                           TextColor="#666666" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Valor -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Hint="Valor">
+                    <Entry Placeholder="0,00" 
+                           Keyboard="Numeric" 
+                           Text="{Binding Valor}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Data -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="1" Hint="Data">
+                    <DatePicker Date="{Binding DataOferta}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Espaço vazio -->
+                <StackLayout Grid.Row="1" Grid.Column="2" />
+                
+                <!-- Mês de Referência -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Hint="Mês">
+                    <Picker ItemsSource="{Binding MesesNomesCollection}" 
+                            SelectedItem="{Binding MesNomeAtual, Mode=TwoWay}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Ano de Referência -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="4" Hint="Ano">
+                    <Picker ItemsSource="{Binding AnosCollection}" SelectedItem="{Binding AnoSelecionado, Mode=TwoWay}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Mensagem de status -->
+                <Label Grid.Row="3" Grid.ColumnSpan="3" 
+                       Text="{Binding NomeDizimista}"
+                       FontSize="12"
+                       Margin="0,8,0,0"
+                       IsVisible="{Binding NomeDizimista, StringFormat='{0}'}" />
+                
+                <!-- Botão Salvar -->
+                <Button Grid.Row="4" Grid.ColumnSpan="3" 
+                        Text="Salvar" 
+                        Command="{Binding SalvarCommand}" 
+                        IsEnabled="{Binding DizimistaEncontrado}"
+                        Margin="0,12,0,0" />
+            </Grid>
+        </ScrollView>
+    </Grid>
 </ContentPage>

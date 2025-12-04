@@ -15,4 +15,18 @@ public partial class OfertaCadastroPage : ContentPage
         InitializeComponent();
         BindingContext = new OfertaCadastroViewModel(createHandler, updateHandler, getHandler, unitOfWork);
     }
+
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//IMPL_ofertas/IMPL_ofertas/ofertas", true);
+    }
+
+    private async void OnCodigoDizimistaUnfocused(object sender, FocusEventArgs e)
+    {
+        var viewModel = (OfertaCadastroViewModel)BindingContext;
+        if (viewModel?.BuscarDizimistaCommand.CanExecute(null) == true)
+        {
+            await viewModel.BuscarDizimistaCommand.ExecuteAsync(null);
+        }
+    }
 }

@@ -14,36 +14,115 @@ public class OfertaCsvService
     private readonly IUnitOfWork _unitOfWork;
     public OfertaCsvService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    public async Task<string> ExportarAsync()
+    public async Task<string> ExportarAsync(List<Oferta>? ofertas = null)
     {
-        var ofertas = await _unitOfWork.Ofertas.GetAllAsync();
+        // Se nenhuma lista for passada, exporta todas
+        if (ofertas == null)
+        {
+            var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
+            ofertas = todasOfertas is List<Oferta> l ? l : todasOfertas.ToList();
+        }
+
         var sb = new StringBuilder();
-        sb.AppendLine("DizimistaId,Valor,Data");
+        sb.AppendLine("CodigoDizimista,NomeDizimista,Valor,Data,MesReferencia,AnoReferencia");
+        
         foreach (var o in ofertas)
         {
-            sb.AppendLine($"{o.DizimistaId},{o.Valor.ToString(CultureInfo.InvariantCulture)},{o.Data:yyyy-MM-dd}");
+            // Buscar dados do dizimista
+            var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId);
+            var codigoDizimista = dizimista?.NumeroCadastro.ToString() ?? "";
+            var nomeDizimista = dizimista?.Nome ?? "";
+            
+            sb.AppendLine($"{codigoDizimista},\"{nomeDizimista}\",{o.Valor.ToString(CultureInfo.InvariantCulture)},{o.Data:yyyy-MM-dd},{o.MesReferencia},{o.AnoReferencia}");
         }
         return sb.ToString();
     }
 
-    public async Task<List<Oferta>> ImportarAsync(string csv)
+    public string GerarModelo()
     {
-        var result = new List<Oferta>();
-        var lines = csv.Split('\n');
-        foreach (var line in lines.Skip(1)) // pula cabe�alho
+        var sb = new StringBuilder();
+        sb.AppendLine("CodigoDizimista,Valor,Data,MesReferencia,AnoReferencia");
+        // Exemplo de linha de modelo
+        sb.AppendLine("123,100.00,2024-01-01,1,2024");
+        return sb.ToString();
+    }
+
+    public class ResultadoImportacao
+    {
+        public List<Oferta> OfertasImportadas { get; set; } = new();
+        public List<string> Erros { get; set; } = new();
+    }
+
+    public async Task<ResultadoImportacao> ImportarAsync(string csv)
+    {
+        var resultado = new ResultadoImportacao();
+        var linhas = csv.Split('\n');
+        var dizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
+        
+        int numeroLinha = 1; // Começa em 1 (cabeçalho é linha 1)
+        
+        foreach (var linha in linhas.Skip(1)) // pula cabeçalho
         {
-            var parts = line.Split(',');
-            if (parts.Length < 3) continue;
-            if (!Guid.TryParse(parts[0], out var dizimistaId)) continue;
-            if (!decimal.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var valor)) continue;
-            if (!DateTime.TryParseExact(parts[2], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data)) continue;
-            result.Add(new Oferta {
+            numeroLinha++;
+            
+            if (string.IsNullOrWhiteSpace(linha)) continue;
+            
+            var partes = linha.Split(',');
+            if (partes.Length < 5)
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Formato inválido. Esperado: CodigoDizimista,Valor,Data,MesReferencia,AnoReferencia");
+                continue;
+            }
+            
+            // Buscar dizimista pelo código
+            if (!int.TryParse(partes[0].Trim(), out var codigoDizimista))
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Código do dizimista '{partes[0].Trim()}' é inválido (deve ser um número)");
+                continue;
+            }
+            
+            var dizimista = dizimistas.FirstOrDefault(d => d.NumeroCadastro == codigoDizimista);
+            if (dizimista == null)
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Dizimista com código {codigoDizimista} não encontrado no sistema");
+                continue;
+            }
+            
+            if (!decimal.TryParse(partes[1].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var valor))
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Valor '{partes[1].Trim()}' é inválido");
+                continue;
+            }
+            
+            if (!DateTime.TryParseExact(partes[2].Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data))
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Data '{partes[2].Trim()}' está em formato inválido (use yyyy-MM-dd)");
+                continue;
+            }
+            
+            if (!int.TryParse(partes[3].Trim(), out var mesReferencia) || mesReferencia < 1 || mesReferencia > 12)
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Mês de referência '{partes[3].Trim()}' é inválido (deve ser entre 1 e 12)");
+                continue;
+            }
+            
+            if (!int.TryParse(partes[4].Trim(), out var anoReferencia))
+            {
+                resultado.Erros.Add($"Linha {numeroLinha}: Ano de referência '{partes[4].Trim()}' é inválido");
+                continue;
+            }
+            
+            resultado.OfertasImportadas.Add(new Oferta
+            {
                 Id = Guid.NewGuid(),
-                DizimistaId = dizimistaId,
+                DizimistaId = dizimista.Id,
                 Valor = valor,
-                Data = data
+                Data = data,
+                MesReferencia = mesReferencia,
+                AnoReferencia = anoReferencia
             });
         }
-        return result;
+        
+        return resultado;
     }
 }

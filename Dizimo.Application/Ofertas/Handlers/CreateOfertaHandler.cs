@@ -18,7 +18,9 @@ public class CreateOfertaHandler
             Id = Guid.NewGuid(),
             DizimistaId = command.DizimistaId,
             Valor = command.Valor,
-            Data = command.Data
+            Data = command.Data,
+            MesReferencia = command.MesReferencia,
+            AnoReferencia = command.AnoReferencia
         };
         await _unitOfWork.Ofertas.AddAsync(oferta);
         await _unitOfWork.SaveChangesAsync();

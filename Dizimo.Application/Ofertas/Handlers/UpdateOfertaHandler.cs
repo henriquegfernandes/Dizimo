@@ -17,7 +17,9 @@ public class UpdateOfertaHandler
             Id = command.Id,
             DizimistaId = command.DizimistaId,
             Valor = command.Valor,
-            Data = command.Data
+            Data = command.Data,
+            MesReferencia = command.MesReferencia,
+            AnoReferencia = command.AnoReferencia
         };
         await _unitOfWork.Ofertas.UpdateAsync(oferta);
         await _unitOfWork.SaveChangesAsync();

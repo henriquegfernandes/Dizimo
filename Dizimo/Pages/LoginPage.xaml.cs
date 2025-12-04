@@ -37,4 +37,17 @@ public partial class LoginPage : ContentPage
         if (BindingContext is LoginViewModel vm)
             vm.ResetLoginState();
     }
+
+    private void OnLoginEntryCompleted(object sender, EventArgs e)
+    {
+        SenhaEntry.Focus();
+    }
+
+    private void OnSenhaEntryCompleted(object sender, EventArgs e)
+    {
+        if (BindingContext is LoginViewModel vm && vm.LoginCommand.CanExecute(null))
+        {
+            vm.LoginCommand.Execute(null);
+        }
+    }
 }

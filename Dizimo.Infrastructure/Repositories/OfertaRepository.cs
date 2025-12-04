@@ -26,7 +26,20 @@ public class OfertaRepository : IOfertaRepository
     }
     public async Task<IEnumerable<Oferta>> GetAllAsync() => await _context.Ofertas.ToListAsync();
     public async Task AddAsync(Oferta oferta) { await _context.Ofertas.AddAsync(oferta); }
-    public async Task UpdateAsync(Oferta oferta) { _context.Ofertas.Update(oferta); await Task.CompletedTask; }
+    public async Task UpdateAsync(Oferta oferta)
+    {
+        var existingOferta = await _context.Ofertas.FindAsync(oferta.Id);
+        if (existingOferta != null)
+        {
+            existingOferta.DizimistaId = oferta.DizimistaId;
+            existingOferta.Valor = oferta.Valor;
+            existingOferta.Data = oferta.Data;
+            existingOferta.MesReferencia = oferta.MesReferencia;
+            existingOferta.AnoReferencia = oferta.AnoReferencia;
+            _context.Ofertas.Update(existingOferta);
+        }
+        await Task.CompletedTask;
+    }
     public async Task DeleteAsync(Guid id)
     {
         var entity = await _context.Ofertas.FindAsync(id);

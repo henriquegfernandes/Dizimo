@@ -5,12 +5,16 @@
              x:Class="Dizimo.Pages.LoginPage">
     <StackLayout Padding="16" VerticalOptions="Center" Spacing="10">
         <Label Text="Login" FontSize="24" HorizontalOptions="Center" />
-        <Entry Placeholder="Usuário" Text="{Binding Login}" 
+        <Entry x:Name="LoginEntry"
+               Placeholder="Usuário" Text="{Binding Login}" 
                BackgroundColor="#E0E0E0" 
-               TextColor="#333333" />
-        <Entry Placeholder="Senha" IsPassword="True" Text="{Binding Senha}" 
+               TextColor="#333333"
+               Completed="OnLoginEntryCompleted" />
+        <Entry x:Name="SenhaEntry"
+               Placeholder="Senha" IsPassword="True" Text="{Binding Senha}" 
                BackgroundColor="#E0E0E0" 
-               TextColor="#333333" />
+               TextColor="#333333"
+               Completed="OnSenhaEntryCompleted" />
         <Button Text="Entrar" Command="{Binding LoginCommand}" />
         <Label Text="Login ou senha inválidos." IsVisible="{Binding IsLoginFailed}" TextColor="Red" />
     </StackLayout>

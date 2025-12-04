@@ -4,25 +4,50 @@ using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
+using Dizimo.Application.Ofertas.Queries;
 using Dizimo.Application.Relatorios;
 using Microsoft.Maui.Controls;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using CommunityToolkit.Maui.Storage;
+using System.Text;
 
 namespace Dizimo.ViewModels;
 
 public partial class OfertaListViewModel : ObservableObject
 {
+    private readonly GetOfertaHandlers _getHandlers;
+    private readonly DeleteOfertaHandler _deleteHandler;
     private readonly OfertaCsvService _csvService;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly UpdateOfertaHandler _updateHandler;
-    private readonly DeleteOfertaHandler _deleteHandler;
-    private readonly RelatorioOfertasService _relatorioOfertasService;
 
-    private ObservableCollection<Oferta> _ofertas = new();
+    public List<Oferta> TodasOfertas { get; private set; } = new List<Oferta>();
+    
+    private ObservableCollection<Oferta> _ofertas = new ObservableCollection<Oferta>();
     public ObservableCollection<Oferta> Ofertas
     {
         get => _ofertas;
-        set => SetProperty(ref _ofertas, value);
+        private set => SetProperty(ref _ofertas, value);
+    }
+
+    private string _filtroNome = string.Empty;
+    public string FiltroNome
+    {
+        get => _filtroNome;
+        set => SetProperty(ref _filtroNome, value);
+    }
+
+    private DateTime _filtroData = DateTime.Today;
+    public DateTime FiltroData
+    {
+        get => _filtroData;
+        set 
+        { 
+            SetProperty(ref _filtroData, value);
+            // Aplicar filtros automaticamente quando a data muda
+            AplicarFiltros();
+        }
     }
 
     private Oferta? _selectedOferta;
@@ -32,99 +57,168 @@ public partial class OfertaListViewModel : ObservableObject
         set => SetProperty(ref _selectedOferta, value);
     }
 
-    private DateTime _filtroData = DateTime.Today;
-    public DateTime FiltroData
+    private int paginaAtual = 1;
+    private const int tamanhoPagina = 20;
+    private bool carregandoMais = false;
+
+    private ObservableCollection<Oferta> _ofertasSelecionadas = new();
+    public ObservableCollection<Oferta> OfertasSelecionadas
     {
-        get => _filtroData;
-        set => SetProperty(ref _filtroData, value);
+        get => _ofertasSelecionadas;
+        set
+        {
+            if (_ofertasSelecionadas != null)
+                _ofertasSelecionadas.CollectionChanged -= OfertasSelecionadas_CollectionChanged;
+            SetProperty(ref _ofertasSelecionadas, value);
+            if (_ofertasSelecionadas != null)
+                _ofertasSelecionadas.CollectionChanged += OfertasSelecionadas_CollectionChanged;
+            OnPropertyChanged(nameof(OfertasSelecionadas));
+            OnPropertyChanged(nameof(OfertasSelecionadas.Count));
+        }
     }
 
-    private string _filtroCodigoDizimista = string.Empty;
-    public string FiltroCodigoDizimista
+    private void OfertasSelecionadas_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        get => _filtroCodigoDizimista;
-        set => SetProperty(ref _filtroCodigoDizimista, value);
+        OnPropertyChanged(nameof(OfertasSelecionadas));
+        OnPropertyChanged(nameof(OfertasSelecionadas.Count));
     }
-
-    private List<Oferta> todasOfertas = new();
 
     public OfertaListViewModel(
-        OfertaCsvService csvService,
-        IUnitOfWork unitOfWork,
-        UpdateOfertaHandler updateHandler,
+        GetOfertaHandlers getHandlers,
         DeleteOfertaHandler deleteHandler,
-        RelatorioOfertasService relatorioOfertasService)
+        OfertaCsvService csvService,
+        IUnitOfWork unitOfWork)
     {
-        _csvService = csvService;
-        _unitOfWork = unitOfWork;
-        _updateHandler = updateHandler;
-        _deleteHandler = deleteHandler;
-        _relatorioOfertasService = relatorioOfertasService;
+        _getHandlers = getHandlers ?? throw new ArgumentNullException(nameof(getHandlers));
+        _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
+        _csvService = csvService ?? throw new ArgumentNullException(nameof(csvService));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        Ofertas = new ObservableCollection<Oferta>();
     }
 
     [RelayCommand]
     public async Task CarregarOfertasAsync()
     {
-        var lista = await _unitOfWork.Ofertas.GetAllAsync();
-        todasOfertas = lista is List<Oferta> l ? l : lista.ToList();
+        paginaAtual = 1;
+        await _unitOfWork.ClearDbContextAsync();
+        var lista = await _getHandlers.Handle(new GetAllOfertasQuery());
+        TodasOfertas = lista is List<Oferta> ofertaList ? ofertaList : lista.ToList();
+        
+        // Aplicar filtros automaticamente após carregar
         AplicarFiltros();
+    }
+
+    [RelayCommand]
+    public async Task CarregarMaisOfertasAsync()
+    {
+        if (carregandoMais) return;
+        carregandoMais = true;
+        paginaAtual++;
+        var lista = await _getHandlers.Handle(new GetAllOfertasQuery());
+        var sourceList = lista is List<Oferta> ofertaList ? ofertaList : lista.ToList();
+        int start = (paginaAtual - 1) * tamanhoPagina;
+        int count = Math.Min(tamanhoPagina, sourceList.Count - start);
+        if (count > 0)
+        {
+            var novos = sourceList.GetRange(start, count);
+            foreach (var o in novos)
+            {
+                Ofertas.Add(o);
+            }
+        }
+        carregandoMais = false;
     }
 
     [RelayCommand]
     public void AplicarFiltros()
     {
-        IEnumerable<Oferta> filtrados = todasOfertas;
+        IEnumerable<Oferta> filtrados = TodasOfertas;
+
+        // Filtro por data
         if (FiltroData != default)
             filtrados = filtrados.Where(o => o.Data.Date == FiltroData.Date);
-        if (int.TryParse(FiltroCodigoDizimista, out var codigo))
-            filtrados = filtrados.Where(o => {
+
+        // Filtro unificado: busca por nome do dizimista OU código do dizimista
+        if (!string.IsNullOrWhiteSpace(FiltroNome))
+        {
+            filtrados = filtrados.Where(o =>
+            {
                 var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId).Result;
-                return dizimista != null && dizimista.NumeroCadastro == codigo;
+                return dizimista != null && (
+                    dizimista.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
+                    dizimista.NumeroCadastro.ToString().Contains(FiltroNome));
             });
-        Ofertas = new ObservableCollection<Oferta>(filtrados);
+        }
+
+        var filteredList = filtrados is List<Oferta> ofertaList ? ofertaList : filtrados.ToList();
+        Ofertas = new ObservableCollection<Oferta>(filteredList);
     }
 
     [RelayCommand]
-    public async Task EditarOfertaAsync()
+    public async Task NovaOfertaAsync()
     {
-        if (SelectedOferta != null)
+        await Shell.Current.GoToAsync("oferta-cadastro");
+    }
+
+    [RelayCommand]
+    public async Task EditarOfertaAsync(Oferta oferta)
+    {
+        if (oferta != null)
         {
-            var query = $"oferta-cadastro?id={SelectedOferta.Id}";
-            await Shell.Current.GoToAsync(query);
+            var navigationParameter = new Dictionary<string, object>
+            {
+                { "id", oferta.Id.ToString() }
+            };
+            await Shell.Current.GoToAsync("oferta-cadastro", navigationParameter);
         }
     }
 
     [RelayCommand]
-    public async Task ExcluirOfertaAsync()
+    public async Task ExcluirOfertaAsync(Oferta oferta)
     {
-        if (SelectedOferta != null)
+        if (oferta == null) return;
+
+        var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (mainPage == null) return;
+
+        bool confirm = await mainPage.DisplayAlertAsync(
+            "Confirmação",
+            $"Deseja excluir a oferta de valor {oferta.Valor:C} em {oferta.Data:dd/MM/yyyy}?",
+            "Sim",
+            "Não"
+        );
+
+        if (confirm)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (mainPage == null)
+            try
             {
-                // Não é possível exibir o alerta sem uma página principal
-                return;
+                await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
+                await CarregarOfertasAsync();
+                await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluída com sucesso.", "OK");
             }
-            bool confirm = await mainPage.DisplayAlertAsync(
-                "Confirmação",
-                $"Deseja excluir a oferta de valor {SelectedOferta.Valor:C} em {SelectedOferta.Data:dd/MM/yyyy}?",
-                "Sim",
-                "Não"
-            );
-            if (confirm)
+            catch (Exception ex)
             {
-                try
-                {
-                    await _deleteHandler.Handle(new DeleteOfertaCommand(SelectedOferta.Id));
-                    await CarregarOfertasAsync();
-                    await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluída com sucesso.", "OK");
-                }
-                catch (Exception ex)
-                {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
-                }
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
             }
         }
+    }
+
+    [RelayCommand]
+    public async Task ExcluirOfertasSelecionadasAsync()
+    {
+        if (OfertasSelecionadas.Count == 0) return;
+        var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (mainPage != null)
+        {
+            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {OfertasSelecionadas.Count} oferta(s)?", "Sim", "Não");
+            if (!confirm) return;
+        }
+        foreach (var oferta in OfertasSelecionadas.ToList())
+        {
+            await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
+        }
+        await CarregarOfertasAsync();
+        OfertasSelecionadas.Clear();
     }
 
     [RelayCommand]
@@ -132,50 +226,58 @@ public partial class OfertaListViewModel : ObservableObject
     {
         try
         {
-            var csv = await _csvService.ExportarAsync();
-            var filePath = Path.Combine(FileSystem.Current.AppDataDirectory, "ofertas_export.csv");
-            File.WriteAllText(filePath, csv);
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Exportação", $"Arquivo exportado para: {filePath}", "OK");
-        }
-        catch (Exception ex)
-        {
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
-        }
-    }
+            // Exportar considerando os filtros aplicados
+            var csv = await _csvService.ExportarAsync(Ofertas.ToList());
 
-    [RelayCommand]
-    public async Task ImportarAsync()
-    {
-        try
-        {
-            var filePath = Path.Combine(FileSystem.Current.AppDataDirectory, "ofertas_import.csv");
-            var mainPage = GetMainPage();
-            if (!File.Exists(filePath))
+            var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+#if WINDOWS
+            var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
+
+            if (folder == null)
             {
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Importação", $"Coloque o arquivo 'ofertas_import.csv' em: {filePath}", "OK");
+                System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
                 return;
             }
-            var csv = File.ReadAllText(filePath);
-            var ofertas = await _csvService.ImportarAsync(csv);
-            foreach (var o in ofertas)
-            {
-                await _unitOfWork.Ofertas.AddAsync(o);
-            }
-            await _unitOfWork.SaveChangesAsync();
-            await CarregarOfertasAsync();
+
+            var filePath = Path.Combine(folder.Folder.Path, fileName);
+            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+
+            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
+
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Importação", $"Importação concluída com sucesso.", "OK");
+            {
+                await mainPage.DisplayAlertAsync("Exportação",
+                    $"Planilha de ofertas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+            }
+#else
+            var downloadsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "Downloads");
+
+            if (!Directory.Exists(downloadsPath))
+                Directory.CreateDirectory(downloadsPath);
+
+            var filePath = Path.Combine(downloadsPath, fileName);
+            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Exportação",
+                    $"Planilha de ofertas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+            }
+#endif
         }
         catch (Exception ex)
         {
-            var mainPage = GetMainPage();
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
+            {
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
+            }
         }
     }
 
@@ -184,64 +286,129 @@ public partial class OfertaListViewModel : ObservableObject
     {
         try
         {
-            var modeloPath = Path.Combine(FileSystem.Current.AppDataDirectory, "ofertas_modelo.csv");
-            var modeloOrigem = Path.Combine(AppContext.BaseDirectory, "ofertas_modelo.csv");
-            var mainPage = GetMainPage();
-            if (File.Exists(modeloOrigem))
+            var csv = _csvService.GerarModelo();
+            var fileName = "ofertas_modelo.csv";
+
+#if WINDOWS
+            var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
+
+            if (folder == null)
             {
-                File.Copy(modeloOrigem, modeloPath, true);
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Modelo", $"Arquivo modelo salvo em: {modeloPath}", "OK");
+                System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
+                return;
             }
-            else
+
+            var filePath = Path.Combine(folder.Folder.Path, fileName);
+            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+
+            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
+
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
             {
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Modelo", "Arquivo modelo não encontrado.", "OK");
+                await mainPage.DisplayAlertAsync("Modelo Baixado",
+                    $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
             }
+#else
+            var downloadsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "Downloads");
+
+            if (!Directory.Exists(downloadsPath))
+                Directory.CreateDirectory(downloadsPath);
+
+            var filePath = Path.Combine(downloadsPath, fileName);
+            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Modelo Baixado",
+                    $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
+            }
+#endif
         }
         catch (Exception ex)
         {
-            var mainPage = GetMainPage();
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
+
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
+            {
                 await mainPage.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
+            }
         }
     }
 
-    [ObservableProperty]
-    private decimal totalOfertasPorData;
-
     [RelayCommand]
-    public async Task GerarRelatorioPorDataAsync()
-    {
-        TotalOfertasPorData = await _relatorioOfertasService.GetTotalOfertasPorDataAsync(FiltroData);
-        var mainPage = GetMainPage();
-        if (mainPage != null)
-            await mainPage.DisplayAlertAsync("Relatório Ofertas", $"Total de ofertas em {FiltroData:dd/MM/yyyy}: {TotalOfertasPorData:C}", "OK");
-    }
-
-    [RelayCommand]
-    public async Task ExportarRelatorioPorDataAsync()
+    public async Task ImportarAsync()
     {
         try
         {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("DizimistaId,Valor,Data");
-            var ofertas = todasOfertas.Where(o => o.Data.Date == FiltroData.Date);
-            foreach (var o in ofertas)
-            {
-                sb.AppendLine($"{o.DizimistaId},{o.Valor.ToString(System.Globalization.CultureInfo.InvariantCulture)},{o.Data:yyyy-MM-dd}");
-            }
-            var filePath = System.IO.Path.Combine(FileSystem.Current.AppDataDirectory, "relatorio_ofertas_por_data.csv");
-            System.IO.File.WriteAllText(filePath, sb.ToString());
             var mainPage = GetMainPage();
+            
+            // Usar FilePicker para selecionar o arquivo
+            var result = await FilePicker.PickAsync(new PickOptions
+            {
+                PickerTitle = "Selecione um arquivo CSV",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.iOS, new[] { "public.comma-separated-values-text" } },
+                    { DevicePlatform.Android, new[] { "text/csv" } },
+                    { DevicePlatform.WinUI, new[] { ".csv" } },
+                    { DevicePlatform.MacCatalyst, new[] { "csv" } },
+                })
+            });
+
+            if (result == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
+                return;
+            }
+
+            // Ler o arquivo selecionado
+            var csv = await File.ReadAllTextAsync(result.FullPath, Encoding.UTF8);
+            var resultado = await _csvService.ImportarAsync(csv);
+            
+            // Adicionar ofertas importadas
+            foreach (var o in resultado.OfertasImportadas)
+            {
+                await _unitOfWork.Ofertas.AddAsync(o);
+            }
+            await _unitOfWork.SaveChangesAsync();
+            await CarregarOfertasAsync();
+            
+            // Montar mensagem de resultado
+            var mensagem = $"Importação concluída!\n\n";
+            mensagem += $"✓ Ofertas importadas: {resultado.OfertasImportadas.Count}\n";
+            
+            if (resultado.Erros.Count > 0)
+            {
+                mensagem += $"\n❌ Ofertas não importadas: {resultado.Erros.Count}\n\n";
+                mensagem += "Erros:\n";
+                
+                // Limitar a 10 erros para não deixar a mensagem muito grande
+                var errosExibir = resultado.Erros.Take(10).ToList();
+                foreach (var erro in errosExibir)
+                {
+                    mensagem += $"• {erro}\n";
+                }
+                
+                if (resultado.Erros.Count > 10)
+                {
+                    mensagem += $"\n... e mais {resultado.Erros.Count - 10} erro(s)";
+                }
+            }
+            
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Exportação", $"Relatório de ofertas exportado para: {filePath}", "OK");
+                await mainPage.DisplayAlertAsync("Resultado da Importação", mensagem, "OK");
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
             var mainPage = GetMainPage();
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar relatório: {ex.Message}", "OK");
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
         }
     }
 

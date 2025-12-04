@@ -32,7 +32,7 @@
             <!-- Botão de excluir -->
             <Button Grid.Column="2" 
                     Text="Excluir"
-                    ImageSource="{StaticResource IconTrash}"
+                    ImageSource="{StaticResource IconDelete}"
                     Command="{Binding ExcluirCommand}"
                     Style="{StaticResource NavButtonStyle}"
                     Padding="12"

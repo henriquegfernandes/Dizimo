@@ -44,24 +44,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <StackLayout Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Padding="10,10,0,0">
-                <ImageButton 
-                    Source="{StaticResource IconDashboard}" 
-                    HeightRequest="32" 
-                    WidthRequest="32" 
-                    BackgroundColor="Transparent" 
-                    Clicked="OnMenuButtonClicked" />
-                <Image HorizontalOptions="Start" Aspect="Center">
-                    <Image.Source>
-                        <FontImageSource 
-                        Glyph="{Binding Icon}" 
-                        FontFamily="{x:Static fonts:FluentUI.FontFamily}" 
-                        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                        Size="{StaticResource IconSize}"/>
-                    </Image.Source>
-                </Image>
-                <Label Text="Menu" VerticalOptions="Center" FontSize="18" Margin="5,0,0,0" />
-            </StackLayout>
             <Grid Grid.Row="1" Grid.ColumnSpan="2">
                 <pullToRefresh:SfPullToRefresh
                     IsRefreshing="{Binding IsRefreshing}"

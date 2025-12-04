@@ -18,32 +18,32 @@
             <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
                 <StackLayout Padding="16" Spacing="12">
                     <!-- Filtro unificado -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,Auto">
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,*,Auto">
+                        <Picker ItemsSource="{Binding StatusOptions}" 
+                                SelectedItem="{Binding StatusSelecionado}"
+                                Grid.Column="0"
+                                BackgroundColor="#E0E0E0" />
                         <Entry Placeholder="Buscar por nome ou número" 
                                Text="{Binding FiltroNome}" 
-                               Grid.Column="0"
+                               Grid.Column="1"
                                BackgroundColor="#E0E0E0" 
                                TextColor="#333333" 
                                Completed="OnFiltroCompleted" />
                         <Button Text="Filtrar" 
                                 Command="{Binding AplicarFiltrosCommand}" 
-                                Grid.Column="1"
+                                Grid.Column="2"
                                 Padding="16,0"
                                 VerticalOptions="Center" />
                     </Grid>
                     <!-- Linha de botões de exportação/importação/modelo e filtro de ativos/inativos -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="3*,3*,3*,3*">
-                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,0,0,8" Grid.Column="0">
-                            <Label Text="Mostrar:" VerticalOptions="Center" />
-                            <Picker ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding StatusSelecionado}" BackgroundColor="#E0E0E0" />
-                        </StackLayout>
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="3*,3*,3*">
                         <Button Text="Exportar Planilha"
                                 Command="{Binding ExportarCommand}" 
                                 ImageSource="{StaticResource IconExport}" 
                                 ToolTipProperties.Text="Exportar Planilha" 
                                 CornerRadius="8"
                                 Padding="10"
-                                Grid.Column="1"
+                                Grid.Column="0"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         <Button Text="Baixar Planilha Modelo"
@@ -52,7 +52,7 @@
                                 ToolTipProperties.Text="Baixar Planilha Modelo" 
                                 CornerRadius="8"
                                 Padding="10"
-                                Grid.Column="2"
+                                Grid.Column="1"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         <Button Text="Importar Planilha"
@@ -61,7 +61,7 @@
                                 ToolTipProperties.Text="Importar Planilha" 
                                 CornerRadius="8"
                                 Padding="10"
-                                Grid.Column="3"
+                                Grid.Column="2"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                     </Grid>
