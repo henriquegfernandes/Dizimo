@@ -54,6 +54,69 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         CEP = Cep
     };
 
+    /// <summary>
+    /// Remove caracteres especiais de campos numéricos
+    /// </summary>
+    private void LimparCamposNumericos()
+    {
+        // Remove caracteres não numéricos do telefone
+        Telefone = new string(Telefone.Where(char.IsDigit).ToArray());
+        
+        // Remove caracteres não numéricos do whatsapp
+        Whatsapp = new string(Whatsapp.Where(char.IsDigit).ToArray());
+        
+        // Remove caracteres não numéricos do CEP
+        Cep = new string(Cep.Where(char.IsDigit).ToArray());
+        
+        // Remove caracteres não numéricos do número
+        Numero = new string(Numero.Where(char.IsDigit).ToArray());
+    }
+
+    /// <summary>
+    /// Valida os campos de telefone, whatsapp e CEP
+    /// </summary>
+    /// <returns>Mensagem de erro, ou null se válido</returns>
+    private string? ValidarCampos()
+    {
+        // Contar apenas dígitos do telefone
+        var telefoneLimpo = new string(Telefone.Where(char.IsDigit).ToArray());
+        
+        // Contar apenas dígitos do whatsapp
+        var whatsappLimpo = new string(Whatsapp.Where(char.IsDigit).ToArray());
+        
+        // Contar apenas dígitos do CEP
+        var cepLimpo = new string(Cep.Where(char.IsDigit).ToArray());
+
+        // Validar telefone
+        if (!string.IsNullOrWhiteSpace(telefoneLimpo))
+        {
+            if (telefoneLimpo.Length < 10 || telefoneLimpo.Length > 11)
+            {
+                return "Telefone deve conter entre 10 e 11 dígitos.";
+            }
+        }
+
+        // Validar whatsapp
+        if (!string.IsNullOrWhiteSpace(whatsappLimpo))
+        {
+            if (whatsappLimpo.Length < 10 || whatsappLimpo.Length > 11)
+            {
+                return "WhatsApp deve conter entre 10 e 11 dígitos.";
+            }
+        }
+
+        // Validar CEP
+        if (!string.IsNullOrWhiteSpace(cepLimpo))
+        {
+            if (cepLimpo.Length != 8)
+            {
+                return "CEP deve conter exatamente 8 dígitos.";
+            }
+        }
+
+        return null;
+    }
+
     public async void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var dizimistaId))
@@ -103,6 +166,21 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     [RelayCommand]
     public async Task SalvarAsync()
     {
+        // Limpar caracteres especiais antes de salvar
+        LimparCamposNumericos();
+        
+        // Validar campos
+        var erroValidacao = ValidarCampos();
+        if (!string.IsNullOrEmpty(erroValidacao))
+        {
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync("Erro de Validação", erroValidacao, "OK");
+            }
+            return;
+        }
+        
         if (IsEditMode)
         {
             await _updateHandler.Handle(new UpdateDizimistaCommand(Id, NumeroCadastro, Nome, DataNascimento, Ativo, Endereco, Telefone, Whatsapp, DataCadastro));

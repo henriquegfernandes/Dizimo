@@ -13,11 +13,10 @@
         <Grid Grid.Row="0" Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
             <!-- Botão de voltar -->
             <Button Grid.Column="0" 
+                    Text="Voltar"
                     ImageSource="{StaticResource IconLeftArrow}"
-                    Text="Voltar "
                     Clicked="OnBackButtonClicked"
                     Style="{StaticResource NavButtonStyle}"
-                    HeightRequest="50"
                     Padding="12"
                     HorizontalOptions="Start"
                     VerticalOptions="Center" />
@@ -31,12 +30,11 @@
                    VerticalOptions="Center" />
             
             <!-- Botão de excluir -->
-            <Button Grid.Column="2"
-                    ImageSource="{StaticResource IconTrash}"
+            <Button Grid.Column="2" 
                     Text="Excluir"
+                    ImageSource="{StaticResource IconTrash}"
                     Command="{Binding ExcluirCommand}"
                     Style="{StaticResource NavButtonStyle}"
-                    HeightRequest="50"
                     Padding="12"
                     HorizontalOptions="End"
                     VerticalOptions="Center" />
@@ -59,11 +57,11 @@
 
                 <!-- Telefone -->
                 <Label Grid.Row="3" Grid.Column="0" Text="Telefone:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="3" Grid.Column="1" Text="{Binding Dizimista.Telefone}" VerticalOptions="Center"/>
+                <Label Grid.Row="3" Grid.Column="1" Text="{Binding TelefoneFormatado}" VerticalOptions="Center"/>
 
                 <!-- WhatsApp -->
                 <Label Grid.Row="4" Grid.Column="0" Text="WhatsApp:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="4" Grid.Column="1" Text="{Binding Dizimista.Whatsapp}" VerticalOptions="Center"/>
+                <Label Grid.Row="4" Grid.Column="1" Text="{Binding WhatsappFormatado}" VerticalOptions="Center"/>
 
                 <!-- Endereço -->
                 <Label Grid.Row="5" Grid.Column="0" Text="Endereço:" FontAttributes="Bold" VerticalOptions="Start" Margin="0,5,0,0"/>
@@ -78,11 +76,11 @@
                 <Label Grid.Row="7" Grid.Column="1" Text="{Binding Dizimista.Ativo, Converter={StaticResource AtivoStatusConverter}}" VerticalOptions="Center"/>
 
                 <!-- Botões -->
-                <Grid Grid.Row="8" Grid.ColumnSpan="2" ColumnDefinitions="*" ColumnSpacing="10" Margin="0,20,0,0">
-                    <Button Grid.Column="1" 
-                            Text="Editar" 
-                            Command="{Binding EditarCommand}" 
-                            ImageSource="{StaticResource IconEdit}"/>
+                <Grid Grid.Row="8" Grid.ColumnSpan="2" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20,0,0">
+                    <Button Grid.Column="0" Text="Editar" Command="{Binding EditarCommand}"/>
+                    <Button Grid.Column="1"
+                            Text="{Binding AtivarInativarText}"
+                            Command="{Binding AtivarInativarCommand}"/>
                 </Grid>
             </Grid>
         </ScrollView>

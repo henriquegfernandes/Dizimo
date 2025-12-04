@@ -14,6 +14,17 @@ public class DizimoDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<Dizimista>().OwnsOne(d => d.Endereco);
+        
+        // Configurar Endereco como owned type com todas as propriedades necessárias
+        modelBuilder.Entity<Dizimista>().OwnsOne(d => d.Endereco, enderecoBuilder =>
+        {
+            enderecoBuilder.Property(e => e.Rua).IsRequired();
+            enderecoBuilder.Property(e => e.Numero).IsRequired();
+            enderecoBuilder.Property(e => e.Complemento).IsRequired();
+            enderecoBuilder.Property(e => e.Bairro).IsRequired();
+            enderecoBuilder.Property(e => e.Cidade).IsRequired();
+            enderecoBuilder.Property(e => e.UF).IsRequired();
+            enderecoBuilder.Property(e => e.CEP).IsRequired();
+        });
     }
 }

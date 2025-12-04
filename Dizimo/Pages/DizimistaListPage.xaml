@@ -16,7 +16,6 @@
     <Grid>
         <ScrollView>
             <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
-                <Label Text="Dizimistas" FontSize="24" HorizontalOptions="Center" />
                 <StackLayout Padding="16" Spacing="12">
                     <!-- Filtro unificado -->
                     <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,Auto">

@@ -217,23 +217,23 @@ namespace Dizimo.ViewModels
                 System.Diagnostics.Debug.WriteLine("[INFO] ExportarAsync iniciado");
                 var csv = await _csvService.ExportarAsync();
                 
-                // Permita que o usuário escolha a pasta usando FolderPicker
+                // Abrir diálogo de salvar arquivo nativo
+                var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                
+#if WINDOWS
+                // Usar Windows API para diálogo de save file
                 var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
                 
                 if (folder == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada - pasta não selecionada");
+                    System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
                     return;
                 }
 
-                // Gerar nome do arquivo com timestamp
-                var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
                 var filePath = Path.Combine(folder.Folder.Path, fileName);
-                
-                // Salvar o arquivo
                 await File.WriteAllTextAsync(filePath, csv);
                 
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo salvo em: {filePath}");
+                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
 
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
@@ -241,74 +241,34 @@ namespace Dizimo.ViewModels
                     await mainPage.DisplayAlertAsync("Exportação", 
                         $"Planilha de dizimistas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
                 }
+#else
+                // Para outras plataformas, usar comportamento padrão
+                var downloadsPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Downloads");
+                
+                if (!Directory.Exists(downloadsPath))
+                    Directory.CreateDirectory(downloadsPath);
+                
+                var filePath = Path.Combine(downloadsPath, fileName);
+                await File.WriteAllTextAsync(filePath, csv);
+                
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Exportação", 
+                        $"Planilha de dizimistas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+                }
+#endif
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
-                }
-            }
-        }
-
-        [RelayCommand]
-        public async Task ImportarAsync()
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
-                
-                // Permitir o usuário selecionar o arquivo CSV
-                var result = await FilePicker.Default.PickAsync(new PickOptions
-                {
-                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                    {
-                        { DevicePlatform.WinUI, new[] { ".csv" } },
-                        { DevicePlatform.Android, new[] { "text/*" } },
-                        { DevicePlatform.iOS, new[] { "public.comma-separated-values-text" } }
-                    }),
-                    PickerTitle = "Selecionar arquivo CSV de dizimistas para importar"
-                });
-
-                if (result == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {result.FullPath}");
-                var csv = File.ReadAllText(result.FullPath);
-                var dizimistas = await _csvService.ImportarAsync(csv);
-                
-                System.Diagnostics.Debug.WriteLine($"[INFO] {dizimistas.Count} dizimistas lidos do arquivo");
-                
-                foreach (var d in dizimistas)
-                {
-                    await _unitOfWork.Dizimistas.AddAsync(d);
-                }
-                await _unitOfWork.SaveChangesAsync();
-                await CarregarDizimistasAsync();
-                
-                System.Diagnostics.Debug.WriteLine("[INFO] Importação concluída com sucesso");
-                
-                var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPageSuccess != null)
-                {
-                    await mainPageSuccess.DisplayAlertAsync("Importação", 
-                        $"Importação concluída com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
-                
-                var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPageError != null)
-                {
-                    await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
                 }
             }
         }
@@ -321,22 +281,21 @@ namespace Dizimo.ViewModels
                 System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
                 
                 var csv = _csvService.GerarModeloAsync();
-                
-                // Permita que o usuário escolha a pasta usando FolderPicker
+                var fileName = "dizimistas_modelo.csv";
+
+#if WINDOWS
+                // Usar Windows API para diálogo de save file
                 var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
                 
                 if (folder == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado - pasta não selecionada");
+                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
                     return;
                 }
 
-                var fileName = "dizimistas_modelo.csv";
                 var filePath = Path.Combine(folder.Folder.Path, fileName);
-                
-                // Salvar o arquivo
                 await File.WriteAllTextAsync(filePath, csv);
-
+                
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
 
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
@@ -345,10 +304,30 @@ namespace Dizimo.ViewModels
                     await mainPage.DisplayAlertAsync("Modelo Baixado", 
                         $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
                 }
+#else
+                // Para outras plataformas, usar comportamento padrão
+                var downloadsPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Downloads");
+                
+                if (!Directory.Exists(downloadsPath))
+                    Directory.CreateDirectory(downloadsPath);
+                
+                var filePath = Path.Combine(downloadsPath, fileName);
+                await File.WriteAllTextAsync(filePath, csv);
+                
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Modelo Baixado", 
+                        $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
+                }
+#endif
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
                 
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
