@@ -27,7 +27,7 @@ jobs:
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
-          path: ~/.nuget/packages
+          path: ${{ env.USERPROFILE }}/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
@@ -42,7 +42,7 @@ jobs:
         run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --no-build --configuration Release --logger trx
 
       - name: Publish Windows App
-        run: dotnet publish Dizimo/Dizimo.csproj -c Release -r win10-x64 --output ./publish-win --self-contained false
+        run: dotnet publish Dizimo/Dizimo.csproj -c Release -r win-x64 --output ./publish-win --self-contained false
 
       - name: Zip Windows App Artifact
         run: Compress-Archive -Path ./publish-win/* -DestinationPath ./Dizimo-Windows-App.zip
