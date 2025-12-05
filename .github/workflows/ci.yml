@@ -32,11 +32,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore dependencies for Windows
+        run: dotnet restore -r win-x64
 
       - name: Build solution for Windows
-        run: dotnet build Dizimo/Dizimo.csproj --no-restore --configuration Release -f net10.0-windows10.0.19041.0
+        run: dotnet build Dizimo/Dizimo.csproj --no-restore --configuration Release -f net10.0-windows10.0.19041.0 -r win-x64
 
       - name: Run tests
         run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --no-restore --configuration Release --logger trx
