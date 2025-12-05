@@ -19,7 +19,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Install MAUI Workloads
-        run: dotnet workload install maui --source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10/nuget/v3/index.json
+        run: dotnet workload install maui
 
       - name: Restore workloads
         run: dotnet workload restore
