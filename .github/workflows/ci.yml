@@ -33,13 +33,13 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore --runtime win-x64
+        run: dotnet restore
 
-      - name: Build solution
-        run: dotnet build Dizimo.slnx --no-restore --configuration Release --runtime win-x64
+      - name: Build solution for Windows
+        run: dotnet build Dizimo/Dizimo.csproj --no-restore --configuration Release -f net10.0-windows10.0.19041.0
 
       - name: Run tests
-        run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --no-build --configuration Release --logger trx
+        run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --no-restore --configuration Release --logger trx
 
       - name: Publish Windows App
         run: dotnet publish Dizimo/Dizimo.csproj -c Release -r win-x64 --output ./publish-win --self-contained false
