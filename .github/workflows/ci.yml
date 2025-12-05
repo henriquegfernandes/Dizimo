@@ -24,6 +24,9 @@ jobs:
       - name: Restore workloads
         run: dotnet workload restore
 
+      - name: Add .NET 10 preview NuGet source
+        run: dotnet nuget add source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10/nuget/v3/index.json -n dotnet10
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -33,7 +36,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore --runtime win-x64
+        run: dotnet restore
 
       - name: Build solution
         run: dotnet build Dizimo.slnx --no-restore --configuration Release
