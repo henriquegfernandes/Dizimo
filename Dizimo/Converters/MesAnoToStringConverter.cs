@@ -7,7 +7,7 @@ namespace Dizimo.Converters;
 
 public class MesAnoToStringConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         // Este converter esperará receber a entidade Oferta completa
         if (value is Oferta oferta)
@@ -24,7 +24,7 @@ public class MesAnoToStringConverter : IValueConverter
         return string.Empty;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

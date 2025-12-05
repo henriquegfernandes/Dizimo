@@ -1,116 +1,222 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:pageModels="clr-namespace:Dizimo.PageModels"             
-             xmlns:models="clr-namespace:Dizimo.Models"
-             xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
-             xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             xmlns:fonts="clr-namespace:Fonts"
-             x:Class="Dizimo.Pages.MainPage"
-             x:DataType="pageModels:MainPageModel"
-             x:Name="OverviewPage"
-             Title="{Binding Today}">
-
-    <ContentPage.Behaviors>
-        <toolkit:EventToCommandBehavior
-                BindingContext="{Binding Path=BindingContext, Source={x:Reference OverviewPage}, x:DataType=ContentPage}"
-                EventName="NavigatedTo"
-                Command="{Binding NavigatedToCommand}" />
-        <toolkit:EventToCommandBehavior
-                BindingContext="{Binding Path=BindingContext, Source={x:Reference OverviewPage}, x:DataType=ContentPage}"
-                EventName="NavigatedFrom"
-                Command="{Binding NavigatedFromCommand}" />
-        <toolkit:EventToCommandBehavior
-                BindingContext="{Binding Path=BindingContext, Source={x:Reference OverviewPage}, x:DataType=ContentPage}"
-                EventName="Appearing"                
-                Command="{Binding AppearingCommand}" />
-    </ContentPage.Behaviors>
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            xmlns:viewModels="clr-namespace:Dizimo.ViewModels"
+            xmlns:domain="clr-namespace:Dizimo.Domain.Entities;assembly=Dizimo.Domain"
+            xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
+            xmlns:converters="clr-namespace:Dizimo.Converters"
+            xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+            xmlns:chart="clr-namespace:Syncfusion.Maui.Toolkit.Charts;assembly=Syncfusion.Maui.Toolkit"
+            x:Class="Dizimo.Pages.MainPage"
+            x:DataType="viewModels:MainPageViewModel"
+            x:Name="DashboardPage"
+            Title="{Binding Titulo}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <controls:DizimistaPeriodoColorConverter x:Key="DizimistaPeriodoColorConverter" />
+            <converters:StringToMesVisibilityConverter x:Key="StringToMesVisibilityConverter" />
+            <converters:IntToIndexConverter x:Key="IntToIndexConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid>
-        <!-- Botão de menu no topo esquerdo -->
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid Grid.Row="1" Grid.ColumnSpan="2">
-                <pullToRefresh:SfPullToRefresh
-                    IsRefreshing="{Binding IsRefreshing}"
-                    RefreshCommand="{Binding RefreshCommand}">
-                    <pullToRefresh:SfPullToRefresh.PullableContent>
-                        <ScrollView>
-                            <Grid Padding="{StaticResource LayoutPadding}" RowSpacing="{StaticResource LayoutSpacing}">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+    <Grid RowDefinitions="*" ColumnDefinitions="*">
+        <ScrollView Grid.Row="0" Grid.Column="0">
+            <VerticalStackLayout Padding="{StaticResource LayoutPadding}" 
+                                Spacing="{StaticResource LayoutSpacing}">
 
-                                <Label Grid.Row="0" Text="Task Categories" Style="{StaticResource Title2}" SemanticProperties.HeadingLevel="Level1"/>
-                                <controls:CategoryChart Grid.Row="1" />
-                                <Label Grid.Row="2" Text="Projects" Style="{StaticResource Title2}" SemanticProperties.HeadingLevel="Level1"/>
-                                <CollectionView Grid.Row="3" ItemsSource="{Binding Projects}"
-                                                Margin="-7.5,0"
-                                                MinimumHeightRequest="250"
-                                                x:Name="ProjectsCollectionView"
-                                                SelectionMode="Single"
-                                                SelectedItem="{Binding SelectedProject}"
-                                                SelectionChangedCommand="{Binding NavigateToProjectCommand, Source={RelativeSource AncestorType={x:Type pageModels:MainPageModel}}, x:DataType=pageModels:MainPageModel}"
-                                                SelectionChangedCommandParameter="{Binding SelectedProject}">
-                                    <CollectionView.ItemsLayout>
-                                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="7.5"/>
-                                    </CollectionView.ItemsLayout>
-                                    <CollectionView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:Project">
-                                            <controls:ProjectCardView WidthRequest="200" />
-                                        </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-                                </CollectionView>
-                                <Grid Grid.Row="4" MinimumHeightRequest="44">
-                                    <Label Text="Tasks" Style="{StaticResource Title2}" VerticalOptions="Center" SemanticProperties.HeadingLevel="Level1"/>
-                                    <ImageButton 
-                                        Source="{StaticResource IconClean}"
-                                        HorizontalOptions="End"
-                                        VerticalOptions="Center"
-                                        Aspect="Center"
-                                        HeightRequest="44"
-                                        WidthRequest="44"
-                                        IsVisible="{Binding HasCompletedTasks}"
-                                        Command="{Binding CleanTasksCommand}"
-                                        SemanticProperties.Description="Clean tasks" />
-                                </Grid>
-                                <VerticalStackLayout Grid.Row="5" Spacing="15"
-                                    BindableLayout.ItemsSource="{Binding Tasks}">
-                                    <BindableLayout.ItemTemplate>
-                                        <DataTemplate>
-                                            <controls:TaskView TaskCompletedCommand="{Binding TaskCompletedCommand, Source={RelativeSource AncestorType={x:Type pageModels:MainPageModel}}, x:DataType=pageModels:MainPageModel}" />
-                                        </DataTemplate>
-                                    </BindableLayout.ItemTemplate>
-                                </VerticalStackLayout>
+                <!-- Seção: Aniversariantes -->
+                <Grid ColumnDefinitions="*,Auto" 
+    RowDefinitions="Auto" 
+    ColumnSpacing="10">
+                    <Label Grid.Column="0"
+        Text="Aniversariantes" 
+        Style="{StaticResource Title2}" 
+        SemanticProperties.HeadingLevel="Level1" 
+        VerticalOptions="Center" />
+                    <HorizontalStackLayout Grid.Column="1" 
+                        Spacing="8" 
+                        VerticalOptions="Center">
+                        <Button Text="{Binding TextoBotaoAlternarVisualizacao}"
+                                Command="{Binding AlternarVisualizacaoCommand}"
+                                Padding="12,8"
+                                FontSize="12"
+                                BackgroundColor="#800000"
+                                TextColor="White"
+                                CornerRadius="5" />
+                        <Button Text="Exportar"
+                                Command="{Binding ExportarAniversariantesCommand}"
+                                Padding="12,8"
+                                FontSize="12"
+                                BackgroundColor="#800000"
+                                TextColor="White"
+                                CornerRadius="5" />
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Seletor de Mês (visível apenas quando visualização é "Mês") -->
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10"
+                      IsVisible="{Binding VisualizacaoAtual, Converter={StaticResource StringToMesVisibilityConverter}}">
+                    <Label Grid.Column="0"
+                        Text="Selecionar Mês:"
+                        VerticalOptions="Center"
+                        FontAttributes="Bold"
+                        FontSize="14" />
+                    <Picker Grid.Column="1"
+                        ItemsSource="{Binding MesesDisponiveis}"
+                        SelectedIndex="{Binding IndiceMesSelecionado}"
+                        TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                        BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" />
+                </Grid>
+                <!-- Lista de Aniversariantes -->
+                <Border StrokeShape="RoundRectangle 10"
+                        Padding="0"
+                        BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2c3e50}">
+                    <CollectionView ItemsSource="{Binding Aniversariantes}"
+                                    SelectionMode="None"
+                                    MinimumHeightRequest="200">
+                        <CollectionView.EmptyView>
+                            <Grid Padding="20"
+                                  RowDefinitions="Auto"
+                                  VerticalOptions="Center"
+                                  HorizontalOptions="Center">
+                                <Label Text="Nenhum aniversariante neste período"
+                                       HorizontalTextAlignment="Center"
+                                       FontSize="14"
+                                       TextColor="Gray" />
                             </Grid>
-                        </ScrollView>
-                    </pullToRefresh:SfPullToRefresh.PullableContent>
-                </pullToRefresh:SfPullToRefresh>
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="domain:Dizimista">
+                                <VerticalStackLayout Spacing="0">
+                                    <Grid Padding="15" 
+                                        RowDefinitions="Auto" 
+                                        ColumnDefinitions="*,Auto" 
+                                        ColumnSpacing="10">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                            <Label Text="{Binding Nome}" 
+                                                    FontAttributes="Bold" 
+                                                    FontSize="14" />
+                                            <Label Text="{Binding DataNascimento, StringFormat='Aniversário: {0:dd/MM}'}"
+                                                    FontSize="12"
+                                                    TextColor="Gray" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="1"
+                                                Text="{Binding NumeroCadastro, StringFormat='#{0}'}"
+                                                VerticalOptions="Center"
+                                                FontSize="12"
+                                                FontAttributes="Bold" />
+                                    </Grid>
+                                    <BoxView HeightRequest="1" 
+                                            Color="#E5E7EB"
+                                            Margin="0" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
 
-                <controls:AddButton 
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    Command="{Binding AddTaskCommand}"
-                    SemanticProperties.Description="Add task" />
-            </Grid>
-        </Grid>
+                <!-- Seção: Dizimistas por Período de Última Oferta -->
+                <Label Text="Dizimistas por Período de Última Oferta"
+                    Style="{StaticResource Title2}" 
+                    SemanticProperties.HeadingLevel="Level1"
+                       Margin="0,20,0,0"/>
+
+                <!-- Gráfico Circular -->
+                <Border StrokeShape="RoundRectangle 10"
+                    Padding="12"
+                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2c3e50}"
+                    HeightRequest="400">
+                    <chart:SfCircularChart>
+                        <chart:DoughnutSeries 
+                            ItemsSource="{Binding DizimistasAgrupadosPeriodo}"
+                            PaletteBrushes="{Binding DizimistasAgrupadosPeriodo, Converter={StaticResource DizimistaPeriodoColorConverter}}"
+                            XBindingPath="Periodo"
+                            YBindingPath="Quantidade"
+                            ShowDataLabels="True"
+                            EnableTooltip="True"
+                            EnableAnimation="True"
+                            x:Name="doughnutSeries"
+                            Radius="{OnIdiom 0.8, Phone=0.6}"
+                            InnerRadius="0.5">
+                            <chart:DoughnutSeries.TooltipTemplate>
+                                <DataTemplate x:DataType="chart:TooltipInfo">
+                                    <VerticalStackLayout Padding="10" Spacing="4">
+                                        <Label Text="{Binding Item.Periodo, StringFormat='Período: {0}'}"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            TextColor="White" />
+                                        <Label Text="{Binding Item.Quantidade, StringFormat='Quantidade: {0}'}"
+                                            FontSize="11"
+                                            TextColor="White" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </chart:DoughnutSeries.TooltipTemplate>
+                            <chart:DoughnutSeries.DataLabelSettings>
+                                <chart:CircularDataLabelSettings LabelPosition="Outside" SmartLabelAlignment="Shift">
+                                    <chart:CircularDataLabelSettings.ConnectorLineSettings>
+                                        <chart:ConnectorLineStyle ConnectorType="Line" StrokeWidth="2" Stroke="#800000" />
+                                    </chart:CircularDataLabelSettings.ConnectorLineSettings>
+                                </chart:CircularDataLabelSettings>
+                            </chart:DoughnutSeries.DataLabelSettings>
+                        </chart:DoughnutSeries>
+                    </chart:SfCircularChart>
+                </Border>
+
+                <!-- Legenda das cores em Grid 2x2 -->
+                <Grid ColumnDefinitions="*,*" 
+                    RowDefinitions="Auto,Auto" 
+                    ColumnSpacing="20" 
+                    RowSpacing="10"
+                    Margin="10">
+                    <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8">
+                        <BoxView BackgroundColor="#22C55E" 
+                            WidthRequest="14" 
+                            HeightRequest="14" 
+                            CornerRadius="2" />
+                        <Label Text="Últimos 2 meses" 
+                            VerticalOptions="Center" 
+                            FontSize="12" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8">
+                        <BoxView BackgroundColor="#FBBF24" 
+                            WidthRequest="14" 
+                            HeightRequest="14" 
+                            CornerRadius="2" />
+                        <Label Text="2-6 meses" 
+                            VerticalOptions="Center" 
+                            FontSize="12" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
+                        <BoxView BackgroundColor="#F97316" 
+                            WidthRequest="14" 
+                            HeightRequest="14" 
+                            CornerRadius="2" />
+                        <Label Text="6-12 meses" 
+                            VerticalOptions="Center" 
+                            FontSize="12" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
+                        <BoxView BackgroundColor="#EF4444" 
+                            WidthRequest="14" 
+                            HeightRequest="14" 
+                            CornerRadius="2" />
+                        <Label Text="Mais de 1 ano" 
+                            VerticalOptions="Center" 
+                            FontSize="12" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Indicador de Carregamento -->
+        <ActivityIndicator Grid.Row="0" 
+                        Grid.Column="0"
+                        IsRunning="{Binding IsBusy}"
+                        IsVisible="{Binding IsBusy}"
+                        Color="#800000"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center" />
     </Grid>
 </ContentPage>

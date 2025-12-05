@@ -16,68 +16,94 @@ public partial class UsuarioListViewModel : ObservableObject
     private readonly UpdateUsuarioHandler _updateHandler;
     private readonly DeleteUsuarioHandler _deleteHandler;
     private readonly InativarUsuarioHandler _inativarHandler;
-    private readonly SessaoService _sessaoService;
 
-    [ObservableProperty] private ObservableCollection<Usuario> usuarios = new();
-    [ObservableProperty] private Usuario? selectedUsuario;
+    public List<Usuario> TodosUsuarios { get; private set; } = new List<Usuario>();
 
-    [ObservableProperty] private string nome = string.Empty;
-    [ObservableProperty] private string login = string.Empty;
-    [ObservableProperty] private string senha = string.Empty;
-    [ObservableProperty] private bool ativo = true;
-    [ObservableProperty] private Guid id;
-    [ObservableProperty] private bool isEditMode;
+    private ObservableCollection<Usuario> _usuarios = new();
+    public ObservableCollection<Usuario> Usuarios
+    {
+        get => _usuarios;
+        private set => SetProperty(ref _usuarios, value);
+    }
+
+    private Usuario? _selectedUsuario;
+    public Usuario? SelectedUsuario
+    {
+        get => _selectedUsuario;
+        set => SetProperty(ref _selectedUsuario, value);
+    }
+
+    private string _filtroNome = string.Empty;
+    public string FiltroNome
+    {
+        get => _filtroNome;
+        set => SetProperty(ref _filtroNome, value);
+    }
+
+    private ObservableCollection<Usuario> _usuariosSelecionados = new();
+    public ObservableCollection<Usuario> UsuariosSelecionados
+    {
+        get => _usuariosSelecionados;
+        set
+        {
+            if (_usuariosSelecionados != null)
+                _usuariosSelecionados.CollectionChanged -= UsuariosSelecionados_CollectionChanged;
+            SetProperty(ref _usuariosSelecionados, value);
+            if (_usuariosSelecionados != null)
+                _usuariosSelecionados.CollectionChanged += UsuariosSelecionados_CollectionChanged;
+            OnPropertyChanged(nameof(UsuariosSelecionados));
+            OnPropertyChanged(nameof(UsuariosSelecionados.Count));
+        }
+    }
+
+    private void UsuariosSelecionados_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(UsuariosSelecionados));
+        OnPropertyChanged(nameof(UsuariosSelecionados.Count));
+    }
 
     public UsuarioListViewModel(
         GetUsuarioHandlers getHandlers,
         CreateUsuarioHandler createHandler,
         UpdateUsuarioHandler updateHandler,
         DeleteUsuarioHandler deleteHandler,
-        InativarUsuarioHandler inativarHandler,
-        SessaoService sessaoService)
+        InativarUsuarioHandler inativarHandler)
     {
-        _getHandlers = getHandlers;
-        _createHandler = createHandler;
-        _updateHandler = updateHandler;
-        _deleteHandler = deleteHandler;
-        _inativarHandler = inativarHandler;
-        _sessaoService = sessaoService;
+        _getHandlers = getHandlers ?? throw new ArgumentNullException(nameof(getHandlers));
+        _createHandler = createHandler ?? throw new ArgumentNullException(nameof(createHandler));
+        _updateHandler = updateHandler ?? throw new ArgumentNullException(nameof(updateHandler));
+        _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
+        _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
     }
 
     [RelayCommand]
     public async Task CarregarUsuariosAsync()
     {
         var lista = await _getHandlers.Handle(new GetAllUsuariosQuery());
-        Usuarios = new ObservableCollection<Usuario>(lista);
+        TodosUsuarios = lista is List<Usuario> usuarioList ? usuarioList : lista.ToList();
+        Usuarios = new ObservableCollection<Usuario>(TodosUsuarios);
     }
 
     [RelayCommand]
-    public async Task SalvarAsync()
+    public void AplicarFiltros()
     {
-        if (IsEditMode)
+        IEnumerable<Usuario> filtrados = TodosUsuarios;
+
+        if (!string.IsNullOrWhiteSpace(FiltroNome))
         {
-            await _updateHandler.Handle(new UpdateUsuarioCommand(Id, Nome, Login, SessaoService.HashSenha(Senha), Ativo));
+            filtrados = filtrados.Where(u => u.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
+                                             u.Login.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase));
         }
-        else
-        {
-            await _createHandler.Handle(new CreateUsuarioCommand(Nome, Login, SessaoService.HashSenha(Senha)));
-        }
-        await CarregarUsuariosAsync();
-        LimparCampos();
+
+        var filteredList = filtrados is List<Usuario> usuarioList ? usuarioList : filtrados.ToList();
+        Usuarios = new ObservableCollection<Usuario>(filteredList);
     }
 
     [RelayCommand]
-    public void EditarUsuario()
+    public void LimparFiltros()
     {
-        if (SelectedUsuario != null)
-        {
-            Id = SelectedUsuario.Id;
-            Nome = SelectedUsuario.Nome;
-            Login = SelectedUsuario.Login;
-            Senha = SelectedUsuario.SenhaHash;
-            Ativo = SelectedUsuario.Ativo;
-            IsEditMode = true;
-        }
+        FiltroNome = string.Empty;
+        AplicarFiltros();
     }
 
     [RelayCommand]
@@ -85,18 +111,44 @@ public partial class UsuarioListViewModel : ObservableObject
     {
         if (SelectedUsuario != null)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var mainPage = GetMainPage();
             if (mainPage != null)
             {
                 bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir o usuário '{SelectedUsuario.Nome}'?", "Sim", "Não");
                 if (confirm)
                 {
-                    await _deleteHandler.Handle(new DeleteUsuarioCommand(SelectedUsuario.Id));
-                    await CarregarUsuariosAsync();
-                    LimparCampos();
+                    try
+                    {
+                        await _deleteHandler.Handle(new DeleteUsuarioCommand(SelectedUsuario.Id));
+                        await CarregarUsuariosAsync();
+                        SelectedUsuario = null;
+                        await mainPage.DisplayAlertAsync("Sucesso", "Usuário excluído com sucesso.", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
+                    }
                 }
             }
         }
+    }
+
+    [RelayCommand]
+    public async Task ExcluirUsuariosSelecionadosAsync()
+    {
+        if (UsuariosSelecionados.Count == 0) return;
+        var mainPage = GetMainPage();
+        if (mainPage != null)
+        {
+            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {UsuariosSelecionados.Count} usuário(s)?", "Sim", "Não");
+            if (!confirm) return;
+        }
+        foreach (var usuario in UsuariosSelecionados.ToList())
+        {
+            await _deleteHandler.Handle(new DeleteUsuarioCommand(usuario.Id));
+        }
+        await CarregarUsuariosAsync();
+        UsuariosSelecionados.Clear();
     }
 
     [RelayCommand]
@@ -104,28 +156,55 @@ public partial class UsuarioListViewModel : ObservableObject
     {
         if (SelectedUsuario != null)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var mainPage = GetMainPage();
             if (mainPage != null)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja inativar o usuário '{SelectedUsuario.Nome}'?", "Sim", "Não");
+                string status = SelectedUsuario.Ativo ? "inativar" : "ativar";
+                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja {status} o usuário '{SelectedUsuario.Nome}'?", "Sim", "Não");
                 if (confirm)
                 {
-                    await _inativarHandler.Handle(new InativarUsuarioCommand(SelectedUsuario.Id));
-                    await CarregarUsuariosAsync();
-                    LimparCampos();
+                    try
+                    {
+                        await _inativarHandler.Handle(new InativarUsuarioCommand(SelectedUsuario.Id));
+                        await CarregarUsuariosAsync();
+                        SelectedUsuario = null;
+                        await mainPage.DisplayAlertAsync("Sucesso", $"Usuário {status}o com sucesso.", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao {status}ar: {ex.Message}", "OK");
+                    }
                 }
             }
         }
     }
 
-    private void LimparCampos()
+    [RelayCommand]
+    public async Task InativarUsuariosSelecionadosAsync()
     {
-        Id = Guid.Empty;
-        Nome = string.Empty;
-        Login = string.Empty;
-        Senha = string.Empty;
-        Ativo = true;
-        IsEditMode = false;
-        SelectedUsuario = null;
+        if (UsuariosSelecionados.Count == 0) return;
+        var mainPage = GetMainPage();
+        if (mainPage != null)
+        {
+            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja inativar/ativar {UsuariosSelecionados.Count} usuário(s)?", "Sim", "Não");
+            if (!confirm) return;
+        }
+        foreach (var usuario in UsuariosSelecionados.ToList())
+        {
+            await _inativarHandler.Handle(new InativarUsuarioCommand(usuario.Id));
+        }
+        await CarregarUsuariosAsync();
+        UsuariosSelecionados.Clear();
+    }
+
+    [RelayCommand]
+    public async Task NovoUsuarioAsync()
+    {
+        await Shell.Current.GoToAsync("usuario-cadastro");
+    }
+
+    private static Page? GetMainPage()
+    {
+        return Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
     }
 }

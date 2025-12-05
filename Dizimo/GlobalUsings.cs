@@ -1,5 +1,4 @@
 global using Dizimo.Data;
-global using Dizimo.PageModels;
 global using Dizimo.Pages;
 global using Dizimo.Services;
 global using Dizimo.Utilities;

@@ -31,7 +31,7 @@
             <!-- Botão de excluir à direita (visível apenas em modo edição) -->
             <Button Grid.Column="2"
                     Text="Excluir"
-                    ImageSource="{StaticResource IconTrash}"
+                    ImageSource="{StaticResource IconDelete}"
                     Command="{Binding ExcluirCommand}"
                     IsVisible="{Binding IsEditMode}"
                     Style="{StaticResource NavButtonStyle}"
@@ -83,7 +83,7 @@
                 
                 <!-- Data -->
                 <sf:SfTextInputLayout Grid.Row="1" Grid.Column="1" Hint="Data">
-                    <DatePicker Date="{Binding DataOferta}" />
+                    <DatePicker Date="{Binding DataOferta}" Format="dd/MM/yyyy" />
                 </sf:SfTextInputLayout>
                 
                 <!-- Espaço vazio -->

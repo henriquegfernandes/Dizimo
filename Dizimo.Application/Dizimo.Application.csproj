@@ -6,4 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Relatorios\" />
+  </ItemGroup>
 </Project>

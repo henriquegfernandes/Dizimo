@@ -4,7 +4,6 @@
              x:Class="Dizimo.Pages.BackupConfigPage"
              Title="Configuração de Backup">
     <VerticalStackLayout Padding="20" Spacing="20">
-        <Label Text="Configuração de Backup" FontSize="24" HorizontalOptions="Center" />
         <Button Text="Escolher Pasta de Backup" Command="{Binding EscolherPastaCommand}" />
         <Label Text="Pasta atual:" FontSize="14" />
         <Label Text="{Binding BackupFolderPath}" FontSize="14" />

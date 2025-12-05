@@ -18,22 +18,32 @@
             <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
                 <StackLayout Padding="16" Spacing="12">
                     <!-- Filtro unificado -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,*,Auto">
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,*,Auto,Auto">
                         <Picker ItemsSource="{Binding StatusOptions}" 
                                 SelectedItem="{Binding StatusSelecionado}"
                                 Grid.Column="0"
-                                BackgroundColor="#E0E0E0" />
+                                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"/>
                         <Entry Placeholder="Buscar por nome ou número" 
                                Text="{Binding FiltroNome}" 
                                Grid.Column="1"
-                               BackgroundColor="#E0E0E0" 
-                               TextColor="#333333" 
+                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
                                Completed="OnFiltroCompleted" />
-                        <Button Text="Filtrar" 
+                        <Button Grid.Column="2"
                                 Command="{Binding AplicarFiltrosCommand}" 
-                                Grid.Column="2"
-                                Padding="16,0"
-                                VerticalOptions="Center" />
+                                Padding="12"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                ImageSource="{StaticResource IconSearch}"
+                                ToolTipProperties.Text="Filtrar"
+                                CornerRadius="6" />
+                        <Button Grid.Column="3"
+                                Command="{Binding LimparFiltrosCommand}" 
+                                Padding="12"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                ImageSource="{StaticResource IconClean}"
+                                ToolTipProperties.Text="Limpar Filtros"
+                                CornerRadius="6" />
                     </Grid>
                     <!-- Linha de botões de exportação/importação/modelo e filtro de ativos/inativos -->
                     <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="3*,3*,3*">

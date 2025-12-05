@@ -12,15 +12,18 @@ public class UpdateUsuarioHandler
 
     public async Task Handle(UpdateUsuarioCommand command)
     {
-        var usuario = new Usuario
+        var usuario = await _unitOfWork.Usuarios.GetByIdAsync(command.Id);
+        
+        if (usuario != null)
         {
-            Id = command.Id,
-            Nome = command.Nome,
-            Login = command.Login,
-            SenhaHash = command.Senha, // Hash deve ser aplicado na infraestrutura
-            Ativo = command.Ativo
-        };
-        await _unitOfWork.Usuarios.UpdateAsync(usuario);
-        await _unitOfWork.SaveChangesAsync();
+            usuario.Nome = command.Nome;
+            usuario.Login = command.Login;
+            usuario.SenhaHash = command.Senha;
+            usuario.Ativo = command.Ativo;
+            usuario.Perfil = command.Perfil;
+            
+            await _unitOfWork.Usuarios.UpdateAsync(usuario);
+            await _unitOfWork.SaveChangesAsync();
+        }
     }
 }

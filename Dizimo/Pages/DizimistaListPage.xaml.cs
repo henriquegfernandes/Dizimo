@@ -1,6 +1,5 @@
 using Dizimo.ViewModels;
 using Dizimo.Application.Dizimistas.Handlers;
-using Dizimo.Application.Relatorios;
 using Dizimo.Domain.Repositories;
 using Dizimo.Domain.Entities;
 
@@ -31,8 +30,7 @@ public partial class DizimistaListPage : ContentPage
             var inativarHandler = (App.Current as App)?.Services.GetService<InativarDizimistaHandler>() ?? throw new InvalidOperationException("InativarDizimistaHandler não está registrado no contêiner de serviços.");
             var csvService = (App.Current as App)?.Services.GetService<DizimistaCsvService>() ?? throw new InvalidOperationException("DizimistaCsvService não está registrado no contêiner de serviços.");
             var unitOfWork = (App.Current as App)?.Services.GetService<IUnitOfWork>() ?? throw new InvalidOperationException("IUnitOfWork não está registrado no contêiner de serviços.");
-            var relatorioService = (App.Current as App)?.Services.GetService<RelatorioAniversariantesService>() ?? throw new InvalidOperationException("RelatorioAniversariantesService não está registrado no contêiner de serviços.");
-            var viewModel = new DizimistaListViewModel(handlers, deleteHandler, inativarHandler, csvService, unitOfWork, relatorioService);
+            var viewModel = new DizimistaListViewModel(handlers, deleteHandler, inativarHandler, csvService, unitOfWork);
             BindingContext = viewModel;
             _viewModel = viewModel;
             System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext inicializado no OnBindingContextChanged.");

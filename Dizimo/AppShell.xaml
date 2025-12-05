@@ -26,18 +26,6 @@
         Route="main" />
 
     <ShellContent
-        Title="Projects"
-        Icon="{StaticResource IconProjects}"
-        ContentTemplate="{DataTemplate pages:ProjectListPage}"
-        Route="projects" />
-
-    <ShellContent
-        Title="Manage Meta"
-        Icon="{StaticResource IconMeta}"
-        ContentTemplate="{DataTemplate pages:ManageMetaPage}"
-        Route="manage" />
-
-    <ShellContent
         Title="Dizimistas"
         Icon="{StaticResource IconPerson}"
         ContentTemplate="{DataTemplate pages:DizimistaListPage}"
@@ -57,17 +45,18 @@
         IsVisible="{Binding IsAdmin}" />
 
     <ShellContent
+        Title="Cadastro de Usuário"
+        Icon="{StaticResource IconUserCog}"
+        ContentTemplate="{DataTemplate pages:UsuarioCadastroPage}"
+        Route="usuario-cadastro"
+        IsVisible="False" />
+
+    <ShellContent
         Title="Configuração de Backup"
         Icon="{StaticResource IconBackup}"
         ContentTemplate="{DataTemplate pages:BackupConfigPage}"
         Route="backupconfig"
         IsVisible="{Binding IsAdmin}" />
-
-    <ShellContent
-        Title="Relatórios"
-        Icon="{StaticResource IconReport}"
-        ContentTemplate="{DataTemplate pages:RelatorioPage}"
-        Route="relatorios" />
 
     <ShellContent
         Title="Detalhes do Dizimista"

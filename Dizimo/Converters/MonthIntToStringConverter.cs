@@ -6,7 +6,7 @@ namespace Dizimo.Converters;
 
 public class MonthIntToStringConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is int month && month >= 1 && month <= 12)
         {
@@ -20,7 +20,7 @@ public class MonthIntToStringConverter : IValueConverter
         return string.Empty;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is string mesNome)
         {

@@ -14,7 +14,7 @@ public class DizimistaIdToNomeConverter : IValueConverter
         _unitOfWork = unitOfWork;
     }
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is Guid dizimistaId && _unitOfWork != null)
         {
@@ -31,7 +31,7 @@ public class DizimistaIdToNomeConverter : IValueConverter
         return "ID desconhecido";
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

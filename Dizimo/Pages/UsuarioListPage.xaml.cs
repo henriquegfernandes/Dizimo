@@ -1,10 +1,13 @@
 using Dizimo.ViewModels;
 using Dizimo.Application.Usuarios.Handlers;
+using Dizimo.Domain.Entities;
 
 namespace Dizimo.Pages;
 
 public partial class UsuarioListPage : ContentPage
 {
+    private readonly SessaoService _sessaoService;
+
     public UsuarioListPage(
         GetUsuarioHandlers getHandlers,
         CreateUsuarioHandler createHandler,
@@ -14,36 +17,67 @@ public partial class UsuarioListPage : ContentPage
         SessaoService sessaoService)
     {
         InitializeComponent();
+        _sessaoService = sessaoService;
 
         BindingContext = new UsuarioListViewModel(
             getHandlers,
             createHandler,
             updateHandler,
             deleteHandler,
-            inativarHandler,
-            sessaoService
+            inativarHandler
         );
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        
+        if (!_sessaoService.IsAdmin)
+        {
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta página.", "OK");
+            await Shell.Current.GoToAsync("//login");
+            return;
+        }
+
+        if (BindingContext is UsuarioListViewModel viewModel)
+        {
+            await viewModel.CarregarUsuariosCommand.ExecuteAsync(null);
+        }
+    }
+
+    private void OnFiltroCompleted(object sender, EventArgs e)
+    {
         if (BindingContext is UsuarioListViewModel vm)
         {
-            var sessaoServiceField = typeof(UsuarioListViewModel)
-                .GetField("_sessaoService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            vm.AplicarFiltrosCommand?.Execute(null);
+        }
+    }
 
-            var sessaoService = sessaoServiceField?.GetValue(vm) as SessaoService;
-
-            if (sessaoService != null && !sessaoService.IsAdmin)
+    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (BindingContext is UsuarioListViewModel vm)
+        {
+            vm.UsuariosSelecionados.Clear();
+            
+            foreach (Usuario item in e.CurrentSelection)
             {
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainWindow = windows != null && windows.Count > 0 ? windows[0] : null;
-                var mainPage = mainWindow?.Page;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta página.", "OK");
-                await Shell.Current.GoToAsync("//login");
+                vm.UsuariosSelecionados.Add(item);
             }
+        }
+    }
+
+    private async void OnNovoUsuarioClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("usuario-cadastro");
+    }
+
+    private async void OnEditarUsuarioClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is Usuario usuario)
+        {
+            await Shell.Current.GoToAsync($"usuario-cadastro?id={usuario.Id}");
         }
     }
 }

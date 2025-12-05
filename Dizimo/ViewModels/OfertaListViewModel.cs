@@ -5,7 +5,6 @@ using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
-using Dizimo.Application.Relatorios;
 using Microsoft.Maui.Controls;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -38,8 +37,8 @@ public partial class OfertaListViewModel : ObservableObject
         set => SetProperty(ref _filtroNome, value);
     }
 
-    private DateTime _filtroData = DateTime.Today;
-    public DateTime FiltroData
+    private DateTime? _filtroData = DateTime.Today;
+    public DateTime? FiltroData
     {
         get => _filtroData;
         set 
@@ -134,9 +133,9 @@ public partial class OfertaListViewModel : ObservableObject
     {
         IEnumerable<Oferta> filtrados = TodasOfertas;
 
-        // Filtro por data
-        if (FiltroData != default)
-            filtrados = filtrados.Where(o => o.Data.Date == FiltroData.Date);
+        // Filtro por data (apenas se uma data foi selecionada)
+        if (FiltroData.HasValue)
+            filtrados = filtrados.Where(o => o.Data.Date == FiltroData.Value.Date);
 
         // Filtro unificado: busca por nome do dizimista OU código do dizimista
         if (!string.IsNullOrWhiteSpace(FiltroNome))
@@ -152,6 +151,14 @@ public partial class OfertaListViewModel : ObservableObject
 
         var filteredList = filtrados is List<Oferta> ofertaList ? ofertaList : filtrados.ToList();
         Ofertas = new ObservableCollection<Oferta>(filteredList);
+    }
+
+    [RelayCommand]
+    public void LimparFiltros()
+    {
+        FiltroNome = string.Empty;
+        FiltroData = null;
+        AplicarFiltros();
     }
 
     [RelayCommand]
@@ -234,7 +241,7 @@ public partial class OfertaListViewModel : ObservableObject
 #if WINDOWS
             var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
 
-            if (folder == null)
+            if (folder?.Folder?.Path == null)
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
                 return;
@@ -292,7 +299,7 @@ public partial class OfertaListViewModel : ObservableObject
 #if WINDOWS
             var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
 
-            if (folder == null)
+            if (folder?.Folder?.Path == null)
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
                 return;

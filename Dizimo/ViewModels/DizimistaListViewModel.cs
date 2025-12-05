@@ -5,7 +5,6 @@ using Dizimo.Application.Dizimistas.Queries;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Commands;
 using System.Collections.ObjectModel;
-using Dizimo.Application.Relatorios;
 using Dizimo.Domain.Repositories;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,15 +21,12 @@ namespace Dizimo.ViewModels
         private readonly InativarDizimistaHandler _inativarHandler;
         private readonly DizimistaCsvService _csvService;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly RelatorioAniversariantesService _relatorioAniversariantesService;
 
         public List<Dizimista> TodosDizimistas { get; private set; } = new List<Dizimista>();
         private ObservableCollection<Dizimista> _dizimistas = new ObservableCollection<Dizimista>();
-        public ObservableCollection<Dizimista> Aniversariantes { get; private set; } = new ObservableCollection<Dizimista>();
 
         private string _filtroNome = string.Empty;
         private Dizimista? _selectedDizimista;
-        private int _filtroMesAniversario = DateTime.Today.Month;
 
         public ObservableCollection<Dizimista> Dizimistas
         {
@@ -51,12 +47,6 @@ namespace Dizimo.ViewModels
         {
             get => _filtroNome;
             set => SetProperty(ref _filtroNome, value);
-        }
-
-        public int FiltroMesAniversario
-        {
-            get => _filtroMesAniversario;
-            set => SetProperty(ref _filtroMesAniversario, value);
         }
 
         private int paginaAtual = 1;
@@ -102,15 +92,13 @@ namespace Dizimo.ViewModels
             DeleteDizimistaHandler deleteHandler,
             InativarDizimistaHandler inativarHandler,
             DizimistaCsvService csvService,
-            IUnitOfWork unitOfWork,
-            RelatorioAniversariantesService relatorioAniversariantesService)
+            IUnitOfWork unitOfWork)
         {
             _handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
             _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
             _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
             _csvService = csvService ?? throw new ArgumentNullException(nameof(csvService));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _relatorioAniversariantesService = relatorioAniversariantesService ?? throw new ArgumentNullException(nameof(relatorioAniversariantesService));
             Dizimistas = new ObservableCollection<Dizimista>();
         }
 
@@ -176,6 +164,14 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
+        public void LimparFiltros()
+        {
+            FiltroNome = string.Empty;
+            StatusSelecionado = "Todos";
+            AplicarFiltros();
+        }
+
+        [RelayCommand]
         public async Task NovoDizimistaCommand()
         {
             System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
@@ -224,7 +220,7 @@ namespace Dizimo.ViewModels
                 // Usar Windows API para diálogo de save file
                 var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
                 
-                if (folder == null)
+                if (folder?.Folder == null)
                 {
                     System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
                     return;
@@ -287,7 +283,7 @@ namespace Dizimo.ViewModels
                 // Usar Windows API para diálogo de save file
                 var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
                 
-                if (folder == null)
+                if (folder?.Folder == null)
                 {
                     System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
                     return;
@@ -338,14 +334,62 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public async Task GerarRelatorioAniversariantesAsync()
+        public async Task ImportarAsync()
         {
-            var lista = await _relatorioAniversariantesService.GetAniversariantesAsync(FiltroMesAniversario);
-            Aniversariantes = new ObservableCollection<Dizimista>(lista);
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (mainPage != null)
+            try
             {
-                await mainPage.DisplayAlertAsync("Relatório Aniversariantes", $"{Aniversariantes.Count} aniversariantes encontrados para o mês {FiltroMesAniversario}", "OK");
+                System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
+                
+                // Permitir o usuário selecionar o arquivo CSV
+                var result = await FilePicker.Default.PickAsync(new PickOptions
+                {
+                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                    {
+                        { DevicePlatform.WinUI, new[] { ".csv" } },
+                        { DevicePlatform.Android, new[] { "text/*" } },
+                        { DevicePlatform.iOS, new[] { "public.comma-separated-values-text" } }
+                    }),
+                    PickerTitle = "Selecionar arquivo CSV de dizimistas para importar"
+                });
+
+                if (result == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {result.FullPath}");
+                var csv = File.ReadAllText(result.FullPath);
+                var dizimistas = await _csvService.ImportarAsync(csv);
+                
+                System.Diagnostics.Debug.WriteLine($"[INFO] {dizimistas.Count} dizimistas lidos do arquivo");
+                
+                foreach (var d in dizimistas)
+                {
+                    await _unitOfWork.Dizimistas.AddAsync(d);
+                }
+                await _unitOfWork.SaveChangesAsync();
+                await CarregarDizimistasAsync();
+                
+                System.Diagnostics.Debug.WriteLine("[INFO] Importação concluída com sucesso");
+                
+                var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPageSuccess != null)
+                {
+                    await mainPageSuccess.DisplayAlertAsync("Importação", 
+                        $"Importação concluída com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
+                
+                var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPageError != null)
+                {
+                    await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
+                }
             }
         }
 
@@ -377,35 +421,6 @@ namespace Dizimo.ViewModels
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Exportação", $"Relatório geral exportado para: {filePath}", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar relatório: {ex.Message}", "OK");
-                }
-            }
-        }
-
-        [RelayCommand]
-        public async Task ExportarRelatorioAniversariantesAsync()
-        {
-            try
-            {
-                var sb = new System.Text.StringBuilder();
-                sb.AppendLine("NumeroCadastro,Nome,DataNascimento,Ativo");
-                foreach (var d in Aniversariantes)
-                {
-                    sb.AppendLine($"{d.NumeroCadastro},\"{d.Nome}\",{d.DataNascimento:yyyy-MM-dd},{d.Ativo}");
-                }
-                var filePath = System.IO.Path.Combine(FileSystem.Current.AppDataDirectory, "relatorio_aniversariantes.csv");
-                System.IO.File.WriteAllText(filePath, sb.ToString());
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Exportação", $"Relatório de aniversariantes exportado para: {filePath}", "OK");
                 }
             }
             catch (Exception ex)

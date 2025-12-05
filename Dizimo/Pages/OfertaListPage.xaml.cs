@@ -1,7 +1,6 @@
 using Dizimo.ViewModels;
 using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Handlers;
-using Dizimo.Application.Relatorios;
 using Dizimo.Domain.Entities;
 using Dizimo.Converters;
 

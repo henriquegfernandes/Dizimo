@@ -8,12 +8,13 @@ using Dizimo.Domain.Repositories;
 using Dizimo.ViewModels;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Ofertas.Handlers;
-using Dizimo.Application.Relatorios;
+using Dizimo.Application.Dashboard;
 using Microsoft.Maui.LifecycleEvents;
 using Microsoft.Maui.Controls;
 using Dizimo.Pages;
 using Microsoft.Extensions.DependencyInjection;
 using Dizimo.Application.Usuarios.Handlers;
+using System.Globalization;
 
 namespace Dizimo
 {
@@ -21,6 +22,11 @@ namespace Dizimo
     {
         public static MauiApp CreateMauiApp()
         {
+            // Configurar cultura global para PT-BR
+            CultureInfo ptBr = new CultureInfo("pt-BR");
+            CultureInfo.DefaultThreadCurrentCulture = ptBr;
+            CultureInfo.DefaultThreadCurrentUICulture = ptBr;
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
@@ -32,14 +38,6 @@ namespace Dizimo
     				Microsoft.Maui.Controls.Handlers.Items.CollectionViewHandler.Mapper.AppendToMapping("KeyboardAccessibleCollectionView", (handler, view) =>
     				{
     					handler.PlatformView.SingleSelectionFollowsFocus = false;
-    				});
-
-    				Microsoft.Maui.Handlers.ContentViewHandler.Mapper.AppendToMapping(nameof(Pages.Controls.CategoryChart), (handler, view) =>
-    				{
-    					if (view is Pages.Controls.CategoryChart && handler.PlatformView is Microsoft.Maui.Platform.ContentPanel contentPanel)
-    					{
-    						contentPanel.IsTabStop = true;
-    					}
     				});
 #endif
                 })
@@ -64,48 +62,17 @@ namespace Dizimo
             // Repositórios e UoW devem ser Scoped para compartilhar o contexto
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            // Remover Singletons relacionados a dados
-            builder.Services.AddScoped<ProjectRepository>();
-            builder.Services.AddScoped<TaskRepository>();
-            builder.Services.AddScoped<CategoryRepository>();
-            builder.Services.AddScoped<TagRepository>();
-            builder.Services.AddScoped<SeedDataService>();
             builder.Services.AddSingleton<ModalErrorHandler>();
-            builder.Services.AddTransient<MainPageModel>();
-            builder.Services.AddTransient<ProjectListPageModel>();
-            builder.Services.AddTransient<ManageMetaPageModel>();
+            builder.Services.AddTransient<AppShell>();
+
+            // ViewModels
+            builder.Services.AddTransient<MainPageViewModel>();
             builder.Services.AddTransient<MainViewModel>();
             builder.Services.AddTransient<LocalBackupViewModel>();
-            builder.Services.AddTransient<AppShell>();
-            builder.Services.AddTransient<DizimistaListPage>();
-            builder.Services.AddTransient<UsuarioListPage>();
-            builder.Services.AddTransient<OfertaListPage>();
-            
+            builder.Services.AddTransient<LoginViewModel>();
 
-            builder.ConfigureLifecycleEvents(events =>
-            {
-//#if WINDOWS
-//                events.AddWindows(windows =>
-//                {
-//                    windows.OnClosed(() =>
-//                    {
-//                        var serviceProvider = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services;
-//                        if (serviceProvider is not null)
-//                        {
-//                            var backupVm = serviceProvider.GetService<LocalBackupViewModel>();
-//                            if (backupVm is not null)
-//                            {
-//                                // Executa o backup de forma síncrona, pois OnClosed não suporta async
-//                                backupVm.BackupAsync().GetAwaiter().GetResult();
-//                            }
-//                        }
-//                    });
-//                });
-//#endif
-            });
-
-            builder.Services.AddTransientWithShellRoute<ProjectDetailPage, ProjectDetailPageModel>("project");
-            builder.Services.AddTransientWithShellRoute<TaskDetailPage, TaskDetailPageModel>("task");
+            // Dashboard Service
+            builder.Services.AddScoped<DashboardService>();
 
             // Registro dos Handlers e ViewModels para Dizimista
             builder.Services.AddScoped<GetDizimistaHandlers>();
@@ -134,16 +101,12 @@ namespace Dizimo
             builder.Services.AddScoped<UpdateOfertaHandler>();
             builder.Services.AddScoped<DeleteOfertaHandler>();
             builder.Services.AddScoped<GetOfertaHandlers>();
-            builder.Services.AddScoped<RelatorioOfertasService>();
-            builder.Services.AddScoped<RelatorioAniversariantesService>();
 
-            builder.Services.AddScoped<GetUsuarioHandlers>();
             builder.Services.AddScoped<CreateUsuarioHandler>();
             builder.Services.AddScoped<UpdateUsuarioHandler>();
             builder.Services.AddScoped<DeleteUsuarioHandler>();
             builder.Services.AddScoped<InativarUsuarioHandler>();
 
-            builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransientWithShellRoute<LoginPage, LoginViewModel>("login");
 
             builder.Services.AddTransient<UsuarioListViewModel>();

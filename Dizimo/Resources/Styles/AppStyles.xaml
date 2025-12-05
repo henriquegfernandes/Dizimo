@@ -87,11 +87,17 @@
                 Size="{StaticResource IconSize}" />
 
     <FontImageSource x:Key="IconClean"
-            Glyph="{x:Static f:FluentUI.broom_32_regular}"
+            Glyph="&#xf0429;"
             FontFamily="{x:Static f:FluentUI.FontFamily}"
-            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
             Size="{StaticResource size240}" />
 
+    <FontImageSource x:Key="IconSearch"
+            Glyph="{x:Static f:FluentUI.search_24_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
+    
     <FontImageSource x:Key="IconLight"
             Glyph="{x:Static f:FluentUI.weather_sunny_28_regular}"
             FontFamily="{x:Static f:FluentUI.FontFamily}"
