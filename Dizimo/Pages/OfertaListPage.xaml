@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -21,9 +22,9 @@
                 <StackLayout Padding="16" Spacing="12">
                     <!-- Filtro unificado e data -->
                     <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,*,Auto,Auto">
-						<DatePicker Date="{Binding FiltroData}"
+                        <DatePicker Date="{Binding FiltroData}"
                                     Grid.Column="0"
-									BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" 
+                                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" 
                                     VerticalOptions="Center"
                                     Format="dd/MM/yyyy" />
                         <Entry Placeholder="Buscar por nome ou código do dizimista" 
@@ -37,7 +38,7 @@
                                 VerticalOptions="Center"
                                 HorizontalOptions="Center"
                                 ImageSource="{StaticResource IconSearch}"
-								ToolTipProperties.Text="Filtrar"
+                                ToolTipProperties.Text="Filtrar"
                                 CornerRadius="6" />
                         <Button Grid.Column="3"
                                 Command="{Binding LimparFiltrosCommand}" 
@@ -45,7 +46,7 @@
                                 VerticalOptions="Center"
                                 HorizontalOptions="Center"
                                 ImageSource="{StaticResource IconClean}"
-								ToolTipProperties.Text="Limpar Filtros"
+                                ToolTipProperties.Text="Limpar Filtros"
                                 CornerRadius="6" />
                     </Grid>
                     <!-- Linha de botões de exportação/importação/modelo -->
