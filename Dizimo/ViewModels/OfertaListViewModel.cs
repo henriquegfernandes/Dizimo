@@ -128,6 +128,13 @@ public partial class OfertaListViewModel : ObservableObject
         carregandoMais = false;
     }
 
+    private decimal _valorTotal;
+    public decimal ValorTotal
+    {
+        get => _valorTotal;
+        private set => SetProperty(ref _valorTotal, value);
+    }
+
     [RelayCommand]
     public void AplicarFiltros()
     {
@@ -151,6 +158,9 @@ public partial class OfertaListViewModel : ObservableObject
 
         var filteredList = filtrados is List<Oferta> ofertaList ? ofertaList : filtrados.ToList();
         Ofertas = new ObservableCollection<Oferta>(filteredList);
+        
+        // Calcular total
+        ValorTotal = Ofertas.Sum(o => o.Valor);
     }
 
     [RelayCommand]

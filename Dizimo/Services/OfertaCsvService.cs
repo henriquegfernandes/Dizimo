@@ -26,6 +26,7 @@ public class OfertaCsvService
         var sb = new StringBuilder();
         sb.AppendLine("CodigoDizimista,NomeDizimista,Valor,Data,MesReferencia,AnoReferencia");
         
+        decimal totalValor = 0;
         foreach (var o in ofertas)
         {
             // Buscar dados do dizimista
@@ -34,7 +35,13 @@ public class OfertaCsvService
             var nomeDizimista = dizimista?.Nome ?? "";
             
             sb.AppendLine($"{codigoDizimista},\"{nomeDizimista}\",{o.Valor.ToString(CultureInfo.InvariantCulture)},{o.Data:yyyy-MM-dd},{o.MesReferencia},{o.AnoReferencia}");
+            totalValor += o.Valor;
         }
+        
+        // Adicionar linha de total
+        sb.AppendLine();
+        sb.AppendLine($"TOTAL,{totalValor.ToString(CultureInfo.InvariantCulture)}");
+        
         return sb.ToString();
     }
 

@@ -101,7 +101,7 @@
                                     <Label Text="" Grid.Column="0" />
                                     <Label Text="{Binding Data, StringFormat='{0:dd/MM/yyyy}'}" Grid.Column="1" HorizontalTextAlignment="Center" />
                                     <Label Text="{Binding DizimistaId, Converter={StaticResource DizimistaIdToNomeConverter}}" Grid.Column="2" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding Valor, StringFormat='{0:C}'}" Grid.Column="3" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding Valor, Converter={StaticResource DecimalToRealConverter}}" Grid.Column="3" HorizontalTextAlignment="Center" />
                                     <Label Text="{Binding ., Converter={StaticResource MesAnoToStringConverter}}" Grid.Column="4" HorizontalTextAlignment="Center" />
                                     <Button Grid.Column="5"
                                             Clicked="OnEditarOfertaClicked"
@@ -115,6 +115,15 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
+                    <!-- Linha de total -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,1*" Padding="8" BackgroundColor="#F5F5F5">
+                        <Label Text="" Grid.Column="0" />
+                        <Label Text="" Grid.Column="1" />
+                        <Label Text="TOTAL" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="{Binding ValorTotal, Converter={StaticResource DecimalToRealConverter}}" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="" Grid.Column="4" />
+                        <Label Text="" Grid.Column="5" />
+                    </Grid>
                     <!-- Botões de excluir -->
                     <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,8,0,0">
                         <Button Text="Excluir" 
