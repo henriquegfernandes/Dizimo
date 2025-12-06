@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+             xmlns:fonts="clr-namespace:Fonts"
+             x:Class="Dizimo.Pages.UsuarioCadastroPage"
+             Title="">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Barra de navega��o customizada -->
+        <Grid Grid.Row="0" Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <!-- Bot�o de voltar -->
+            <Button Grid.Column="0" 
+                    Text="Voltar"
+                    ImageSource="{StaticResource IconLeftArrow}"
+                    Clicked="OnBackButtonClicked"
+                    Style="{StaticResource NavButtonStyle}"
+                    Padding="12"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center" />
+            
+            <!-- T�tulo centralizado -->
+            <Label Grid.Column="1" 
+                   Text="Cadastro de Usuário"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            
+            <!-- Botão de excluir à direita (visível apenas em modo edi��o) -->
+            <Button Grid.Column="2"
+                    Text="Excluir"
+                    ImageSource="{StaticResource IconDelete}"
+                    Command="{Binding ExcluirCommand}"
+                    IsVisible="{Binding IsEditMode}"
+                    Style="{StaticResource NavButtonStyle}"
+                    Padding="12"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Conte�do da p�gina -->
+        <ScrollView Grid.Row="1" Padding="16,12">
+            <Grid Padding="0" RowSpacing="12" ColumnSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+                
+                <!-- Nome -->
+                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Hint="Nome">
+                    <Entry Placeholder="Digite o nome" 
+                           Text="{Binding Nome}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Login -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Hint="Login">
+                    <Entry Placeholder="Digite o login" 
+                           Text="{Binding Login}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Tipo de Acesso (Perfil) -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Hint="Tipo de Acesso">
+                    <Picker ItemsSource="{Binding PerfilOptions}" 
+                            SelectedItem="{Binding PerfilSelecionado}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Senha -->
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Hint="Senha">
+                    <Entry Placeholder="Digite a senha" 
+                           IsPassword="True"
+                           Text="{Binding Senha}" />
+                </sf:SfTextInputLayout>
+                
+                <!-- Status Ativo -->
+                <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="0,12,0,0">
+                    <Label Grid.Column="0" Text="Usu�rio Ativo" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding Ativo}" />
+                </Grid>
+                
+                <!-- Botões -->
+                <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,24,0,0">
+                    <Button Grid.Column="0"
+                            Text="Cancelar" 
+                            Clicked="OnCancelarClicked"
+                            Padding="12"
+                            CornerRadius="8" />
+                    <Button Grid.Column="1"
+                            Text="Salvar" 
+                            Command="{Binding SalvarCommand}" 
+                            Padding="12"
+                            CornerRadius="8" />
+                </Grid>
+            </Grid>
+        </ScrollView>
+    </Grid>
+</ContentPage>

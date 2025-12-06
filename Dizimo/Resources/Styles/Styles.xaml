@@ -378,7 +378,7 @@
         </Setter>
     </Style>
   
-    <!--
+    
     <Style TargetType="TitleBar">
         <Setter Property="MinimumHeightRequest" Value="32"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
@@ -400,7 +400,7 @@
             </VisualStateGroupList>
         </Setter>
     </Style>
-    -->
+    
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0"/>
@@ -436,6 +436,13 @@
     <Style TargetType="shimmer:SfShimmer">
         <Setter Property="Fill" Value="{AppThemeBinding Light={StaticResource LightSecondaryBackground}, Dark={StaticResource DarkSecondaryBackground}}" />
         <Setter Property="WaveColor" Value="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}" />
+    </Style>
+
+    <!-- Título -->
+    <Style TargetType="Label" x:Key="TitleLabel">
+        <Setter Property="TextColor" Value="{StaticResource TitleTextColor}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
 </ResourceDictionary>

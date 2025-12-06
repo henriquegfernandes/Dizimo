@@ -6,7 +6,18 @@
     xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.SegmentedControl;assembly=Syncfusion.Maui.Toolkit"
     xmlns:pages="clr-namespace:Dizimo.Pages"
     Shell.FlyoutBehavior="Flyout"
-    Title="Dizimo">
+    Title="Dizimo"
+    TitleColor="#800000"
+    TabBarForegroundColor="#800000"
+    ForegroundColor="#800000"
+    FlyoutHeaderBehavior="CollapseOnScroll">
+
+    <ShellContent
+        Title="Login"
+        Icon="login.png"
+        ContentTemplate="{DataTemplate pages:LoginPage}"
+        Route="login"
+        IsVisible="False"/>
 
     <ShellContent
         Title="Dashboard"
@@ -15,30 +26,74 @@
         Route="main" />
 
     <ShellContent
-        Title="Projects"
-        Icon="{StaticResource IconProjects}"
-        ContentTemplate="{DataTemplate pages:ProjectListPage}"
-        Route="projects" />
+        Title="Dizimistas"
+        Icon="{StaticResource IconPerson}"
+        ContentTemplate="{DataTemplate pages:DizimistaListPage}"
+        Route="dizimista-list" />
 
     <ShellContent
-        Title="Manage Meta"
-        Icon="{StaticResource IconMeta}"
-        ContentTemplate="{DataTemplate pages:ManageMetaPage}"
-        Route="manage" />
+        Title="Ofertas"
+        Icon="{StaticResource IconMoney}"
+        ContentTemplate="{DataTemplate pages:OfertaListPage}"
+        Route="ofertas" />
+
+    <ShellContent
+        Title="Usuários"
+        Icon="{StaticResource IconUserCog}"
+        ContentTemplate="{DataTemplate pages:UsuarioListPage}"
+        Route="usuarios"
+        IsVisible="{Binding IsAdmin}" />
+
+    <ShellContent
+        Title="Cadastro de Usuário"
+        Icon="{StaticResource IconUserCog}"
+        ContentTemplate="{DataTemplate pages:UsuarioCadastroPage}"
+        Route="usuario-cadastro"
+        IsVisible="False" />
+
+    <ShellContent
+        Title="Configuração de Backup"
+        Icon="{StaticResource IconBackup}"
+        ContentTemplate="{DataTemplate pages:BackupConfigPage}"
+        Route="backupconfig"
+        IsVisible="{Binding IsAdmin}" />
+
+    <ShellContent
+        Title="Detalhes do Dizimista"
+        Icon="{StaticResource IconPerson}"
+        ContentTemplate="{DataTemplate pages:DizimistaDetalhesPage}"
+        Route="dizimista-detalhes"
+        IsVisible="False" />
+
+    <Shell.FlyoutHeader>
+        <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
+            <Image Source="avatar.png" HeightRequest="32" WidthRequest="32" VerticalOptions="Center" />
+            <StackLayout Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
+                <Label Text="Usuário: " FontAttributes="Bold" />
+                <Label Text="{Binding UsuarioNome}" />
+                <Label Text="{Binding UsuarioPerfil}" FontSize="12" TextColor="Gray" />
+            </StackLayout>
+        </StackLayout>
+    </Shell.FlyoutHeader>
 
     <Shell.FlyoutFooter>
-        <Grid Padding="15">
-            <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
-                VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
-                SegmentWidth="40" SegmentHeight="40">
-                <sf:SfSegmentedControl.ItemsSource>
-                    <x:Array Type="{x:Type sf:SfSegmentItem}">
-                        <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode"/>
-                        <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode"/>
-                    </x:Array>
-                </sf:SfSegmentedControl.ItemsSource>
-            </sf:SfSegmentedControl>
-        </Grid>
+        <VerticalStackLayout Padding="15" Spacing="10">
+            <Grid>
+                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center" Spacing="15">
+                    <Button Text="Logout" Command="{Binding LogoutCommand}" />
+                    <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
+                        VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
+                        SegmentWidth="40" SegmentHeight="40">
+                        <sf:SfSegmentedControl.ItemsSource>
+                            <x:Array Type="{x:Type sf:SfSegmentItem}">
+                                <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode" SelectedSegmentBackground="#800000"/>
+                                <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode" SelectedSegmentBackground="#800000"/>
+                            </x:Array>
+                        </sf:SfSegmentedControl.ItemsSource>
+                    </sf:SfSegmentedControl>
+                </StackLayout>
+            </Grid>
+        </VerticalStackLayout>
     </Shell.FlyoutFooter>
 
 </Shell>

@@ -1,8 +1,9 @@
-namespace Dizimo.Models;
-
-public class ProjectsTags
+namespace Dizimo.Models
 {
-    public int ID { get; set; }
-    public int ProjectID { get; set; }
-    public int TagID { get; set; }
+    public class ProjectsTags
+    {
+        public int ID { get; set; }
+        public int ProjectID { get; set; }
+        public int TagID { get; set; }
+    }
 }

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             xmlns:local="clr-namespace:Dizimo.Converters"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+             xmlns:fonts="clr-namespace:Fonts"
+             x:Class="Dizimo.Pages.OfertaListPage">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <local:NullToBoolConverter x:Key="NullToBoolConverter" />
+            <local:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
+            <local:MonthNumberToNameConverter x:Key="MonthNumberToNameConverter" />
+            <local:DecimalToRealConverter x:Key="DecimalToRealConverter" />
+            <local:DizimistaIdToNomeConverter x:Key="DizimistaIdToNomeConverter" />
+            <local:MesAnoToStringConverter x:Key="MesAnoToStringConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
+                <StackLayout Padding="16" Spacing="12">
+                    <!-- Filtro unificado e data -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,*,Auto,Auto">
+                        <DatePicker Date="{Binding FiltroData}"
+                                    Grid.Column="0"
+                                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" 
+                                    VerticalOptions="Center"
+                                    Format="dd/MM/yyyy" />
+                        <Entry Placeholder="Buscar por nome ou código do dizimista" 
+                               Text="{Binding FiltroNome}" 
+                               Grid.Column="1"
+                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
+                               Completed="OnFiltroCompleted" />
+                        <Button Grid.Column="2"
+                                Command="{Binding AplicarFiltrosCommand}" 
+                                Padding="12"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                ImageSource="{StaticResource IconSearch}"
+                                ToolTipProperties.Text="Filtrar"
+                                CornerRadius="6" />
+                        <Button Grid.Column="3"
+                                Command="{Binding LimparFiltrosCommand}" 
+                                Padding="12"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                ImageSource="{StaticResource IconClean}"
+                                ToolTipProperties.Text="Limpar Filtros"
+                                CornerRadius="6" />
+                    </Grid>
+                    <!-- Linha de botões de exportação/importação/modelo -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="3*,3*,3*">
+                        <Button Text="Exportar Planilha"
+                                Command="{Binding ExportarCommand}" 
+                                ImageSource="{StaticResource IconExport}" 
+                                ToolTipProperties.Text="Exportar Planilha (com filtros aplicados)" 
+                                CornerRadius="8"
+                                Padding="10"
+                                Grid.Column="0"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        <Button Text="Baixar Planilha Modelo"
+                                Command="{Binding BaixarModeloCommand}" 
+                                ImageSource="{StaticResource IconDownload}" 
+                                ToolTipProperties.Text="Baixar Planilha Modelo" 
+                                CornerRadius="8"
+                                Padding="10"
+                                Grid.Column="1"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        <Button Text="Importar Planilha"
+                                Command="{Binding ImportarCommand}" 
+                                ImageSource="{StaticResource IconImport}" 
+                                ToolTipProperties.Text="Importar Planilha" 
+                                CornerRadius="8"
+                                Padding="10"
+                                Grid.Column="2"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                    </Grid>
+                    <!-- Linha de título da lista -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,1*" Padding="8">
+                        <Label Text="" Grid.Column="0" />
+                        <Label Text="Data" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Dizimista" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Valor" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Período" Grid.Column="4" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="" Grid.Column="5" />
+                    </Grid>
+                    <!-- Lista paginada com infinite scroll -->
+                    <CollectionView x:Name="OfertasCollectionView"
+                                    ItemsSource="{Binding Ofertas}"
+                                    RemainingItemsThreshold="5"
+                                    RemainingItemsThresholdReachedCommand="{Binding CarregarMaisOfertasCommand}"
+                                    SelectionMode="Multiple"
+                                    SelectionChanged="OnSelectionChanged"
+                                    Margin="0,0,0,8">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,1*" Padding="8">
+                                    <Label Text="" Grid.Column="0" />
+                                    <Label Text="{Binding Data, StringFormat='{0:dd/MM/yyyy}'}" Grid.Column="1" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding DizimistaId, Converter={StaticResource DizimistaIdToNomeConverter}}" Grid.Column="2" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding Valor, Converter={StaticResource DecimalToRealConverter}}" Grid.Column="3" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding ., Converter={StaticResource MesAnoToStringConverter}}" Grid.Column="4" HorizontalTextAlignment="Center" />
+                                    <Button Grid.Column="5"
+                                            Clicked="OnEditarOfertaClicked"
+                                            CommandParameter="{Binding .}"
+                                            ImageSource="{StaticResource IconEdit}"
+                                            Padding="0"
+                                            CornerRadius="6"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <!-- Linha de total -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,1*" Padding="8" BackgroundColor="#F5F5F5">
+                        <Label Text="" Grid.Column="0" />
+                        <Label Text="" Grid.Column="1" />
+                        <Label Text="TOTAL" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="{Binding ValorTotal, Converter={StaticResource DecimalToRealConverter}}" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="" Grid.Column="4" />
+                        <Label Text="" Grid.Column="5" />
+                    </Grid>
+                    <!-- Botões de excluir -->
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,8,0,0">
+                        <Button Text="Excluir" 
+                                Command="{Binding ExcluirOfertasSelecionadasCommand}" 
+                                IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                                Padding="12"
+                                CornerRadius="8"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ImageSource="{StaticResource IconTrash}">
+                        </Button>
+                    </StackLayout>
+                </StackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+        <!-- Botão flutuante de adicionar oferta -->
+        <Button
+            Command="{Binding NovaOfertaCommand}"
+            Clicked="OnNovaOfertaClicked"
+            IsEnabled="True"
+            ImageSource="{StaticResource IconAdd}"
+            CornerRadius="28"
+            Padding="0"
+            HeightRequest="56"
+            WidthRequest="56"
+            VerticalOptions="End"
+            HorizontalOptions="End"
+            Margin="24"
+            BackgroundColor="{DynamicResource Primary}"
+            TextColor="White"
+            FontSize="28"
+            SemanticProperties.Description="Adicionar oferta" />
+    </Grid>
+</ContentPage>

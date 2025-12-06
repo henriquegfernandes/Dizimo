@@ -1,9 +1,10 @@
-namespace Dizimo.Pages.Controls;
-
-public partial class AddButton
+namespace Dizimo.Pages.Controls
 {
-    public AddButton()
+    public partial class AddButton
     {
-        InitializeComponent();
+        public AddButton()
+        {
+            InitializeComponent();
+        }
     }
 }

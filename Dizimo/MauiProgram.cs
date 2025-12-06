@@ -1,82 +1,137 @@
 ﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Maui.Toolkit.Hosting;
+using Dizimo.Infrastructure.Persistence;
+using Dizimo.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Dizimo.Domain.Repositories;
+using Dizimo.ViewModels;
+using Dizimo.Application.Dizimistas.Handlers;
+using Dizimo.Application.Ofertas.Handlers;
+using Dizimo.Application.Dashboard;
+using Microsoft.Maui.LifecycleEvents;
+using Microsoft.Maui.Controls;
+using Dizimo.Pages;
+using Microsoft.Extensions.DependencyInjection;
+using Dizimo.Application.Usuarios.Handlers;
+using System.Globalization;
 
-namespace Dizimo;
-
-public static class MauiProgram
+namespace Dizimo
 {
-    public static MauiApp CreateMauiApp()
+    public static class MauiProgram
     {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .UseMauiCommunityToolkit()
-            .ConfigureSyncfusionToolkit()
-            .ConfigureMauiHandlers(handlers =>
-            {
-#if WINDOWS
-				Microsoft.Maui.Controls.Handlers.Items.CollectionViewHandler.Mapper.AppendToMapping("KeyboardAccessibleCollectionView", (handler, view) =>
-				{
-					handler.PlatformView.SingleSelectionFollowsFocus = false;
-				});
+        public static MauiApp CreateMauiApp()
+        {
+            // Configurar cultura global para PT-BR
+            CultureInfo ptBr = new CultureInfo("pt-BR");
+            CultureInfo.DefaultThreadCurrentCulture = ptBr;
+            CultureInfo.DefaultThreadCurrentUICulture = ptBr;
 
-				Microsoft.Maui.Handlers.ContentViewHandler.Mapper.AppendToMapping(nameof(Pages.Controls.CategoryChart), (handler, view) =>
-				{
-					if (view is Pages.Controls.CategoryChart && handler.PlatformView is Microsoft.Maui.Platform.ContentPanel contentPanel)
-					{
-						contentPanel.IsTabStop = true;
-					}
-				});
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
+                .ConfigureSyncfusionToolkit()
+                .ConfigureMauiHandlers(handlers =>
+                {
+#if WINDOWS
+    				Microsoft.Maui.Controls.Handlers.Items.CollectionViewHandler.Mapper.AppendToMapping("KeyboardAccessibleCollectionView", (handler, view) =>
+    				{
+    					handler.PlatformView.SingleSelectionFollowsFocus = false;
+    				});
 #endif
-            })
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                fonts.AddFont("SegoeUI-Semibold.ttf", "SegoeSemibold");
-                fonts.AddFont("FluentSystemIcons-Regular.ttf", FluentUI.FontFamily);
-            });
+                })
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("SegoeUI-Semibold.ttf", "SegoeSemibold");
+                    fonts.AddFont("FluentSystemIcons-Regular.ttf", FluentUI.FontFamily);
+                });
 
 #if DEBUG
-        builder.Logging.AddDebug();
-        builder.Services.AddLogging(configure => configure.AddDebug());
+    		builder.Logging.AddDebug();
+    		builder.Services.AddLogging(configure => configure.AddDebug());
 #endif
 
-        builder.Services.AddSingleton<ProjectRepository>();
-        builder.Services.AddSingleton<TaskRepository>();
-        builder.Services.AddSingleton<CategoryRepository>();
-        builder.Services.AddSingleton<TagRepository>();
-        builder.Services.AddSingleton<DizimistaRepository>();
-        builder.Services.AddSingleton<OfertaRepository>();
-        builder.Services.AddSingleton<Dizimo.Core.Services.DizimoService>();
-        builder.Services.AddSingleton<Dizimo.Core.Services.BackupService>();
-        builder.Services.AddSingleton<SeedDataService>();
-        builder.Services.AddSingleton<ModalErrorHandler>();
-        builder.Services.AddSingleton<MainPageModel>();
-        builder.Services.AddSingleton<DizimistaListPageModel>();
-        builder.Services.AddSingleton<DizimistaDetailPageModel>();
-        builder.Services.AddSingleton<OfertaPageModel>();
-        builder.Services.AddSingleton<RelatoriosPageModel>();
-        builder.Services.AddSingleton<RelatorioGeralPageModel>();
-        builder.Services.AddSingleton<RelatorioAniversariantesPageModel>();
-        builder.Services.AddSingleton<RelatorioOfertasPageModel>();
-        builder.Services.AddSingleton(sp => new Dizimo.Core.Services.AuthService(FileSystem.AppDataDirectory));
-        builder.Services.AddSingleton<LoginPageModel>();
-        builder.Services.AddSingleton<ProjectListPageModel>();
-        builder.Services.AddSingleton<ManageMetaPageModel>();
+            // Configuração do EF Core com SQLite
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "dizimo.db");
+            builder.Services.AddDbContext<DizimoDbContext>(options =>
+                options.UseSqlite($"Data Source={dbPath}")
+            );
+            // Repositórios e UoW devem ser Scoped para compartilhar o contexto
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+            builder.Services.AddSingleton<ModalErrorHandler>();
+            builder.Services.AddTransient<AppShell>();
 
-        builder.Services.AddTransientWithShellRoute<ProjectDetailPage, ProjectDetailPageModel>("project");
-        builder.Services.AddTransientWithShellRoute<TaskDetailPage, TaskDetailPageModel>("task");
-        builder.Services.AddTransientWithShellRoute<Pages.DizimistaListPage, DizimistaListPageModel>("dizimistas");
-        builder.Services.AddTransientWithShellRoute<Pages.DizimistaDetailPage, DizimistaDetailPageModel>("dizimista");
-        builder.Services.AddTransientWithShellRoute<Pages.OfertaPage, OfertaPageModel>("oferta");
-        builder.Services.AddTransientWithShellRoute<Pages.RelatoriosPage, RelatoriosPageModel>("relatorios");
-        builder.Services.AddTransientWithShellRoute<Pages.RelatorioGeralPage, RelatorioGeralPageModel>("relatorio/geral");
-        builder.Services.AddTransientWithShellRoute<Pages.RelatorioAniversariantesPage, RelatorioAniversariantesPageModel>("relatorio/aniversariantes");
-        builder.Services.AddTransientWithShellRoute<Pages.RelatorioOfertasPage, RelatorioOfertasPageModel>("relatorio/ofertas");
-        builder.Services.AddTransientWithShellRoute<Pages.LoginPage, LoginPageModel>("login");
+            // ViewModels
+            builder.Services.AddTransient<MainPageViewModel>();
+            builder.Services.AddTransient<MainViewModel>();
+            builder.Services.AddTransient<LocalBackupViewModel>();
+            builder.Services.AddTransient<LoginViewModel>();
 
-        return builder.Build();
+            // Dashboard Service
+            builder.Services.AddScoped<DashboardService>();
+
+            // Registro dos Handlers e ViewModels para Dizimista
+            builder.Services.AddScoped<GetDizimistaHandlers>();
+            builder.Services.AddScoped<CreateDizimistaHandler>();
+            builder.Services.AddScoped<UpdateDizimistaHandler>();
+            builder.Services.AddScoped<DeleteDizimistaHandler>();
+            builder.Services.AddScoped<InativarDizimistaHandler>();
+            builder.Services.AddScoped<GetUsuarioHandlers>();
+            builder.Services.AddTransient<DizimistaListViewModel>();
+            builder.Services.AddTransient<DizimistaCadastroViewModel>();
+            builder.Services.AddScoped<DizimistaDetalhesViewModel>();
+            builder.Services.AddTransientWithShellRoute<DizimistaDetalhesPage, DizimistaDetalhesViewModel>("dizimista-detalhes");
+
+            // Registro das páginas para navegação
+            builder.Services.AddTransientWithShellRoute<DizimistaListPage, DizimistaListViewModel>("dizimistas");
+            builder.Services.AddTransientWithShellRoute<DizimistaCadastroPage, DizimistaCadastroViewModel>("dizimista-cadastro");
+
+            builder.Services.AddScoped<DizimistaCsvService>();
+            builder.Services.AddScoped<OfertaCsvService>();
+            builder.Services.AddTransient<OfertaListViewModel>();
+            builder.Services.AddTransient<OfertaCadastroViewModel>();
+            builder.Services.AddTransientWithShellRoute<OfertaListPage, OfertaListViewModel>("ofertas");
+            builder.Services.AddTransientWithShellRoute<OfertaCadastroPage, OfertaCadastroViewModel>("oferta-cadastro");
+
+            builder.Services.AddScoped<CreateOfertaHandler>();
+            builder.Services.AddScoped<UpdateOfertaHandler>();
+            builder.Services.AddScoped<DeleteOfertaHandler>();
+            builder.Services.AddScoped<GetOfertaHandlers>();
+
+            builder.Services.AddScoped<CreateUsuarioHandler>();
+            builder.Services.AddScoped<UpdateUsuarioHandler>();
+            builder.Services.AddScoped<DeleteUsuarioHandler>();
+            builder.Services.AddScoped<InativarUsuarioHandler>();
+
+            builder.Services.AddTransientWithShellRoute<LoginPage, LoginViewModel>("login");
+
+            builder.Services.AddTransient<UsuarioListViewModel>();
+            builder.Services.AddTransientWithShellRoute<UsuarioListPage, UsuarioListViewModel>("usuarios");
+
+            builder.Services.AddSingleton<SessaoService>();
+
+            // Configuração do serviço de backup
+            builder.Services.AddSingleton(new LocalBackupService(dbPath));
+
+            builder.ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("Font Awesome 6 Pro-Regular-400.otf", "FontAwesome");
+            });
+
+            var app = builder.Build();
+
+            // Aplicar migrações automaticamente ao iniciar
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<DizimoDbContext>();
+                db.Database.Migrate();
+            }
+
+            return app;
+        }
     }
 }

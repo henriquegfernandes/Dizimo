@@ -83,25 +83,116 @@
     <FontImageSource x:Key="IconDelete"
                 Glyph="{x:Static f:FluentUI.delete_32_regular}"
                 FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+                Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
                 Size="{StaticResource IconSize}" />
 
-        <FontImageSource x:Key="IconClean"
-                Glyph="{x:Static f:FluentUI.broom_32_regular}"
-                FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                Size="{StaticResource size240}" />
+    <FontImageSource x:Key="IconClean"
+            Glyph="&#xf0429;"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
 
-        <FontImageSource x:Key="IconLight"
-                Glyph="{x:Static f:FluentUI.weather_sunny_28_regular}"
-                FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                Size="{StaticResource size240}" />
-        <FontImageSource x:Key="IconDark"
-                Glyph="{x:Static f:FluentUI.weather_moon_28_regular}"
-                FontFamily="{x:Static f:FluentUI.FontFamily}"
-                Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
-                Size="{StaticResource size240}" />
+    <FontImageSource x:Key="IconSearch"
+            Glyph="{x:Static f:FluentUI.search_24_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
+    
+    <FontImageSource x:Key="IconLight"
+            Glyph="{x:Static f:FluentUI.weather_sunny_28_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
+    
+    <FontImageSource x:Key="IconDark"
+            Glyph="{x:Static f:FluentUI.weather_moon_28_regular}"
+            FontFamily="{x:Static f:FluentUI.FontFamily}"
+            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Size="{StaticResource size240}" />
+
+    <FontImageSource x:Key="IconPerson"
+        Glyph="{x:Static f:FluentUI.person_24_regular}"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconMoney"
+        Glyph="{x:Static f:FluentUI.money_24_regular}"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconAdmin"
+        Glyph="&#xEBD3;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconUserCog"
+        Glyph="&#xf013d;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconBackup"
+        Glyph="{x:Static f:FluentUI.save_24_regular}"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+    
+    <FontImageSource x:Key="IconEdit"
+        Glyph="&#xE5B4;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconExport"
+        Glyph="&#xE0Ca;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconImport"
+        Glyph="&#xf15a;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+    
+    <FontImageSource x:Key="IconDownload"
+        Glyph="&#xf152;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconReport"
+        Glyph="&#xe4d9;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconTrash"
+        Glyph="&#xf01c5;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconEye"
+        Glyph="&#xefca;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconLeftArrow"
+        Glyph="&#xf19e;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconSwitch"
+        Glyph="&#xf25a;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
 
     <Style TargetType="Label">
         <Setter Property="TextColor"
@@ -284,6 +375,22 @@
         <Setter Property="TransitionMode" Value="SlideOnTop"/>
         <Setter Property="PullingThreshold" Value="100"/>
         <Setter Property="ProgressColor" Value="{StaticResource Primary}"/>
+    </Style>
+
+    <!-- Título global -->
+    <Style TargetType="Label" x:Key="AppTitle">
+        <Setter Property="TextColor" Value="{StaticResource TitleTextColor}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <!-- Estilo para botões de navegação vermelhos -->
+    <Style TargetType="Button" x:Key="NavButtonStyle">
+        <Setter Property="BackgroundColor" Value="#800000" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
 </ResourceDictionary>

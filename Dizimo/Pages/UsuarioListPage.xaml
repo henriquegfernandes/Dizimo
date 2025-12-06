@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Dizimo.ViewModels"
+             xmlns:local="clr-namespace:Dizimo.Converters"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+             xmlns:fonts="clr-namespace:Fonts"
+             x:Class="Dizimo.Pages.UsuarioListPage">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <local:NullToBoolConverter x:Key="NullToBoolConverter" />
+            <local:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
+            <local:PerfilToStringConverter x:Key="PerfilToStringConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
+                <StackLayout Padding="16" Spacing="12">
+                    <!-- Filtro de busca -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,Auto,Auto">
+                        <Entry Placeholder="Buscar por nome ou login" 
+                               Text="{Binding FiltroNome}" 
+                               Grid.Column="0"
+                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
+                               Completed="OnFiltroCompleted" />
+                        <Button Grid.Column="1"
+                                Command="{Binding AplicarFiltrosCommand}" 
+                                Padding="12"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                ImageSource="{StaticResource IconSearch}"
+                                ToolTipProperties.Text="Filtrar"
+                                CornerRadius="6" />
+                        <Button Grid.Column="2"
+                                Command="{Binding LimparFiltrosCommand}" 
+                                Padding="12"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                ImageSource="{StaticResource IconClean}"
+                                ToolTipProperties.Text="Limpar Filtros"
+                                CornerRadius="6" />
+                    </Grid>
+                    <!-- Linha de título da lista -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,3*,2*,2*,1*" Padding="8">
+                        <Label Text="" Grid.Column="0" />
+                        <Label Text="Nome" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Login" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="Tipo de Acesso" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                        <Label Text="" Grid.Column="4" />
+                    </Grid>
+                    <!-- Lista de usuários -->
+                    <CollectionView x:Name="UsuariosCollectionView"
+                                    ItemsSource="{Binding Usuarios}"
+                                    SelectionMode="Multiple"
+                                    SelectionChanged="OnSelectionChanged"
+                                    Margin="0,0,0,8">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,3*,2*,2*,1*" Padding="8">
+                                    <Label Text="" Grid.Column="0" />
+                                    <Label Text="{Binding Nome}" Grid.Column="1" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding Login}" Grid.Column="2" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding Perfil, Converter={StaticResource PerfilToStringConverter}}" Grid.Column="3" HorizontalTextAlignment="Center" />
+                                    <Button Grid.Column="4"
+                                            Clicked="OnEditarUsuarioClicked"
+                                            CommandParameter="{Binding .}"
+                                            ImageSource="{StaticResource IconEdit}"
+                                            Padding="0"
+                                            CornerRadius="6"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <!-- Botões de excluir/inativar -->
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,8,0,0">
+                        <Button Text="Excluir" 
+                                Command="{Binding ExcluirUsuariosSelecionadosCommand}" 
+                                IsVisible="{Binding UsuariosSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                                Padding="12"
+                                CornerRadius="8"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ImageSource="{StaticResource IconTrash}">
+                        </Button>
+                        <Button Text="Ativar/Inativar" 
+                                Command="{Binding InativarUsuariosSelecionadosCommand}" 
+                                IsVisible="{Binding UsuariosSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                                Padding="12"
+                                CornerRadius="8"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center">
+                            <Button.ImageSource>
+                                <FontImageSource Glyph="&#xE7B0;" FontFamily="{x:Static fonts:FluentUI.FontFamily}" Color="{DynamicResource ButtonIconColor}" />
+                            </Button.ImageSource>
+                        </Button>
+                    </StackLayout>
+                </StackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+        <!-- Botão flutuante de adicionar usuário -->
+        <Button
+            Command="{Binding NovoUsuarioCommand}"
+            Clicked="OnNovoUsuarioClicked"
+            IsEnabled="True"
+            ImageSource="{StaticResource IconAdd}"
+            CornerRadius="28"
+            Padding="0"
+            HeightRequest="56"
+            WidthRequest="56"
+            VerticalOptions="End"
+            HorizontalOptions="End"
+            Margin="24"
+            BackgroundColor="{DynamicResource Primary}"
+            TextColor="White"
+            FontSize="28"
+            SemanticProperties.Description="Adicionar usuário" />
+    </Grid>
+</ContentPage>

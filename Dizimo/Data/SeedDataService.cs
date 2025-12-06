@@ -2,101 +2,101 @@ using System.Text.Json;
 using Dizimo.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Dizimo.Data;
-
-public class SeedDataService
+namespace Dizimo.Data
 {
-    private readonly ProjectRepository _projectRepository;
-    private readonly TaskRepository _taskRepository;
-    private readonly TagRepository _tagRepository;
-    private readonly CategoryRepository _categoryRepository;
-    private readonly string _seedDataFilePath = "SeedData.json";
-    private readonly ILogger<SeedDataService> _logger;
-
-    public SeedDataService(ProjectRepository projectRepository, TaskRepository taskRepository,
-        TagRepository tagRepository, CategoryRepository categoryRepository, ILogger<SeedDataService> logger)
+    public class SeedDataService
     {
-        _projectRepository = projectRepository;
-        _taskRepository = taskRepository;
-        _tagRepository = tagRepository;
-        _categoryRepository = categoryRepository;
-        _logger = logger;
-    }
+        private readonly ProjectRepository _projectRepository;
+        private readonly TaskRepository _taskRepository;
+        private readonly TagRepository _tagRepository;
+        private readonly CategoryRepository _categoryRepository;
+        private readonly string _seedDataFilePath = "SeedData.json";
+        private readonly ILogger<SeedDataService> _logger;
 
-    public async Task LoadSeedDataAsync()
-    {
-        ClearTables();
-
-        await using Stream templateStream = await FileSystem.OpenAppPackageFileAsync(_seedDataFilePath);
-
-        ProjectsJson? payload = null;
-        try
+        public SeedDataService(ProjectRepository projectRepository, TaskRepository taskRepository, TagRepository tagRepository, CategoryRepository categoryRepository, ILogger<SeedDataService> logger)
         {
-            payload = JsonSerializer.Deserialize(templateStream, JsonContext.Default.ProjectsJson);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error deserializing seed data");
+            _projectRepository = projectRepository;
+            _taskRepository = taskRepository;
+            _tagRepository = tagRepository;
+            _categoryRepository = categoryRepository;
+            _logger = logger;
         }
 
-        try
+        public async Task LoadSeedDataAsync()
         {
-            if (payload is not null)
+            ClearTables();
+
+            await using Stream templateStream = await FileSystem.OpenAppPackageFileAsync(_seedDataFilePath);
+
+            ProjectsJson? payload = null;
+            try
             {
-                foreach (var project in payload.Projects)
+                payload = JsonSerializer.Deserialize(templateStream, JsonContext.Default.ProjectsJson);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error deserializing seed data");
+            }
+
+            try
+            {
+                if (payload is not null)
                 {
-                    if (project is null)
+                    foreach (var project in payload.Projects)
                     {
-                        continue;
-                    }
-
-                    if (project.Category is not null)
-                    {
-                        await _categoryRepository.SaveItemAsync(project.Category);
-                        project.CategoryID = project.Category.ID;
-                    }
-
-                    await _projectRepository.SaveItemAsync(project);
-
-                    if (project?.Tasks is not null)
-                    {
-                        foreach (var task in project.Tasks)
+                        if (project is null)
                         {
-                            task.ProjectID = project.ID;
-                            await _taskRepository.SaveItemAsync(task);
+                            continue;
                         }
-                    }
 
-                    if (project?.Tags is not null)
-                    {
-                        foreach (var tag in project.Tags)
+                        if (project.Category is not null)
                         {
-                            await _tagRepository.SaveItemAsync(tag, project.ID);
+                            await _categoryRepository.SaveItemAsync(project.Category);
+                            project.CategoryID = project.Category.ID;
+                        }
+
+                        await _projectRepository.SaveItemAsync(project);
+
+                        if (project?.Tasks is not null)
+                        {
+                            foreach (var task in project.Tasks)
+                            {
+                                task.ProjectID = project.ID;
+                                await _taskRepository.SaveItemAsync(task);
+                            }
+                        }
+
+                        if (project?.Tags is not null)
+                        {
+                            foreach (var tag in project.Tags)
+                            {
+                                await _tagRepository.SaveItemAsync(tag, project.ID);
+                            }
                         }
                     }
                 }
             }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error saving seed data");
+                throw;
+            }
         }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error saving seed data");
-            throw;
-        }
-    }
 
-    private async void ClearTables()
-    {
-        try
+        private async void ClearTables()
         {
-            await Task.WhenAll(
-                _projectRepository.DropTableAsync(),
-                _taskRepository.DropTableAsync(),
-                _tagRepository.DropTableAsync(),
-                _categoryRepository.DropTableAsync());
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
+            try
+            {
+                await Task.WhenAll(
+                    _projectRepository.DropTableAsync(),
+                    _taskRepository.DropTableAsync(),
+                    _tagRepository.DropTableAsync(),
+                    _categoryRepository.DropTableAsync());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
     }
 }

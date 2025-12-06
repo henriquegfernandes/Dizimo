@@ -1,0 +1,4 @@
+NumeroCadastro,Nome,DataNascimento,Ativo
+123,"João da Silva",1980-05-10,true
+456,"Maria Oliveira",1975-12-22,true
+789,"Carlos Souza",1990-03-15,false

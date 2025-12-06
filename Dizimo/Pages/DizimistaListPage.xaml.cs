@@ -1,42 +1,94 @@
-using Dizimo.PageModels;
+using Dizimo.ViewModels;
+using Dizimo.Application.Dizimistas.Handlers;
+using Dizimo.Domain.Repositories;
+using Dizimo.Domain.Entities;
 
 namespace Dizimo.Pages;
 
 public partial class DizimistaListPage : ContentPage
 {
-    public DizimistaListPage(DizimistaListPageModel vm)
+    private SessaoService? _sessaoService;
+    private DizimistaListViewModel? _viewModel;
+
+    public DizimistaListPage()
     {
         InitializeComponent();
-        BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override void OnBindingContextChanged()
+    {
+        base.OnBindingContextChanged();
+        if (BindingContext is DizimistaListViewModel vm)
+        {
+            _viewModel = vm;
+            System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext é DizimistaListViewModel.");
+        }
+        else
+        {
+            var handlers = (App.Current as App)?.Services.GetService<GetDizimistaHandlers>() ?? throw new InvalidOperationException("GetDizimistaHandlers não está registrado no contêiner de serviços.");
+            var deleteHandler = (App.Current as App)?.Services.GetService<DeleteDizimistaHandler>() ?? throw new InvalidOperationException("DeleteDizimistaHandler não está registrado no contêiner de serviços.");
+            var inativarHandler = (App.Current as App)?.Services.GetService<InativarDizimistaHandler>() ?? throw new InvalidOperationException("InativarDizimistaHandler não está registrado no contêiner de serviços.");
+            var csvService = (App.Current as App)?.Services.GetService<DizimistaCsvService>() ?? throw new InvalidOperationException("DizimistaCsvService não está registrado no contêiner de serviços.");
+            var unitOfWork = (App.Current as App)?.Services.GetService<IUnitOfWork>() ?? throw new InvalidOperationException("IUnitOfWork não está registrado no contêiner de serviços.");
+            var viewModel = new DizimistaListViewModel(handlers, deleteHandler, inativarHandler, csvService, unitOfWork);
+            BindingContext = viewModel;
+            _viewModel = viewModel;
+            System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext inicializado no OnBindingContextChanged.");
+        }
+    }
+
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is DizimistaListPageModel vm)
+        var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+        var mainPage = windows != null && windows.Count > 0 ? windows[0].Page : null;
+        _sessaoService = mainPage?.BindingContext as SessaoService;
+        if (_sessaoService != null && !_sessaoService.IsLogado)
         {
-            _ = RunLoadAsync(vm);
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
+            await Shell.Current.GoToAsync("//login");
+            return;
+        }
+        if (_viewModel != null)
+            await _viewModel.CarregarDizimistasAsync();
+    }
+
+    private async void OnNovoDizimistaClicked(object sender, EventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
+        await Shell.Current.GoToAsync("dizimista-cadastro");
+    }
+
+    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (BindingContext is DizimistaListViewModel vm)
+        {
+            vm.DizimistasSelecionados.Clear();
+            foreach (var item in e.CurrentSelection.OfType<Dizimista>())
+                vm.DizimistasSelecionados.Add(item);
         }
     }
 
-    private async Task RunLoadAsync(DizimistaListPageModel vm)
+    private void OnFiltroCompleted(object sender, EventArgs e)
     {
-        try
-        {
-            await vm.LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            await Shell.Current.DisplayAlert("Erro", ex.Message, "OK");
-        }
+        if (BindingContext is DizimistaListViewModel vm && vm.AplicarFiltrosCommand.CanExecute(null))
+            vm.AplicarFiltrosCommand.Execute(null);
     }
 
-    private async void CollectionView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void OnVerDetalhesDizimistaClicked(object sender, EventArgs e)
     {
-        if (e.CurrentSelection.FirstOrDefault() is Dizimista item)
+        if (sender is Button button && button.BindingContext is Dizimista dizimista)
         {
-            // navigate to detail page with id
-            await Shell.Current.GoToAsync($"dizimista?id={item.ID}");
+            System.Diagnostics.Debug.WriteLine($"[INFO] Ver detalhes do dizimista: {dizimista.Nome} (ID: {dizimista.Id})");
+            
+            var navigationParameter = new Dictionary<string, object>
+            {
+                { "id", dizimista.Id.ToString() }
+            };
+            
+            System.Diagnostics.Debug.WriteLine($"[INFO] Navegando para dizimista-detalhes com ID: {dizimista.Id}");
+            await Shell.Current.GoToAsync("dizimista-detalhes", navigationParameter);
         }
     }
 }

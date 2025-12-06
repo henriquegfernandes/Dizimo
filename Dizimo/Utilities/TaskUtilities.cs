@@ -1,26 +1,27 @@
-// no external services required
+using Dizimo.Services;
 
-namespace Dizimo.Utilities;
-
-/// <summary>
-/// Task Utilities.
-/// </summary>
-public static class TaskUtilities
+namespace Dizimo.Utilities
 {
     /// <summary>
-    /// Fire and Forget Safe Async.
+    /// Task Utilities.
     /// </summary>
-    /// <param name="task">Task to Fire and Forget.</param>
-    /// <param name="handler">Error Handler.</param>
-    public static async void FireAndForgetSafeAsync(this Task task, IErrorHandler? handler = null)
+    public static class TaskUtilities
     {
-        try
+        /// <summary>
+        /// Fire and Forget Safe Async.
+        /// </summary>
+        /// <param name="task">Task to Fire and Forget.</param>
+        /// <param name="handler">Error Handler.</param>
+        public static async void FireAndForgetSafeAsync(this Task task, IErrorHandler? handler = null)
         {
-            await task;
-        }
-        catch (Exception ex)
-        {
-            handler?.HandleError(ex);
+            try
+            {
+                await task;
+            }
+            catch (Exception ex)
+            {
+                handler?.HandleError(ex);
+            }
         }
     }
 }
