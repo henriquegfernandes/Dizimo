@@ -20,6 +20,9 @@ public class NumericValidationBehavior : Behavior<Entry>
     {
         if (sender is not Entry entry) return;
 
+        // Proteger contra NewTextValue nulo
+        if (string.IsNullOrEmpty(e.NewTextValue)) return;
+
         // Remove caracteres não numéricos
         var newText = new string(e.NewTextValue.Where(char.IsDigit).ToArray());
         

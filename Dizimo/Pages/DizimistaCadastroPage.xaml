@@ -74,7 +74,7 @@
                 </sf:SfTextInputLayout>
                 <!-- Telefone -->
                 <sf:SfTextInputLayout Grid.Row="1" Grid.Column="1" Hint="Telefone">
-                    <Entry Text="{Binding Telefone}" Keyboard="Numeric" MaxLength="15" TextChanged="OnTelefoneTextChanged" Placeholder="(00) 0000-0000">
+                    <Entry Text="{Binding Telefone}" Keyboard="Numeric" MaxLength="15" Placeholder="(00) 0000-0000">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
                         </Entry.Behaviors>
@@ -82,7 +82,7 @@
                 </sf:SfTextInputLayout>
                 <!-- Whatsapp -->
                 <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Hint="Whatsapp">
-                    <Entry Text="{Binding Whatsapp}" Keyboard="Numeric" MaxLength="15" TextChanged="OnWhatsappTextChanged" Placeholder="(00) 00000-0000">
+                    <Entry Text="{Binding Whatsapp}" Keyboard="Numeric" MaxLength="15" Placeholder="(00) 00000-0000">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
                         </Entry.Behaviors>
@@ -114,7 +114,7 @@
                 </sf:SfTextInputLayout>
                 <!-- Endereço: CEP -->
                 <sf:SfTextInputLayout Grid.Row="5" Grid.Column="0" Hint="CEP">
-                    <Entry Text="{Binding Cep}" Keyboard="Numeric" MaxLength="9" TextChanged="OnCepTextChanged" Placeholder="00000-000">
+                    <Entry Text="{Binding Cep}" Keyboard="Numeric" MaxLength="9" Placeholder="00000-000">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
                         </Entry.Behaviors>
