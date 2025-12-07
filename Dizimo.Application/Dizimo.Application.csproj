@@ -4,9 +4,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj" />
+    <Compile Remove="Relatorios\**" />
+    <EmbeddedResource Remove="Relatorios\**" />
+    <None Remove="Relatorios\**" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Relatorios\" />
+    <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj" />
   </ItemGroup>
 </Project>

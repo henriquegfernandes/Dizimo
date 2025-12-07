@@ -12,8 +12,6 @@
 		<!-- https://github.com/CommunityToolkit/Maui/issues/2921 -->
 		<NoWarn>NU1608</NoWarn>
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
-		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 
 		<!-- Display name -->
 		<ApplicationTitle>Dizimo</ApplicationTitle>
