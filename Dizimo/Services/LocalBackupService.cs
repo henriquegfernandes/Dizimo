@@ -36,6 +36,10 @@ public class LocalBackupService
     public async Task RestoreAsync()
     {
         var srcPath = Path.Combine(_backupFolderPath, Path.GetFileName(_dbFilePath));
+        
+        if (!File.Exists(srcPath))
+            throw new FileNotFoundException($"Arquivo de backup não encontrado em: {srcPath}");
+        
         File.Copy(srcPath, _dbFilePath, true);
         await Task.CompletedTask;
     }
