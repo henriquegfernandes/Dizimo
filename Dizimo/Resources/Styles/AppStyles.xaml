@@ -189,7 +189,7 @@
         Size="{StaticResource IconSize}" />
 
     <FontImageSource x:Key="IconSwitch"
-        Glyph="&#xf25a;"
+        Glyph="&#xf28e;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
         Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />

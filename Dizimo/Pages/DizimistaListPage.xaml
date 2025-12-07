@@ -120,7 +120,7 @@
                                 CornerRadius="8"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center"
-                                ImageSource="{StaticResource IconTrash}">
+                                ImageSource="{StaticResource IconDelete}">
                         </Button>
                         <Button Text="Ativar/Inativar" 
                                 Command="{Binding InativarDizimistasSelecionadosCommand}" 
