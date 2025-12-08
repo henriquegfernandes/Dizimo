@@ -13,7 +13,6 @@ namespace Dizimo
         {
             InitializeComponent();
             Routing.RegisterRoute("login", typeof(Dizimo.Pages.LoginPage));
-            Routing.RegisterRoute("usuario-cadastro", typeof(Dizimo.Pages.UsuarioCadastroPage));
             var app = Microsoft.Maui.Controls.Application.Current as App;
             if (app is null)
                 throw new InvalidOperationException("Application.Current não está inicializado ou não é do tipo App.");

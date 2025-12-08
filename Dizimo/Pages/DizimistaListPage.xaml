@@ -120,19 +120,16 @@
                                 CornerRadius="8"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center"
-                                ImageSource="{StaticResource IconDelete}">
-                        </Button>
+                                ImageSource="{StaticResource IconDelete}"/>
+
                         <Button Text="Ativar/Inativar" 
                                 Command="{Binding InativarDizimistasSelecionadosCommand}" 
                                 IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
                                 Padding="12"
                                 CornerRadius="8"
                                 HorizontalOptions="Center"
-                                VerticalOptions="Center">
-                            <Button.ImageSource>
-                                <FontImageSource Glyph="&#xE7B0;" FontFamily="{x:Static fonts:FluentUI.FontFamily}" Color="{DynamicResource ButtonIconColor}" />
-                            </Button.ImageSource>
-                        </Button>
+                                VerticalOptions="Center"
+                                ImageSource="{StaticResource IconSwitch}"/>
                     </StackLayout>
                 </StackLayout>
             </VerticalStackLayout>

@@ -74,53 +74,47 @@ namespace Dizimo
             // Dashboard Service
             builder.Services.AddScoped<DashboardService>();
 
-            // Registro dos Handlers e ViewModels para Dizimista
             builder.Services.AddScoped<GetDizimistaHandlers>();
             builder.Services.AddScoped<CreateDizimistaHandler>();
             builder.Services.AddScoped<UpdateDizimistaHandler>();
             builder.Services.AddScoped<DeleteDizimistaHandler>();
             builder.Services.AddScoped<InativarDizimistaHandler>();
             builder.Services.AddScoped<GetUsuarioHandlers>();
+            builder.Services.AddScoped<DizimistaCsvService>();
             builder.Services.AddTransient<DizimistaListViewModel>();
             builder.Services.AddTransient<DizimistaCadastroViewModel>();
-            builder.Services.AddScoped<DizimistaDetalhesViewModel>();
+            builder.Services.AddTransient<DizimistaDetalhesViewModel>();
             builder.Services.AddTransientWithShellRoute<DizimistaDetalhesPage, DizimistaDetalhesViewModel>("dizimista-detalhes");
-
-            // Registro das páginas para navegação
             builder.Services.AddTransientWithShellRoute<DizimistaListPage, DizimistaListViewModel>("dizimistas");
             builder.Services.AddTransientWithShellRoute<DizimistaCadastroPage, DizimistaCadastroViewModel>("dizimista-cadastro");
 
-            builder.Services.AddScoped<DizimistaCsvService>();
+            // Registro dos Handlers e ViewModels para Ofertas
             builder.Services.AddScoped<OfertaCsvService>();
             builder.Services.AddTransient<OfertaListViewModel>();
             builder.Services.AddTransient<OfertaCadastroViewModel>();
             builder.Services.AddTransientWithShellRoute<OfertaListPage, OfertaListViewModel>("ofertas");
             builder.Services.AddTransientWithShellRoute<OfertaCadastroPage, OfertaCadastroViewModel>("oferta-cadastro");
-
             builder.Services.AddScoped<CreateOfertaHandler>();
             builder.Services.AddScoped<UpdateOfertaHandler>();
             builder.Services.AddScoped<DeleteOfertaHandler>();
             builder.Services.AddScoped<GetOfertaHandlers>();
 
+            // Registro dos Handlers e ViewModels para Usuários
             builder.Services.AddScoped<CreateUsuarioHandler>();
             builder.Services.AddScoped<UpdateUsuarioHandler>();
             builder.Services.AddScoped<DeleteUsuarioHandler>();
             builder.Services.AddScoped<InativarUsuarioHandler>();
+            builder.Services.AddTransient<UsuarioListViewModel>();
+            builder.Services.AddTransient<UsuarioCadastroViewModel>();
+            builder.Services.AddTransientWithShellRoute<UsuarioListPage, UsuarioListViewModel>("usuarios");
+            builder.Services.AddTransientWithShellRoute<UsuarioCadastroPage, UsuarioCadastroViewModel>("usuario-cadastro");
 
             builder.Services.AddTransientWithShellRoute<LoginPage, LoginViewModel>("login");
-
-            builder.Services.AddTransient<UsuarioListViewModel>();
-            builder.Services.AddTransientWithShellRoute<UsuarioListPage, UsuarioListViewModel>("usuarios");
 
             builder.Services.AddSingleton<SessaoService>();
 
             // Configuração do serviço de backup
             builder.Services.AddSingleton(new LocalBackupService(dbPath));
-
-            builder.ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("Font Awesome 6 Pro-Regular-400.otf", "FontAwesome");
-            });
 
             var app = builder.Build();
 

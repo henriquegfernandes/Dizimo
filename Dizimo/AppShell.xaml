@@ -45,25 +45,11 @@
         IsVisible="{Binding IsAdmin}" />
 
     <ShellContent
-        Title="Cadastro de Usuário"
-        Icon="{StaticResource IconUserCog}"
-        ContentTemplate="{DataTemplate pages:UsuarioCadastroPage}"
-        Route="usuario-cadastro"
-        IsVisible="False" />
-
-    <ShellContent
         Title="Configuração de Backup"
         Icon="{StaticResource IconBackup}"
         ContentTemplate="{DataTemplate pages:BackupConfigPage}"
         Route="backupconfig"
         IsVisible="{Binding IsAdmin}" />
-
-    <ShellContent
-        Title="Detalhes do Dizimista"
-        Icon="{StaticResource IconPerson}"
-        ContentTemplate="{DataTemplate pages:DizimistaDetalhesPage}"
-        Route="dizimista-detalhes"
-        IsVisible="False" />
 
     <Shell.FlyoutHeader>
         <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
