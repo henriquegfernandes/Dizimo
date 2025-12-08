@@ -11,9 +11,26 @@ public partial class LoginViewModel : ObservableObject
     private readonly GetUsuarioHandlers _getUsuarioHandlers;
     private readonly SessaoService _sessaoService;
 
-    [ObservableProperty] private string login = string.Empty;
-    [ObservableProperty] private string senha = string.Empty;
-    [ObservableProperty] private bool isLoginFailed;
+    private string _login = string.Empty;
+    public string Login
+    {
+        get => _login;
+        set => SetProperty(ref _login, value);
+    }
+
+    private string _senha = string.Empty;
+    public string Senha
+    {
+        get => _senha;
+        set => SetProperty(ref _senha, value);
+    }
+
+    private bool _isLoginFailed;
+    public bool IsLoginFailed
+    {
+        get => _isLoginFailed; 
+        set => SetProperty(ref _isLoginFailed, value);
+    }
 
     public LoginViewModel(GetUsuarioHandlers getUsuarioHandlers, SessaoService sessaoService)
     {

@@ -13,21 +13,110 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     private readonly UpdateDizimistaHandler _updateHandler;
     private readonly GetDizimistaHandlers _getHandler;
 
-    [ObservableProperty] private int _numeroCadastro;
-    [ObservableProperty] private string _nome = string.Empty;
-    [ObservableProperty] private DateTime _dataNascimento = DateTime.Today;
-    [ObservableProperty] private bool _ativo = true;
-    [ObservableProperty] private Guid _id;
-    [ObservableProperty] private bool _isEditMode;
-    [ObservableProperty] private string _telefone = string.Empty;
-    [ObservableProperty] private string _whatsapp = string.Empty;
-    [ObservableProperty] private DateTime _dataCadastro = DateTime.Today;
-    [ObservableProperty] private string _rua = string.Empty;
-    [ObservableProperty] private string _numero = string.Empty;
-    [ObservableProperty] private string _bairro = string.Empty;
-    [ObservableProperty] private string _cidade = "Osasco";
-    [ObservableProperty] private string _uf = "SP";
-    [ObservableProperty] private string _cep = string.Empty;
+    private int _numeroCadastro;
+    public int NumeroCadastro
+    {
+        get => _numeroCadastro;
+        set => SetProperty(ref _numeroCadastro, value);
+    }
+
+    private string _nome = string.Empty;
+    public string Nome
+    {
+        get => _nome;
+        set => SetProperty(ref _nome, value);
+    }
+
+    private DateTime _dataNascimento = DateTime.Today;
+    public DateTime DataNascimento
+    {
+        get => _dataNascimento;
+        set => SetProperty(ref _dataNascimento, value);
+    }
+
+    private bool _ativo = true;
+    public bool Ativo
+    {
+        get => _ativo;
+        set => SetProperty(ref _ativo, value);
+    }
+
+    private Guid _id;
+    public Guid Id
+    {
+        get => _id;
+        set => SetProperty(ref _id, value);
+    }
+
+    private bool _isEditMode;
+    public bool IsEditMode
+    {
+        get => _isEditMode;
+        set => SetProperty(ref _isEditMode, value);
+    }
+
+    private string _telefone = string.Empty;
+    public string Telefone
+    {
+        get => _telefone;
+        set => SetProperty(ref _telefone, value);
+    }
+
+    private string _whatsapp = string.Empty;
+    public string Whatsapp
+    {
+        get => _whatsapp;
+        set => SetProperty(ref _whatsapp, value);
+    }
+
+    private DateTime _dataCadastro = DateTime.Today;
+    public DateTime DataCadastro
+    {
+        get => _dataCadastro;
+        set => SetProperty(ref _dataCadastro, value);
+    }
+
+    private string _rua = string.Empty;
+    public string Rua
+    {
+        get => _rua;
+        set => SetProperty(ref _rua, value);
+    }
+
+    private string _numero = string.Empty;
+    public string Numero
+    {
+        get => _numero;
+        set => SetProperty(ref _numero, value);
+    }
+
+    private string _bairro = string.Empty;
+    public string Bairro
+    {
+        get => _bairro;
+        set => SetProperty(ref _bairro, value);
+    }
+
+    private string _cidade = "Osasco";
+    public string Cidade
+    {
+        get => _cidade;
+        set => SetProperty(ref _cidade, value);
+    }
+
+    private string _uf = "SP";
+    public string Uf
+    {
+        get => _uf;
+        set => SetProperty(ref _uf, value);
+    }
+
+    private string _cep = string.Empty;
+    public string Cep
+    {
+        get => _cep;
+        set => SetProperty(ref _cep, value);
+    }
 
     private string _complemento = string.Empty;
 
