@@ -8,17 +8,22 @@ public partial class LocalBackupViewModel : ObservableObject
 {
     private readonly LocalBackupService _backupService;
 
-    private string? _backupFolderPath;
+    private string? backupFolderPath;
+    public string? BackupFolderPath
+    {
+        get => backupFolderPath;
+        set => SetProperty(ref backupFolderPath, value);
+    }
 
     public LocalBackupViewModel(LocalBackupService backupService)
     {
         _backupService = backupService;
+        LoadBackupFolderPath();
     }
 
-    public string? BackupFolderPath
+    private void LoadBackupFolderPath()
     {
-        get => _backupFolderPath;
-        set => SetProperty(ref _backupFolderPath, value);
+        BackupFolderPath = _backupService.BackupFolderPath;
     }
 
     [RelayCommand]
@@ -69,7 +74,7 @@ public partial class LocalBackupViewModel : ObservableObject
                 ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
                 : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Backup", "RestauraÃ§Ã£o realizada com sucesso.", "OK");
+                await mainPage.DisplayAlertAsync("Backup", "Restauração realizada com sucesso.", "OK");
         }
         catch (Exception ex)
         {

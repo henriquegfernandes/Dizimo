@@ -14,6 +14,7 @@ using Microsoft.Maui.Controls;
 using Dizimo.Pages;
 using Microsoft.Extensions.DependencyInjection;
 using Dizimo.Application.Usuarios.Handlers;
+using Dizimo.Services;
 using System.Globalization;
 
 namespace Dizimo
@@ -54,8 +55,12 @@ namespace Dizimo
     		builder.Services.AddLogging(configure => configure.AddDebug());
 #endif
 
+            // Configuração do serviço de caminhos
+            builder.Services.AddSingleton<IDataPathProvider, DataPathProvider>();
+
             // Configuração do EF Core com SQLite
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "dizimo.db");
+            var dataPathProvider = new DataPathProvider();
+            var dbPath = dataPathProvider.GetDatabasePath();
             builder.Services.AddDbContext<DizimoDbContext>(options =>
                 options.UseSqlite($"Data Source={dbPath}")
             );
@@ -115,6 +120,7 @@ namespace Dizimo
 
             // Configuração do serviço de backup
             builder.Services.AddSingleton(new LocalBackupService(dbPath));
+            builder.Services.AddSingleton<BackupOnCloseService>();
 
             var app = builder.Build();
 

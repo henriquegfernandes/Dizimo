@@ -21,6 +21,8 @@ public class LocalBackupService
         }
     }
 
+    public bool IsBackupFolderConfigured => !string.IsNullOrEmpty(_backupFolderPath) && _backupFolderPath != FileSystem.Current.AppDataDirectory;
+
     public void SetBackupFolder(string folderPath)
     {
         BackupFolderPath = folderPath;
