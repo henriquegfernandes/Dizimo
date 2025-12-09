@@ -41,11 +41,11 @@ public partial class UsuarioCadastroPage : ContentPage
 
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("../");
+        await Shell.Current.GoToAsync("///usuarios", true);
     }
 
     private async void OnCancelarClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("../");
+        await Shell.Current.GoToAsync("///usuarios", true);
     }
 }

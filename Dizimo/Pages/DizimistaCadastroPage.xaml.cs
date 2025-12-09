@@ -12,7 +12,6 @@ public partial class DizimistaCadastroPage : ContentPage
 
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine("[INFO] Botão voltar clicado na página de cadastro");
-        await Shell.Current.GoToAsync("..", true);
+        await Shell.Current.GoToAsync("///dizimistas", true);
     }
 }

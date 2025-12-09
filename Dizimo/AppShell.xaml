@@ -29,7 +29,7 @@
         Title="Dizimistas"
         Icon="{StaticResource IconPerson}"
         ContentTemplate="{DataTemplate pages:DizimistaListPage}"
-        Route="dizimista-list" />
+        Route="dizimistas" />
 
     <ShellContent
         Title="Ofertas"

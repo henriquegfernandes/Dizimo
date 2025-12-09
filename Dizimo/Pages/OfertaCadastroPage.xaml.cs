@@ -18,7 +18,7 @@ public partial class OfertaCadastroPage : ContentPage
 
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("//IMPL_ofertas/IMPL_ofertas/ofertas", true);
+        await Shell.Current.GoToAsync("///ofertas", true);
     }
 
     private async void OnCodigoDizimistaUnfocused(object sender, FocusEventArgs e)
