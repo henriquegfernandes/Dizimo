@@ -117,7 +117,7 @@
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                     <!-- Linha de total -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,1*" Padding="8" BackgroundColor="#F5F5F5">
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,1*" Padding="8" >
                         <Label Text="" Grid.Column="0" />
                         <Label Text="" Grid.Column="1" />
                         <Label Text="TOTAL" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />

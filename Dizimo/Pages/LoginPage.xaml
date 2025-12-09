@@ -3,19 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              x:Class="Dizimo.Pages.LoginPage">
-    <StackLayout Padding="16" VerticalOptions="Center" Spacing="10">
-        <Label Text="Login" FontSize="24" HorizontalOptions="Center" />
+    <StackLayout Padding="16" VerticalOptions="Center" Spacing="10" WidthRequest="500">
+        <Image Source="dizimologo.png" HeightRequest="240" WidthRequest="240" HorizontalOptions="Center" />
         <Entry x:Name="LoginEntry"
                Placeholder="Usuário" Text="{Binding Login}" 
-               BackgroundColor="#E0E0E0" 
-               TextColor="#333333"
+               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
                Completed="OnLoginEntryCompleted" />
         <Entry x:Name="SenhaEntry"
                Placeholder="Senha" IsPassword="True" Text="{Binding Senha}" 
-               BackgroundColor="#E0E0E0" 
-               TextColor="#333333"
+               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
                Completed="OnSenhaEntryCompleted" />
-        <Button Text="Entrar" Command="{Binding LoginCommand}" />
+        <Button Text="Entrar" Command="{Binding LoginCommand}"/>
         <Label Text="Login ou senha inválidos." IsVisible="{Binding IsLoginFailed}" TextColor="Red" />
     </StackLayout>
 </ContentPage>

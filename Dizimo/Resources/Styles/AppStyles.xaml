@@ -101,7 +101,7 @@
     <FontImageSource x:Key="IconLight"
             Glyph="{x:Static f:FluentUI.weather_sunny_28_regular}"
             FontFamily="{x:Static f:FluentUI.FontFamily}"
-            Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+            Color="{AppThemeBinding Light={StaticResource LightOnDarkBackground}, Dark={StaticResource LightOnDarkBackground}}"
             Size="{StaticResource size240}" />
     
     <FontImageSource x:Key="IconDark"

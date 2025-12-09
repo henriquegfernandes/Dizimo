@@ -42,14 +42,12 @@
                                 Command="{Binding AlternarVisualizacaoCommand}"
                                 Padding="12,8"
                                 FontSize="12"
-                                BackgroundColor="#800000"
                                 TextColor="White"
                                 CornerRadius="5" />
                         <Button Text="Exportar"
                                 Command="{Binding ExportarAniversariantesCommand}"
                                 Padding="12,8"
                                 FontSize="12"
-                                BackgroundColor="#800000"
                                 TextColor="White"
                                 CornerRadius="5" />
                     </HorizontalStackLayout>

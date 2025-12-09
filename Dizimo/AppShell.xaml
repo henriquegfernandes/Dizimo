@@ -7,9 +7,7 @@
     xmlns:pages="clr-namespace:Dizimo.Pages"
     Shell.FlyoutBehavior="Flyout"
     Title="Dizimo"
-    TitleColor="#800000"
-    TabBarForegroundColor="#800000"
-    ForegroundColor="#800000"
+    ForegroundColor="#FF0000"
     FlyoutHeaderBehavior="CollapseOnScroll">
 
     <ShellContent
@@ -72,8 +70,8 @@
                         SegmentWidth="40" SegmentHeight="40">
                         <sf:SfSegmentedControl.ItemsSource>
                             <x:Array Type="{x:Type sf:SfSegmentItem}">
-                                <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode" SelectedSegmentBackground="#800000"/>
-                                <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode" SelectedSegmentBackground="#800000"/>
+                                <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode" SelectedSegmentBackground="#FF0000"/>
+                                <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode" SelectedSegmentBackground="#FF0000"/>
                             </x:Array>
                         </sf:SfSegmentedControl.ItemsSource>
                     </sf:SfSegmentedControl>
