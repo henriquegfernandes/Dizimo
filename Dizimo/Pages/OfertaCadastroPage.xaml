@@ -90,13 +90,13 @@
                 <StackLayout Grid.Row="1" Grid.Column="2" />
                 
                 <!-- Mês de Referência -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Hint="Mês">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Hint="Mês de Referência">
                     <Picker ItemsSource="{Binding MesesNomesCollection}" 
                             SelectedItem="{Binding MesNomeAtual, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
                 
                 <!-- Ano de Referência -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="4" Hint="Ano">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="4" Hint="Ano de Refência">
                     <Picker ItemsSource="{Binding AnosCollection}" SelectedItem="{Binding AnoSelecionado, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
                 
