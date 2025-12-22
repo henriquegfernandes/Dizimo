@@ -11,7 +11,6 @@ namespace Dizimo.ViewModels;
 public partial class MainPageViewModel : ObservableObject
 {
     private readonly DashboardService _dashboardService;
-    private readonly DizimistaCsvService _csvService;
 
     private ObservableCollection<DashboardService.DizimistaPeriodoOfertaData> _dizimistasAgrupadosPeriodo = new();
 
@@ -82,10 +81,9 @@ public partial class MainPageViewModel : ObservableObject
 
     public string Titulo => $"Dashboard - {DateTime.Now:dddd, dd 'de' MMMM 'de' yyyy}";
 
-    public MainPageViewModel(DashboardService dashboardService, DizimistaCsvService csvService)
+    public MainPageViewModel(DashboardService dashboardService)
     {
         _dashboardService = dashboardService ?? throw new ArgumentNullException(nameof(dashboardService));
-        _csvService = csvService ?? throw new ArgumentNullException(nameof(csvService));
     }
 
     [RelayCommand]
@@ -180,21 +178,20 @@ public partial class MainPageViewModel : ObservableObject
                 ? $"aniversariantes_semana_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
                 : $"aniversariantes_mes_{MesesDisponiveis[MesSelecionado - 1]}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
 
+            var csvBytes = Encoding.UTF8.GetBytes(csv);
+            var csvStream = new MemoryStream(csvBytes);
+
 #if WINDOWS
-            var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
-            if (folder?.Folder == null)
-            {
-                return;
-            }
+            var result = await FileSaver.Default.SaveAsync(nomeArquivo, csvStream, CancellationToken.None);
 
-            var filePath = Path.Combine(folder.Folder.Path, nomeArquivo);
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
-
-            var mainPage = GetMainPage();
-            if (mainPage != null)
+            if (result.IsSuccessful)
             {
-                await mainPage.DisplayAlertAsync("Exportação",
-                    $"Aniversariantes exportados com sucesso!\n\nLocalização: {filePath}", "OK");
+                var mainPage = GetMainPage();
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Exportação",
+                        $"Aniversariantes exportados com sucesso!", "OK");
+                }
             }
 #else
             var downloadsPath = Path.Combine(
@@ -207,7 +204,7 @@ public partial class MainPageViewModel : ObservableObject
             }
 
             var filePath = Path.Combine(downloadsPath, nomeArquivo);
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+            await File.WriteAllBytesAsync(filePath, csvBytes);
 
             var mainPageSuccess = GetMainPage();
             if (mainPageSuccess != null)

@@ -8,9 +8,9 @@ using System.Collections.ObjectModel;
 using Dizimo.Domain.Repositories;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Input;
-using System.IO;
+using Microsoft.Maui.Storage;
 using CommunityToolkit.Maui.Storage;
+using System.IO;
 
 namespace Dizimo.ViewModels
 {
@@ -19,7 +19,7 @@ namespace Dizimo.ViewModels
         private readonly GetDizimistaHandlers _handlers;
         private readonly DeleteDizimistaHandler _deleteHandler;
         private readonly InativarDizimistaHandler _inativarHandler;
-        private readonly DizimistaCsvService _csvService;
+        private readonly DizimistaExcelService _excelService;
         private readonly IUnitOfWork _unitOfWork;
 
         public List<Dizimista> TodosDizimistas { get; private set; } = new List<Dizimista>();
@@ -91,13 +91,13 @@ namespace Dizimo.ViewModels
             GetDizimistaHandlers handlers,
             DeleteDizimistaHandler deleteHandler,
             InativarDizimistaHandler inativarHandler,
-            DizimistaCsvService csvService,
+            DizimistaExcelService excelService,
             IUnitOfWork unitOfWork)
         {
             _handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
             _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
             _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
-            _csvService = csvService ?? throw new ArgumentNullException(nameof(csvService));
+            _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             Dizimistas = new ObservableCollection<Dizimista>();
         }
@@ -211,34 +211,29 @@ namespace Dizimo.ViewModels
             try
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] ExportarAsync iniciado");
-                var csv = await _csvService.ExportarAsync();
+                var excelStream = await _excelService.ExportarAsync();
                 
-                // Abrir diálogo de salvar arquivo nativo
-                var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 
 #if WINDOWS
-                // Usar Windows API para diálogo de save file
-                var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
-                
-                if (folder?.Folder == null)
+                var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
+
+                if (result.IsSuccessful)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
+
+                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    if (mainPage != null)
+                    {
+                        await mainPage.DisplayAlertAsync("Exportação", 
+                            $"Planilha de dizimistas exportada com sucesso!", "OK");
+                    }
+                }
+                else
                 {
                     System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
-                    return;
-                }
-
-                var filePath = Path.Combine(folder.Folder.Path, fileName);
-                await File.WriteAllTextAsync(filePath, csv);
-                
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
-
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Exportação", 
-                        $"Planilha de dizimistas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
                 }
 #else
-                // Para outras plataformas, usar comportamento padrão
                 var downloadsPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                     "Downloads");
@@ -247,7 +242,7 @@ namespace Dizimo.ViewModels
                     Directory.CreateDirectory(downloadsPath);
                 
                 var filePath = Path.Combine(downloadsPath, fileName);
-                await File.WriteAllTextAsync(filePath, csv);
+                await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
                 
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
@@ -276,32 +271,28 @@ namespace Dizimo.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
                 
-                var csv = _csvService.GerarModeloAsync();
-                var fileName = "dizimistas_modelo.csv";
+                var excelStream = _excelService.GerarModelo();
+                var fileName = "dizimistas_modelo.xlsx";
 
 #if WINDOWS
-                // Usar Windows API para diálogo de save file
-                var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
-                
-                if (folder?.Folder == null)
+                var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
+
+                if (result.IsSuccessful)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {result.FilePath}");
+
+                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    if (mainPage != null)
+                    {
+                        await mainPage.DisplayAlertAsync("Modelo Baixado", 
+                            $"Planilha modelo baixada com sucesso!", "OK");
+                    }
+                }
+                else
                 {
                     System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
-                    return;
-                }
-
-                var filePath = Path.Combine(folder.Folder.Path, fileName);
-                await File.WriteAllTextAsync(filePath, csv);
-                
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
-
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Modelo Baixado", 
-                        $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
                 }
 #else
-                // Para outras plataformas, usar comportamento padrão
                 var downloadsPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                     "Downloads");
@@ -310,7 +301,7 @@ namespace Dizimo.ViewModels
                     Directory.CreateDirectory(downloadsPath);
                 
                 var filePath = Path.Combine(downloadsPath, fileName);
-                await File.WriteAllTextAsync(filePath, csv);
+                await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
                 
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
@@ -340,16 +331,16 @@ namespace Dizimo.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
                 
-                // Permitir o usuário selecionar o arquivo CSV
+                // Permitir o usuário selecionar o arquivo Excel
                 var result = await FilePicker.Default.PickAsync(new PickOptions
                 {
                     FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                     {
-                        { DevicePlatform.WinUI, new[] { ".csv" } },
-                        { DevicePlatform.Android, new[] { "text/*" } },
-                        { DevicePlatform.iOS, new[] { "public.comma-separated-values-text" } }
+                        { DevicePlatform.WinUI, new[] { ".xlsx" } },
+                        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
+                        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } }
                     }),
-                    PickerTitle = "Selecionar arquivo CSV de dizimistas para importar"
+                    PickerTitle = "Selecionar arquivo Excel de dizimistas para importar"
                 });
 
                 if (result == null)
@@ -359,8 +350,8 @@ namespace Dizimo.ViewModels
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {result.FullPath}");
-                var csv = File.ReadAllText(result.FullPath);
-                var dizimistas = await _csvService.ImportarAsync(csv);
+                var excelBytes = await File.ReadAllBytesAsync(result.FullPath);
+                var dizimistas = await _excelService.ImportarAsync(excelBytes);
                 
                 System.Diagnostics.Debug.WriteLine($"[INFO] {dizimistas.Count} dizimistas lidos do arquivo");
                 
