@@ -67,7 +67,7 @@
                     <Button Text="Logout" Command="{Binding LogoutCommand}" />
                     <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
                         VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
-                        SegmentWidth="40" SegmentHeight="40">
+                        SegmentWidth="40" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}">
                         <sf:SfSegmentedControl.ItemsSource>
                             <x:Array Type="{x:Type sf:SfSegmentItem}">
                                 <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode" SelectedSegmentBackground="#FF0000"/>
