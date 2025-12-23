@@ -9,12 +9,7 @@ using Dizimo.ViewModels;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Dashboard;
-using Microsoft.Maui.LifecycleEvents;
-using Microsoft.Maui.Controls;
-using Dizimo.Pages;
-using Microsoft.Extensions.DependencyInjection;
 using Dizimo.Application.Usuarios.Handlers;
-using Dizimo.Services;
 using System.Globalization;
 
 namespace Dizimo
