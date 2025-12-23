@@ -49,10 +49,19 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         for (int i = anoAtual - 5; i <= anoAtual + 5; i++)
             anos.Add(i);
         AnosCollection = anos;
+
+        var tiposPagamento = new ObservableCollection<string>
+        {
+            "PIX",
+            "Dinheiro",
+            "Cartão"
+        };
+        TiposPagamentoCollection = tiposPagamento;
     }
 
     public ObservableCollection<string> MesesNomesCollection { get; }
     public ObservableCollection<int> AnosCollection { get; }
+    public ObservableCollection<string> TiposPagamentoCollection { get; }
 
     private Guid _id;
     public Guid Id { get => _id; set => SetProperty(ref _id, value); }
@@ -72,6 +81,16 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     private DateTime _data = DateTime.Today;
     public DateTime DataOferta { get => _data; set => SetProperty(ref _data, value); }
 
+    private string _tipoPagamento = "PIX";
+    public string TipoPagamento { get => _tipoPagamento; set => SetProperty(ref _tipoPagamento, value); }
+
+    private bool _usarRangoMeses = false;
+    public bool UsarRangoMeses 
+    { 
+        get => _usarRangoMeses; 
+        set => SetProperty(ref _usarRangoMeses, value);
+    }
+
     private int _mesReferencia = DateTime.Today.Month;
     public int MesRef 
     { 
@@ -79,7 +98,6 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         set 
         { 
             SetProperty(ref _mesReferencia, value);
-            // Atualizar o nome do mês quando MesRef muda
             OnPropertyChanged(nameof(MesNomeAtual));
         }
     }
@@ -89,12 +107,38 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         get => _mesReferencia >= 1 && _mesReferencia <= 12 ? _mesesArray[_mesReferencia - 1] : _mesesArray[0];
         set
         {
-            // Converter nome do mês para int
             for (int i = 0; i < _mesesArray.Length; i++)
             {
                 if (_mesesArray[i].Equals(value, StringComparison.OrdinalIgnoreCase))
                 {
                     MesRef = i + 1;
+                    return;
+                }
+            }
+        }
+    }
+
+    private int _mesReferenciaFim = DateTime.Today.Month;
+    public int MesRefFim 
+    { 
+        get => _mesReferenciaFim; 
+        set 
+        { 
+            SetProperty(ref _mesReferenciaFim, value);
+            OnPropertyChanged(nameof(MesNomeAtualFim));
+        }
+    }
+
+    public string MesNomeAtualFim
+    {
+        get => _mesReferenciaFim >= 1 && _mesReferenciaFim <= 12 ? _mesesArray[_mesReferenciaFim - 1] : _mesesArray[0];
+        set
+        {
+            for (int i = 0; i < _mesesArray.Length; i++)
+            {
+                if (_mesesArray[i].Equals(value, StringComparison.OrdinalIgnoreCase))
+                {
+                    MesRefFim = i + 1;
                     return;
                 }
             }
@@ -108,7 +152,6 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         set 
         { 
             SetProperty(ref _anoReferencia, value);
-            // Atualizar o ano quando AnoRef muda
             OnPropertyChanged(nameof(AnoSelecionado));
         }
     }
@@ -121,6 +164,29 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             if (_anoReferencia != value)
             {
                 AnoRef = value;
+            }
+        }
+    }
+
+    private int _anoReferenciaFim = DateTime.Today.Year;
+    public int AnoRefFim 
+    { 
+        get => _anoReferenciaFim; 
+        set 
+        { 
+            SetProperty(ref _anoReferenciaFim, value);
+            OnPropertyChanged(nameof(AnoSelecionadoFim));
+        }
+    }
+
+    public int AnoSelecionadoFim
+    {
+        get => _anoReferenciaFim;
+        set
+        {
+            if (_anoReferenciaFim != value)
+            {
+                AnoRefFim = value;
             }
         }
     }
@@ -198,7 +264,9 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             DataOferta = oferta.Data;
             MesRef = oferta.MesReferencia;
             AnoRef = oferta.AnoReferencia;
+            TipoPagamento = oferta.TipoPagamento.ToString().Replace("Cartao", "Cartão");
             IsEditMode = true;
+            UsarRangoMeses = false;
 
             var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(DizimistaIdProp);
             if (dizimista != null)
@@ -219,9 +287,13 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         Valor = 0;
         DataOferta = DateTime.Today;
         MesRef = DateTime.Today.Month;
+        MesRefFim = DateTime.Today.Month;
         AnoRef = DateTime.Today.Year;
+        AnoRefFim = DateTime.Today.Year;
+        TipoPagamento = "PIX";
         IsEditMode = false;
         DizimistaEncontrado = false;
+        UsarRangoMeses = false;
     }
 
     public IAsyncRelayCommand SalvarCommand => new AsyncRelayCommand(SalvarAsync);
@@ -244,16 +316,118 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             return;
         }
 
+        // Validação para range de meses
+        if (UsarRangoMeses)
+        {
+            int mesInicio = MesRef;
+            int mesFim = MesRefFim;
+            int anoInicio = AnoRef;
+            int anoFim = AnoRefFim;
+
+            // Criar datas para comparação
+            var dataInicio = new DateTime(anoInicio, mesInicio, 1);
+            var dataFim = new DateTime(anoFim, mesFim, 1);
+
+            if (dataFim < dataInicio)
+            {
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                    await mainPage.DisplayAlertAsync("Validação", "A data final deve ser maior ou igual à data de início. Por favor, verifique o período selecionado.", "OK");
+                return;
+            }
+        }
+
         try
         {
+            var tipoPagamentoSelecionado = TipoPagamento.Replace("Cartão", "Cartao");
+            var tipoPagamento = (Dizimo.Domain.Entities.TipoPagamento)Enum.Parse(typeof(Dizimo.Domain.Entities.TipoPagamento), tipoPagamentoSelecionado);
+
             if (IsEditMode)
+            {
                 await _updateHandler.Handle(new UpdateOfertaCommand(Id, DizimistaIdProp, Valor, DataOferta, MesRef, AnoRef));
+                // Atualizar tipo de pagamento
+                var oferta = await _unitOfWork.Ofertas.GetByIdAsync(Id);
+                if (oferta != null)
+                {
+                    oferta.TipoPagamento = tipoPagamento;
+                    await _unitOfWork.Ofertas.UpdateAsync(oferta);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
             else
-                await _createHandler.Handle(new CreateOfertaCommand(DizimistaIdProp, Valor, DataOferta, MesRef, AnoRef));
+            {
+                if (UsarRangoMeses)
+                {
+                    int mesInicio = MesRef;
+                    int mesFim = MesRefFim;
+                    int anoInicio = AnoRef;
+                    int anoFim = AnoRefFim;
+
+                    // Calcular quantidade total de meses no range
+                    int qtdMeses = 0;
+                    int mesTemp = mesInicio;
+                    int anoTemp = anoInicio;
+
+                    while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
+                    {
+                        qtdMeses++;
+                        mesTemp++;
+                        if (mesTemp > 12)
+                        {
+                            mesTemp = 1;
+                            anoTemp++;
+                        }
+                    }
+
+                    // Dividir valor igualmente entre os meses
+                    decimal valorPorMes = qtdMeses > 0 ? Valor / qtdMeses : Valor;
+
+                    // Criar ofertas para cada mês no range
+                    mesTemp = mesInicio;
+                    anoTemp = anoInicio;
+                    while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
+                    {
+                        var novaOferta = new Oferta
+                        {
+                            Id = Guid.NewGuid(),
+                            DizimistaId = DizimistaIdProp,
+                            Valor = valorPorMes,
+                            Data = DataOferta,
+                            MesReferencia = mesTemp,
+                            AnoReferencia = anoTemp,
+                            TipoPagamento = tipoPagamento
+                        };
+                        await _unitOfWork.Ofertas.AddAsync(novaOferta);
+                        mesTemp++;
+                        if (mesTemp > 12)
+                        {
+                            mesTemp = 1;
+                            anoTemp++;
+                        }
+                    }
+                    await _unitOfWork.SaveChangesAsync();
+                }
+                else
+                {
+                    // Oferta única
+                    var novaOferta = new Oferta
+                    {
+                        Id = Guid.NewGuid(),
+                        DizimistaId = DizimistaIdProp,
+                        Valor = Valor,
+                        Data = DataOferta,
+                        MesReferencia = MesRef,
+                        AnoReferencia = AnoRef,
+                        TipoPagamento = tipoPagamento
+                    };
+                    await _unitOfWork.Ofertas.AddAsync(novaOferta);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
 
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Sucesso", "Oferta salva com sucesso!", "OK");
+                await mainPage.DisplayAlertAsync("Sucesso", "Oferta(s) salva(s) com sucesso!", "OK");
 
             await Shell.Current.GoToAsync("///ofertas", true);
         }

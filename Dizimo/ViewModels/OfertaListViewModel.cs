@@ -38,13 +38,25 @@ public partial class OfertaListViewModel : ObservableObject
         set => SetProperty(ref _filtroNome, value);
     }
 
-    private DateTime? _filtroData = DateTime.Today;
-    public DateTime? FiltroData
+    private DateTime? _filtroDataInicio = DateTime.Today;
+    public DateTime? FiltroDataInicio
     {
-        get => _filtroData;
+        get => _filtroDataInicio;
         set 
         { 
-            SetProperty(ref _filtroData, value);
+            SetProperty(ref _filtroDataInicio, value);
+            // Aplicar filtros automaticamente quando a data muda
+            AplicarFiltros();
+        }
+    }
+
+    private DateTime? _filtroDataFim = DateTime.Today;
+    public DateTime? FiltroDataFim
+    {
+        get => _filtroDataFim;
+        set 
+        { 
+            SetProperty(ref _filtroDataFim, value);
             // Aplicar filtros automaticamente quando a data muda
             AplicarFiltros();
         }
@@ -142,8 +154,11 @@ public partial class OfertaListViewModel : ObservableObject
         IEnumerable<Oferta> filtrados = TodasOfertas;
 
         // Filtro por data (apenas se uma data foi selecionada)
-        if (FiltroData.HasValue)
-            filtrados = filtrados.Where(o => o.Data.Date == FiltroData.Value.Date);
+        if (FiltroDataInicio.HasValue)
+            filtrados = filtrados.Where(o => o.Data.Date >= FiltroDataInicio.Value.Date);
+
+        if (FiltroDataFim.HasValue)
+            filtrados = filtrados.Where(o => o.Data.Date <= FiltroDataFim.Value.Date);
 
         // Filtro unificado: busca por nome do dizimista OU código do dizimista
         if (!string.IsNullOrWhiteSpace(FiltroNome))
@@ -157,8 +172,7 @@ public partial class OfertaListViewModel : ObservableObject
             });
         }
 
-        var filteredList = filtrados is List<Oferta> ofertaList ? ofertaList : filtrados.ToList();
-        Ofertas = new ObservableCollection<Oferta>(filteredList);
+        Ofertas = new ObservableCollection<Oferta>(filtrados);
         
         // Calcular total
         ValorTotal = Ofertas.Sum(o => o.Valor);
@@ -168,7 +182,8 @@ public partial class OfertaListViewModel : ObservableObject
     public void LimparFiltros()
     {
         FiltroNome = string.Empty;
-        FiltroData = null;
+        FiltroDataInicio = null;
+        FiltroDataFim = null;
         AplicarFiltros();
     }
 

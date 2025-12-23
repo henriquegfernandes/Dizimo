@@ -31,9 +31,10 @@ public class OfertaExcelService
         headerRow.Cell(4).Value = "Data";
         headerRow.Cell(5).Value = "Mês Referência";
         headerRow.Cell(6).Value = "Ano Referência";
+        headerRow.Cell(7).Value = "Tipo Pagamento";
 
         // Formatar cabeçalho
-        var headerRange = worksheet.Range("A1:F1");
+        var headerRange = worksheet.Range("A1:G1");
         headerRange.Style.Font.Bold = true;
         headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
         headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -54,6 +55,7 @@ public class OfertaExcelService
             worksheet.Cell(rowNumber, 4).Value = o.Data;
             worksheet.Cell(rowNumber, 5).Value = o.MesReferencia;
             worksheet.Cell(rowNumber, 6).Value = o.AnoReferencia;
+            worksheet.Cell(rowNumber, 7).Value = o.TipoPagamento.ToString();
 
             totalValor += o.Valor;
             rowNumber++;
@@ -75,6 +77,7 @@ public class OfertaExcelService
         worksheet.Column(4).Style.DateFormat.Format = "dd/mm/yyyy";
         worksheet.Column(5).Width = 15;
         worksheet.Column(6).Width = 15;
+        worksheet.Column(7).Width = 18;
 
         // Converter para MemoryStream
         var stream = new MemoryStream();
@@ -95,9 +98,10 @@ public class OfertaExcelService
         headerRow.Cell(3).Value = "Data";
         headerRow.Cell(4).Value = "Mês Referência";
         headerRow.Cell(5).Value = "Ano Referência";
+        headerRow.Cell(6).Value = "Tipo Pagamento";
 
         // Formatar cabeçalho
-        var headerRange = worksheet.Range("A1:E1");
+        var headerRange = worksheet.Range("A1:F1");
         headerRange.Style.Font.Bold = true;
         headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
         headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -108,11 +112,12 @@ public class OfertaExcelService
         worksheet.Cell(2, 3).Value = DateTime.Now;
         worksheet.Cell(2, 4).Value = 1;
         worksheet.Cell(2, 5).Value = DateTime.Now.Year;
+        worksheet.Cell(2, 6).Value = "PIX";
 
         // Linhas em branco para o usuário preencher (5 linhas)
         for (int i = 3; i <= 7; i++)
         {
-            for (int j = 1; j <= 5; j++)
+            for (int j = 1; j <= 6; j++)
             {
                 worksheet.Cell(i, j).Value = "";
             }
@@ -126,6 +131,7 @@ public class OfertaExcelService
         worksheet.Column(3).Style.DateFormat.Format = "dd/mm/yyyy";
         worksheet.Column(4).Width = 18;
         worksheet.Column(5).Width = 18;
+        worksheet.Column(6).Width = 18;
 
         // Converter para MemoryStream
         var stream = new MemoryStream();
@@ -213,6 +219,28 @@ public class OfertaExcelService
                 continue;
             }
 
+            // Ler tipo de pagamento (coluna 6)
+            var tipoPagamentoCell = worksheet.Cell(rowNumber, 6).GetValue<string>();
+            TipoPagamento tipoPagamento = TipoPagamento.Dinheiro; // Default é Dinheiro
+
+            if (!string.IsNullOrWhiteSpace(tipoPagamentoCell))
+            {
+                var tipoPagamentoTrimmed = tipoPagamentoCell.Trim();
+                if (tipoPagamentoTrimmed.Equals("PIX", StringComparison.OrdinalIgnoreCase))
+                    tipoPagamento = TipoPagamento.PIX;
+                else if (tipoPagamentoTrimmed.Equals("Dinheiro", StringComparison.OrdinalIgnoreCase))
+                    tipoPagamento = TipoPagamento.Dinheiro;
+                else if (tipoPagamentoTrimmed.Equals("Cartão", StringComparison.OrdinalIgnoreCase) || 
+                         tipoPagamentoTrimmed.Equals("Cartao", StringComparison.OrdinalIgnoreCase))
+                    tipoPagamento = TipoPagamento.Cartao;
+                else
+                {
+                    resultado.Erros.Add($"Linha {numeroLinha}: Tipo de pagamento '{tipoPagamentoCell.Trim()}' é inválido (use PIX, Dinheiro ou Cartão)");
+                    numeroLinha++;
+                    continue;
+                }
+            }
+
             resultado.OfertasImportadas.Add(new Oferta
             {
                 Id = Guid.NewGuid(),
@@ -220,7 +248,8 @@ public class OfertaExcelService
                 Valor = valor,
                 Data = data,
                 MesReferencia = mesReferencia,
-                AnoReferencia = anoReferencia
+                AnoReferencia = anoReferencia,
+                TipoPagamento = tipoPagamento
             });
 
             numeroLinha++;
