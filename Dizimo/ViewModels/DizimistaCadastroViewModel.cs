@@ -269,6 +269,36 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             }
             return;
         }
+
+        // Validação de código duplicado ao cadastrar novo dizimista
+        if (!IsEditMode && NumeroCadastro > 0)
+        {
+            var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
+            if (dizimistaExistente != null)
+            {
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Código Duplicado", $"Já existe um dizimista cadastrado com o código {NumeroCadastro}. Por favor, insira um código diferente.", "OK");
+                }
+                return;
+            }
+        }
+
+        // Ao editar, verificar se o código foi alterado e já existe outro dizimista com o novo código
+        if (IsEditMode && NumeroCadastro > 0)
+        {
+            var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
+            if (dizimistaExistente != null && dizimistaExistente.Id != Id)
+            {
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Código Duplicado", $"Já existe outro dizimista cadastrado com o código {NumeroCadastro}. Por favor, insira um código diferente.", "OK");
+                }
+                return;
+            }
+        }
         
         if (IsEditMode)
         {

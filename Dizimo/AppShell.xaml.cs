@@ -39,7 +39,7 @@ namespace Dizimo
 
             var snackbarOptions = new SnackbarOptions
             {
-                BackgroundColor = Color.FromArgb("#FF3300"),
+                BackgroundColor = Color.FromArgb("#FF0000"),
                 TextColor = Colors.White,
                 ActionButtonTextColor = Colors.Yellow,
                 CornerRadius = new CornerRadius(0),

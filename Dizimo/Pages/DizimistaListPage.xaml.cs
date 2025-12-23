@@ -28,9 +28,9 @@ public partial class DizimistaListPage : ContentPage
             var handlers = (App.Current as App)?.Services.GetService<GetDizimistaHandlers>() ?? throw new InvalidOperationException("GetDizimistaHandlers não está registrado no contêiner de serviços.");
             var deleteHandler = (App.Current as App)?.Services.GetService<DeleteDizimistaHandler>() ?? throw new InvalidOperationException("DeleteDizimistaHandler não está registrado no contêiner de serviços.");
             var inativarHandler = (App.Current as App)?.Services.GetService<InativarDizimistaHandler>() ?? throw new InvalidOperationException("InativarDizimistaHandler não está registrado no contêiner de serviços.");
-            var csvService = (App.Current as App)?.Services.GetService<DizimistaCsvService>() ?? throw new InvalidOperationException("DizimistaCsvService não está registrado no contêiner de serviços.");
+            var excelService = (App.Current as App)?.Services.GetService<DizimistaExcelService>() ?? throw new InvalidOperationException("DizimistaExcelService não está registrado no contêiner de serviços.");
             var unitOfWork = (App.Current as App)?.Services.GetService<IUnitOfWork>() ?? throw new InvalidOperationException("IUnitOfWork não está registrado no contêiner de serviços.");
-            var viewModel = new DizimistaListViewModel(handlers, deleteHandler, inativarHandler, csvService, unitOfWork);
+            var viewModel = new DizimistaListViewModel(handlers, deleteHandler, inativarHandler, excelService, unitOfWork);
             BindingContext = viewModel;
             _viewModel = viewModel;
             System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext inicializado no OnBindingContextChanged.");

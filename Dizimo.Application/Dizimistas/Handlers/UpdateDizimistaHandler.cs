@@ -1,7 +1,7 @@
 using Dizimo.Domain.Repositories;
 using Dizimo.Application.Dizimistas.Commands;
 using System.Threading.Tasks;
-using Dizimo.Domain.Entities;
+using System.Collections.Generic;
 
 namespace Dizimo.Application.Dizimistas.Handlers;
 
@@ -12,18 +12,31 @@ public class UpdateDizimistaHandler
 
     public async Task Handle(UpdateDizimistaCommand command)
     {
-        var dizimista = new Dizimista
+        var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(command.Id) ?? 
+            throw new KeyNotFoundException($"Dizimista with Id {command.Id} not found.");
+
+        dizimista.NumeroCadastro = command.NumeroCadastro;
+        dizimista.Nome = command.Nome;
+        dizimista.DataNascimento = command.DataNascimento;
+        dizimista.Ativo = command.Ativo;
+        dizimista.Endereco = command.Endereco;
+        dizimista.Telefone = command.Telefone;
+        dizimista.Whatsapp = command.Whatsapp;
+        dizimista.DataCadastro = command.DataCadastro;
+
+        // Garantir que campos obrigatórios do Endereco tenham valores válidos
+        if (dizimista.Endereco != null)
         {
-            Id = command.Id,
-            NumeroCadastro = command.NumeroCadastro,
-            Nome = command.Nome,
-            DataNascimento = command.DataNascimento,
-            Ativo = command.Ativo,
-            Endereco = command.Endereco,
-            Telefone = command.Telefone,
-            Whatsapp = command.Whatsapp,
-            DataCadastro = command.DataCadastro
-        };
+            if (string.IsNullOrWhiteSpace(dizimista.Endereco.UF))
+            {
+                dizimista.Endereco.UF = "SP";
+            }
+            if (string.IsNullOrWhiteSpace(dizimista.Endereco.Cidade))
+            {
+                dizimista.Endereco.Cidade = "Osasco";
+            }
+        }
+        
         await _unitOfWork.Dizimistas.UpdateAsync(dizimista);
         await _unitOfWork.SaveChangesAsync();
     }

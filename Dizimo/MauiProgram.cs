@@ -9,12 +9,7 @@ using Dizimo.ViewModels;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Dashboard;
-using Microsoft.Maui.LifecycleEvents;
-using Microsoft.Maui.Controls;
-using Dizimo.Pages;
-using Microsoft.Extensions.DependencyInjection;
 using Dizimo.Application.Usuarios.Handlers;
-using Dizimo.Services;
 using System.Globalization;
 
 namespace Dizimo
@@ -79,13 +74,14 @@ namespace Dizimo
             // Dashboard Service
             builder.Services.AddScoped<DashboardService>();
 
+            // Registro dos Handlers e ViewModels para Dizimistas
             builder.Services.AddScoped<GetDizimistaHandlers>();
             builder.Services.AddScoped<CreateDizimistaHandler>();
             builder.Services.AddScoped<UpdateDizimistaHandler>();
             builder.Services.AddScoped<DeleteDizimistaHandler>();
             builder.Services.AddScoped<InativarDizimistaHandler>();
             builder.Services.AddScoped<GetUsuarioHandlers>();
-            builder.Services.AddScoped<DizimistaCsvService>();
+            builder.Services.AddScoped<DizimistaExcelService>();
             builder.Services.AddTransient<DizimistaListViewModel>();
             builder.Services.AddTransient<DizimistaCadastroViewModel>();
             builder.Services.AddTransient<DizimistaDetalhesViewModel>();
@@ -94,7 +90,7 @@ namespace Dizimo
             builder.Services.AddTransientWithShellRoute<DizimistaCadastroPage, DizimistaCadastroViewModel>("dizimista-cadastro");
 
             // Registro dos Handlers e ViewModels para Ofertas
-            builder.Services.AddScoped<OfertaCsvService>();
+            builder.Services.AddScoped<OfertaExcelService>();
             builder.Services.AddTransient<OfertaListViewModel>();
             builder.Services.AddTransient<OfertaCadastroViewModel>();
             builder.Services.AddTransientWithShellRoute<OfertaListPage, OfertaListViewModel>("ofertas");

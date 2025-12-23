@@ -21,7 +21,7 @@ public class DizimistaIdToNomeConverter : IValueConverter
             try
             {
                 var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(dizimistaId).GetAwaiter().GetResult();
-                return dizimista?.Nome ?? "Desconhecido";
+                return $"{dizimista?.NumeroCadastro} - {dizimista?.Nome}" ?? "Desconhecido";
             }
             catch
             {
