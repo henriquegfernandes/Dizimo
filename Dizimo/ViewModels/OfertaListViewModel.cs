@@ -6,10 +6,11 @@ using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
+using CommunityToolkit.Maui.Storage;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using CommunityToolkit.Maui.Storage;
 using System.Text;
 
 namespace Dizimo.ViewModels;
@@ -18,7 +19,7 @@ public partial class OfertaListViewModel : ObservableObject
 {
     private readonly GetOfertaHandlers _getHandlers;
     private readonly DeleteOfertaHandler _deleteHandler;
-    private readonly OfertaCsvService _csvService;
+    private readonly OfertaExcelService _excelService;
     private readonly IUnitOfWork _unitOfWork;
 
     public List<Oferta> TodasOfertas { get; private set; } = new List<Oferta>();
@@ -37,13 +38,25 @@ public partial class OfertaListViewModel : ObservableObject
         set => SetProperty(ref _filtroNome, value);
     }
 
-    private DateTime? _filtroData = DateTime.Today;
-    public DateTime? FiltroData
+    private DateTime? _filtroDataInicio = DateTime.Today;
+    public DateTime? FiltroDataInicio
     {
-        get => _filtroData;
+        get => _filtroDataInicio;
         set 
         { 
-            SetProperty(ref _filtroData, value);
+            SetProperty(ref _filtroDataInicio, value);
+            // Aplicar filtros automaticamente quando a data muda
+            AplicarFiltros();
+        }
+    }
+
+    private DateTime? _filtroDataFim = DateTime.Today;
+    public DateTime? FiltroDataFim
+    {
+        get => _filtroDataFim;
+        set 
+        { 
+            SetProperty(ref _filtroDataFim, value);
             // Aplicar filtros automaticamente quando a data muda
             AplicarFiltros();
         }
@@ -85,12 +98,12 @@ public partial class OfertaListViewModel : ObservableObject
     public OfertaListViewModel(
         GetOfertaHandlers getHandlers,
         DeleteOfertaHandler deleteHandler,
-        OfertaCsvService csvService,
+        OfertaExcelService excelService,
         IUnitOfWork unitOfWork)
     {
         _getHandlers = getHandlers ?? throw new ArgumentNullException(nameof(getHandlers));
         _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
-        _csvService = csvService ?? throw new ArgumentNullException(nameof(csvService));
+        _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         Ofertas = new ObservableCollection<Oferta>();
     }
@@ -141,8 +154,11 @@ public partial class OfertaListViewModel : ObservableObject
         IEnumerable<Oferta> filtrados = TodasOfertas;
 
         // Filtro por data (apenas se uma data foi selecionada)
-        if (FiltroData.HasValue)
-            filtrados = filtrados.Where(o => o.Data.Date == FiltroData.Value.Date);
+        if (FiltroDataInicio.HasValue)
+            filtrados = filtrados.Where(o => o.Data.Date >= FiltroDataInicio.Value.Date);
+
+        if (FiltroDataFim.HasValue)
+            filtrados = filtrados.Where(o => o.Data.Date <= FiltroDataFim.Value.Date);
 
         // Filtro unificado: busca por nome do dizimista OU código do dizimista
         if (!string.IsNullOrWhiteSpace(FiltroNome))
@@ -156,8 +172,7 @@ public partial class OfertaListViewModel : ObservableObject
             });
         }
 
-        var filteredList = filtrados is List<Oferta> ofertaList ? ofertaList : filtrados.ToList();
-        Ofertas = new ObservableCollection<Oferta>(filteredList);
+        Ofertas = new ObservableCollection<Oferta>(filtrados);
         
         // Calcular total
         ValorTotal = Ofertas.Sum(o => o.Valor);
@@ -167,7 +182,8 @@ public partial class OfertaListViewModel : ObservableObject
     public void LimparFiltros()
     {
         FiltroNome = string.Empty;
-        FiltroData = null;
+        FiltroDataInicio = null;
+        FiltroDataFim = null;
         AplicarFiltros();
     }
 
@@ -244,29 +260,27 @@ public partial class OfertaListViewModel : ObservableObject
         try
         {
             // Exportar considerando os filtros aplicados
-            var csv = await _csvService.ExportarAsync(Ofertas.ToList());
+            var excelStream = await _excelService.ExportarAsync(Ofertas.ToList());
 
-            var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
 #if WINDOWS
-            var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
+            var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
 
-            if (folder?.Folder?.Path == null)
+            if (result.IsSuccessful)
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
-                return;
+                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
+
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Exportação",
+                        $"Planilha de ofertas exportada com sucesso!", "OK");
+                }
             }
-
-            var filePath = Path.Combine(folder.Folder.Path, fileName);
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
-
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
-
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (mainPage != null)
+            else
             {
-                await mainPage.DisplayAlertAsync("Exportação",
-                    $"Planilha de ofertas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+                System.Diagnostics.Debug.WriteLine($"[INFO] Exportação cancelada pelo usuário");
             }
 #else
             var downloadsPath = Path.Combine(
@@ -277,7 +291,7 @@ public partial class OfertaListViewModel : ObservableObject
                 Directory.CreateDirectory(downloadsPath);
 
             var filePath = Path.Combine(downloadsPath, fileName);
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+            await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
@@ -303,28 +317,26 @@ public partial class OfertaListViewModel : ObservableObject
     {
         try
         {
-            var csv = _csvService.GerarModelo();
-            var fileName = "ofertas_modelo.csv";
+            var excelStream = _excelService.GerarModelo();
+            var fileName = "ofertas_modelo.xlsx";
 
 #if WINDOWS
-            var folder = await FolderPicker.Default.PickAsync(CancellationToken.None);
+            var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
 
-            if (folder?.Folder?.Path == null)
+            if (result.IsSuccessful)
+            {
+                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {result.FilePath}");
+
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                {
+                    await mainPage.DisplayAlertAsync("Modelo Baixado",
+                        $"Planilha modelo baixada com sucesso!", "OK");
+                }
+            }
+            else
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
-                return;
-            }
-
-            var filePath = Path.Combine(folder.Folder.Path, fileName);
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
-
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
-
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync("Modelo Baixado",
-                    $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
             }
 #else
             var downloadsPath = Path.Combine(
@@ -335,7 +347,7 @@ public partial class OfertaListViewModel : ObservableObject
                 Directory.CreateDirectory(downloadsPath);
 
             var filePath = Path.Combine(downloadsPath, fileName);
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8);
+            await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
@@ -367,13 +379,13 @@ public partial class OfertaListViewModel : ObservableObject
             // Usar FilePicker para selecionar o arquivo
             var result = await FilePicker.PickAsync(new PickOptions
             {
-                PickerTitle = "Selecione um arquivo CSV",
+                PickerTitle = "Selecione um arquivo Excel",
                 FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                 {
-                    { DevicePlatform.iOS, new[] { "public.comma-separated-values-text" } },
-                    { DevicePlatform.Android, new[] { "text/csv" } },
-                    { DevicePlatform.WinUI, new[] { ".csv" } },
-                    { DevicePlatform.MacCatalyst, new[] { "csv" } },
+                    { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
+                    { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
+                    { DevicePlatform.WinUI, new[] { ".xlsx" } },
+                    { DevicePlatform.MacCatalyst, new[] { "xlsx" } },
                 })
             });
 
@@ -384,8 +396,8 @@ public partial class OfertaListViewModel : ObservableObject
             }
 
             // Ler o arquivo selecionado
-            var csv = await File.ReadAllTextAsync(result.FullPath, Encoding.UTF8);
-            var resultado = await _csvService.ImportarAsync(csv);
+            var excelBytes = await File.ReadAllBytesAsync(result.FullPath);
+            var resultado = await _excelService.ImportarAsync(excelBytes);
             
             // Adicionar ofertas importadas
             foreach (var o in resultado.OfertasImportadas)
