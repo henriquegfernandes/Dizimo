@@ -3,7 +3,7 @@
 # Run this script to build, package, and create a release on GitHub
 
 param(
-    [string]$VersionTag = "v1.0.0-beta.2",
+    [string]$VersionTag = "v1.0.0-beta.3",
     [string]$ReleaseNotes = "Initial beta release"
 )
 
