@@ -82,6 +82,7 @@ namespace Dizimo
             builder.Services.AddScoped<InativarDizimistaHandler>();
             builder.Services.AddScoped<GetUsuarioHandlers>();
             builder.Services.AddScoped<DizimistaExcelService>();
+            builder.Services.AddScoped<AniversariantesExcelService>();
             builder.Services.AddTransient<DizimistaListViewModel>();
             builder.Services.AddTransient<DizimistaCadastroViewModel>();
             builder.Services.AddTransient<DizimistaDetalhesViewModel>();

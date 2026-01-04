@@ -11,6 +11,7 @@ namespace Dizimo.ViewModels;
 public partial class MainPageViewModel : ObservableObject
 {
     private readonly DashboardService _dashboardService;
+    private readonly AniversariantesExcelService _aniversariantesExcelService;
 
     private ObservableCollection<DashboardService.DizimistaPeriodoOfertaData> _dizimistasAgrupadosPeriodo = new();
 
@@ -81,9 +82,10 @@ public partial class MainPageViewModel : ObservableObject
 
     public string Titulo => $"Dashboard - {DateTime.Now:dddd, dd 'de' MMMM 'de' yyyy}";
 
-    public MainPageViewModel(DashboardService dashboardService)
+    public MainPageViewModel(DashboardService dashboardService, AniversariantesExcelService aniversariantesExcelService)
     {
         _dashboardService = dashboardService ?? throw new ArgumentNullException(nameof(dashboardService));
+        _aniversariantesExcelService = aniversariantesExcelService ?? throw new ArgumentNullException(nameof(aniversariantesExcelService));
     }
 
     [RelayCommand]
@@ -173,16 +175,24 @@ public partial class MainPageViewModel : ObservableObject
                 return;
             }
 
-            var csv = GerarCsvAniversariantes();
-            var nomeArquivo = VisualizacaoAtual == "Semana" 
-                ? $"aniversariantes_semana_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-                : $"aniversariantes_mes_{MesesDisponiveis[MesSelecionado - 1]}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            if (_aniversariantesExcelService == null)
+            {
+                var mainPageNull = GetMainPage();
+                if (mainPageNull != null)
+                {
+                    await mainPageNull.DisplayAlertAsync("Erro", "Serviço de exportação não está disponível.", "OK");
+                }
+                return;
+            }
 
-            var csvBytes = Encoding.UTF8.GetBytes(csv);
-            var csvStream = new MemoryStream(csvBytes);
+            var fileName = VisualizacaoAtual == "Semana"
+                ? $"aniversariantes_semana_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                : $"aniversariantes_mes_{MesesDisponiveis[MesSelecionado - 1]}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            var excelStream = _aniversariantesExcelService.Exportar(Aniversariantes);
 
 #if WINDOWS
-            var result = await FileSaver.Default.SaveAsync(nomeArquivo, csvStream, CancellationToken.None);
+            var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
 
             if (result.IsSuccessful)
             {
@@ -203,8 +213,8 @@ public partial class MainPageViewModel : ObservableObject
                 Directory.CreateDirectory(downloadsPath);
             }
 
-            var filePath = Path.Combine(downloadsPath, nomeArquivo);
-            await File.WriteAllBytesAsync(filePath, csvBytes);
+            var filePath = Path.Combine(downloadsPath, fileName);
+            await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
             var mainPageSuccess = GetMainPage();
             if (mainPageSuccess != null)
