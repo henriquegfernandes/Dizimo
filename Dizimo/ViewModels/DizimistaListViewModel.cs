@@ -110,13 +110,7 @@ namespace Dizimo.ViewModels
             var lista = await _handlers.Handle(new GetAllDizimistasQuery());
             TodosDizimistas = lista is List<Dizimista> dizimistaList ? dizimistaList : lista.ToList();
             Dizimistas.Clear();
-            var novaLista = TodosDizimistas.Count > tamanhoPagina
-                ? TodosDizimistas.GetRange(0, tamanhoPagina)
-                : TodosDizimistas;
-            foreach (var d in novaLista)
-            {
-                Dizimistas.Add(d);
-            }
+            AplicarFiltros();
         }
 
         [RelayCommand]
@@ -159,7 +153,10 @@ namespace Dizimo.ViewModels
             else if (StatusSelecionado == "Inativos")
                 filtrados = filtrados.Where(d => !d.Ativo);
             
-            var filteredList = filtrados is List<Dizimista> dizimistaList ? dizimistaList : filtrados.ToList();
+            // Ordenação por código do dizimista
+            var filteredList = (filtrados is List<Dizimista> dizimistaList ? dizimistaList : filtrados.ToList())
+                .OrderBy(d => d.Nome)
+                .ToList();
             Dizimistas = new ObservableCollection<Dizimista>(filteredList);
         }
 
