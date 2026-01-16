@@ -12,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Dizimo.ViewModels;
 
@@ -148,6 +149,22 @@ public partial class OfertaListViewModel : ObservableObject
         private set => SetProperty(ref _valorTotal, value);
     }
 
+    // Lista de opções para o filtro de tipo de pagamento
+    public List<string> TiposPagamento { get; } = new List<string> { "Todos", "PIX", "Dinheiro", "Cartao" };
+
+    private string _filtroTipoPagamento = "Todos";
+    public string FiltroTipoPagamento
+    {
+        get => _filtroTipoPagamento;
+        set
+        {
+            if (SetProperty(ref _filtroTipoPagamento, value))
+            {
+                AplicarFiltros();
+            }
+        }
+    }
+
     [RelayCommand]
     public void AplicarFiltros()
     {
@@ -159,6 +176,15 @@ public partial class OfertaListViewModel : ObservableObject
 
         if (FiltroDataFim.HasValue)
             filtrados = filtrados.Where(o => o.Data.Date <= FiltroDataFim.Value.Date);
+
+        // Filtro por tipo de pagamento (apenas se não for "Todos")
+        if (!string.IsNullOrWhiteSpace(FiltroTipoPagamento) && FiltroTipoPagamento != "Todos")
+        {
+            if (Enum.TryParse<TipoPagamento>(FiltroTipoPagamento, out var tipo))
+            {
+                filtrados = filtrados.Where(o => o.TipoPagamento == tipo);
+            }
+        }
 
         // Filtro unificado: busca por nome do dizimista OU código do dizimista
         if (!string.IsNullOrWhiteSpace(FiltroNome))
@@ -172,8 +198,14 @@ public partial class OfertaListViewModel : ObservableObject
             });
         }
 
-        Ofertas = new ObservableCollection<Oferta>(filtrados);
-        
+        // Ordenação: Data, DizimistaId, AnoReferencia, MesReferencia
+        var ordered = filtrados
+            .OrderBy(o => o.Data)
+            .ThenBy(o => o.DizimistaId)
+            .ThenBy(o => o.AnoReferencia)
+            .ThenBy(o => o.MesReferencia)
+            .ToList();
+        Ofertas = new ObservableCollection<Oferta>(ordered);
         // Calcular total
         ValorTotal = Ofertas.Sum(o => o.Valor);
     }
@@ -184,6 +216,7 @@ public partial class OfertaListViewModel : ObservableObject
         FiltroNome = string.Empty;
         FiltroDataInicio = null;
         FiltroDataFim = null;
+        FiltroTipoPagamento = "Todos";
         AplicarFiltros();
     }
 
