@@ -20,11 +20,11 @@
         <ScrollView>
             <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
                 <StackLayout Padding="16" Spacing="12">
-                    <!-- Filtro unificado e data -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                    <!-- Filtro unificado, data e tipo de pagamento -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
                         <DatePicker Date="{Binding FiltroDataInicio}"
                                     Grid.Column="0"
-                                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" 
+                                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
                                     VerticalOptions="Center"
                                     Format="dd/MM/yyyy" />
                         <Label Text="até" Grid.Column="1" VerticalOptions="Center" Margin="4,0" FontSize="12" />
@@ -38,7 +38,13 @@
                                Grid.Column="3"
                                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
                                Completed="OnFiltroCompleted" />
-                        <Button Grid.Column="4"
+                        <!-- Picker para tipo de pagamento -->
+                        <Picker Grid.Column="4"
+                                ItemsSource="{Binding TiposPagamento}"
+                                SelectedItem="{Binding FiltroTipoPagamento, Mode=TwoWay}"
+                                VerticalOptions="Center"
+                                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" />
+                        <Button Grid.Column="5"
                                 Command="{Binding AplicarFiltrosCommand}" 
                                 Padding="12"
                                 VerticalOptions="Center"
@@ -46,7 +52,7 @@
                                 ImageSource="{StaticResource IconSearch}"
                                 ToolTipProperties.Text="Filtrar"
                                 CornerRadius="6" />
-                        <Button Grid.Column="5"
+                        <Button Grid.Column="6"
                                 Command="{Binding LimparFiltrosCommand}" 
                                 Padding="12"
                                 VerticalOptions="Center"
@@ -134,21 +140,24 @@
                         <Label Text="" Grid.Column="5" />
                         <Label Text="" Grid.Column="6" />
                     </Grid>
-                    <!-- Botões de excluir -->
+                    
                     <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,8,0,0">
-                        <Button Text="Excluir" 
-                                Command="{Binding ExcluirOfertasSelecionadasCommand}" 
-                                IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
-                                Padding="12"
-                                CornerRadius="8"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                ImageSource="{StaticResource IconTrash}">
-                        </Button>
+                        
                     </StackLayout>
                 </StackLayout>
             </VerticalStackLayout>
         </ScrollView>
+        <!-- Botão flutuante de excluir -->
+        <Button Text="Excluir" 
+            Command="{Binding ExcluirOfertasSelecionadasCommand}" 
+            IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+            Padding="12"
+            CornerRadius="8"
+            HorizontalOptions="Center"
+            VerticalOptions="End"
+            Margin="0,28"
+            ImageSource="{StaticResource IconTrash}">
+        </Button>
         <!-- Botão flutuante de adicionar oferta -->
         <Button
             Command="{Binding NovaOfertaCommand}"

@@ -231,13 +231,13 @@ namespace Dizimo.ViewModels
                     var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                     if (mainPage != null)
                     {
-                        await mainPage.DisplayAlertAsync("Exportação", 
+                        await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", 
                             $"Planilha de dizimistas exportada com sucesso!", "OK");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
+                    System.Diagnostics.Debug.WriteLine("[INFO] ExportaÃ§Ã£o cancelada pelo usuÃ¡rio");
                 }
 #else
                 var downloadsPath = Path.Combine(
@@ -253,8 +253,8 @@ namespace Dizimo.ViewModels
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
-                    await mainPage.DisplayAlertAsync("Exportação", 
-                        $"Planilha de dizimistas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+                    await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", 
+                        $"Planilha de dizimistas exportada com sucesso!\n\nLocalizaÃ§Ã£o: {filePath}", "OK");
                 }
 #endif
             }
@@ -296,7 +296,7 @@ namespace Dizimo.ViewModels
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
+                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuÃ¡rio");
                 }
 #else
                 var downloadsPath = Path.Combine(
@@ -313,7 +313,7 @@ namespace Dizimo.ViewModels
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Modelo Baixado", 
-                        $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
+                        $"Planilha modelo baixada com sucesso!\n\nLocalizaÃ§Ã£o: {filePath}", "OK");
                 }
 #endif
             }
@@ -350,7 +350,7 @@ namespace Dizimo.ViewModels
 
                 if (result == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
+                    System.Diagnostics.Debug.WriteLine("[INFO] ImportaÃ§Ã£o cancelada pelo usuÃ¡rio");
                     return;
                 }
 
@@ -367,13 +367,13 @@ namespace Dizimo.ViewModels
                 await _unitOfWork.SaveChangesAsync();
                 await CarregarDizimistasAsync();
                 
-                System.Diagnostics.Debug.WriteLine("[INFO] Importação concluída com sucesso");
+                System.Diagnostics.Debug.WriteLine("[INFO] ImportaÃ§Ã£o concluÃ­da com sucesso");
                 
                 var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPageSuccess != null)
                 {
-                    await mainPageSuccess.DisplayAlertAsync("Importação", 
-                        $"Importação concluída com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
+                    await mainPageSuccess.DisplayAlertAsync("ImportaÃ§Ã£o", 
+                        $"ImportaÃ§Ã£o concluÃ­da com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
                 }
             }
             catch (Exception ex)
@@ -396,7 +396,7 @@ namespace Dizimo.ViewModels
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
             {
-                await mainPage.DisplayAlertAsync("Relatório Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
+                await mainPage.DisplayAlertAsync("RelatÃ³rio Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
             }
         }
 
@@ -406,7 +406,7 @@ namespace Dizimo.ViewModels
             try
             {
                 var sb = new System.Text.StringBuilder();
-                sb.AppendLine("Relatório Geral de Dizimistas");
+                sb.AppendLine("RelatÃ³rio Geral de Dizimistas");
                 sb.AppendLine($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
                 sb.AppendLine($"Total de Dizimistas: {Dizimistas.Count}");
                 sb.AppendLine();
@@ -414,16 +414,16 @@ namespace Dizimo.ViewModels
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
-                    await mainPage.DisplayAlertAsync("Relatório", sb.ToString(), "OK");
+                    await mainPage.DisplayAlertAsync("RelatÃ³rio", sb.ToString(), "OK");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatÃ³rio: {ex.Message}");
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
+                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatÃ³rio: {ex.Message}", "OK");
                 }
             }
         }
@@ -435,7 +435,7 @@ namespace Dizimo.ViewModels
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
+                bool confirm = await mainPage.DisplayAlertAsync("ConfirmaÃ§Ã£o", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "NÃ£o");
                 if (!confirm) return;
             }
             foreach (var dizimista in DizimistasSelecionados.ToList())
@@ -453,7 +453,7 @@ namespace Dizimo.ViewModels
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja ativar/inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
+                bool confirm = await mainPage.DisplayAlertAsync("ConfirmaÃ§Ã£o", $"Deseja ativar/inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "NÃ£o");
                 if (!confirm) return;
             }
             foreach (var dizimista in DizimistasSelecionados.ToList())

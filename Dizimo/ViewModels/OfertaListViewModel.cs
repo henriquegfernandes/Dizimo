@@ -180,7 +180,7 @@ public partial class OfertaListViewModel : ObservableObject
                 FiltroTipoPagamento,
                 FiltroNome));
             
-            // Aplicar filtro de nome client-side se necessário
+            // Aplicar filtro de nome client-side se necessÃ¡rio
             var items = result.Items.AsEnumerable();
             if (!string.IsNullOrWhiteSpace(FiltroNome))
             {
@@ -261,10 +261,10 @@ public partial class OfertaListViewModel : ObservableObject
         if (mainPage == null) return;
 
         bool confirm = await mainPage.DisplayAlertAsync(
-            "Confirmação",
+            "ConfirmaÃ§Ã£o",
             $"Deseja excluir a oferta de valor {oferta.Valor:C} em {oferta.Data:dd/MM/yyyy}?",
             "Sim",
-            "Não"
+            "NÃ£o"
         );
 
         if (confirm)
@@ -273,7 +273,7 @@ public partial class OfertaListViewModel : ObservableObject
             {
                 await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
                 await CarregarOfertasAsync();
-                await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluída com sucesso.", "OK");
+                await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluÃ­da com sucesso.", "OK");
             }
             catch (Exception ex)
             {
@@ -289,7 +289,7 @@ public partial class OfertaListViewModel : ObservableObject
         var mainPage = GetMainPage();
         if (mainPage != null)
         {
-            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {OfertasSelecionadas.Count} oferta(s)?", "Sim", "Não");
+            bool confirm = await mainPage.DisplayAlertAsync("ConfirmaÃ§Ã£o", $"Deseja excluir {OfertasSelecionadas.Count} oferta(s)?", "Sim", "NÃ£o");
             if (!confirm) return;
         }
         foreach (var oferta in OfertasSelecionadas.ToList())
@@ -316,11 +316,11 @@ public partial class OfertaListViewModel : ObservableObject
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
                 var mainPage = GetMainPage();
                 if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Exportação", $"Planilha de ofertas exportada com sucesso!", "OK");
+                    await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", $"Planilha de ofertas exportada com sucesso!", "OK");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"[INFO] Exportação cancelada pelo usuário");
+                System.Diagnostics.Debug.WriteLine($"[INFO] ExportaÃ§Ã£o cancelada pelo usuÃ¡rio");
             }
 #else
             var downloadsPath = Path.Combine(
@@ -335,7 +335,7 @@ public partial class OfertaListViewModel : ObservableObject
 
             var mainPage = GetMainPage();
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Exportação", $"Planilha de ofertas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+                await mainPage.DisplayAlertAsync("ExportaÃ§Ã£o", $"Planilha de ofertas exportada com sucesso!\n\nLocalizaÃ§Ã£o: {filePath}", "OK");
 #endif
         }
         catch (Exception ex)
@@ -367,7 +367,7 @@ public partial class OfertaListViewModel : ObservableObject
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
+                System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuÃ¡rio");
             }
 #else
             var downloadsPath = Path.Combine(
@@ -382,7 +382,7 @@ public partial class OfertaListViewModel : ObservableObject
 
             var mainPage = GetMainPage();
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Modelo Baixado", $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
+                await mainPage.DisplayAlertAsync("Modelo Baixado", $"Planilha modelo baixada com sucesso!\n\nLocalizaÃ§Ã£o: {filePath}", "OK");
 #endif
         }
         catch (Exception ex)
@@ -415,7 +415,7 @@ public partial class OfertaListViewModel : ObservableObject
 
             if (result == null)
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
+                System.Diagnostics.Debug.WriteLine("[INFO] ImportaÃ§Ã£o cancelada pelo usuÃ¡rio");
                 return;
             }
 
@@ -429,18 +429,18 @@ public partial class OfertaListViewModel : ObservableObject
             await _unitOfWork.SaveChangesAsync();
             await CarregarOfertasAsync();
             
-            var mensagem = $"Importação concluída!\n\n";
+            var mensagem = $"ImportaÃ§Ã£o concluÃ­da!\n\n";
             mensagem += $"? Ofertas importadas: {importResult.OfertasImportadas.Count}\n";
             
             if (importResult.Erros.Count > 0)
             {
-                mensagem += $"\n? Ofertas não importadas: {importResult.Erros.Count}\n\n";
+                mensagem += $"\n? Ofertas nÃ£o importadas: {importResult.Erros.Count}\n\n";
                 mensagem += "Erros:\n";
                 
                 var errosExibir = importResult.Erros.Take(10).ToList();
                 foreach (var erro in errosExibir)
                 {
-                    mensagem += $"• {erro}\n";
+                    mensagem += $"â€¢ {erro}\n";
                 }
                 
                 if (importResult.Erros.Count > 10)
@@ -450,7 +450,7 @@ public partial class OfertaListViewModel : ObservableObject
             }
             
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Resultado da Importação", mensagem, "OK");
+                await mainPage.DisplayAlertAsync("Resultado da ImportaÃ§Ã£o", mensagem, "OK");
         }
         catch (Exception ex)
         {
