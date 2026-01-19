@@ -427,9 +427,28 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Sucesso", "Oferta(s) salva(s) com sucesso!", "OK");
+            {
+                var resultado = await mainPage.DisplayAlertAsync(
+                    "Sucesso",
+                    "Oferta(s) salva(s) com sucesso! Deseja cadastrar outra oferta?",
+                    "Sim",
+                    "Não");
 
-            await Shell.Current.GoToAsync("///ofertas", true);
+                if (resultado)
+                {
+                    // Limpar o formulário para novo cadastro
+                    LimparCampos();
+                }
+                else
+                {
+                    // Ir para a lista de ofertas
+                    await Shell.Current.GoToAsync("///ofertas", true);
+                }
+            }
+            else
+            {
+                await Shell.Current.GoToAsync("///ofertas", true);
+            }
         }
         catch (Exception ex)
         {

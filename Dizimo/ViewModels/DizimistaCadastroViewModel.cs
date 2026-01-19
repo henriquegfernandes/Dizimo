@@ -252,6 +252,26 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         }
     }
 
+    private void LimparCampos()
+    {
+        Id = Guid.Empty;
+        NumeroCadastro = 0;
+        Nome = string.Empty;
+        DataNascimento = DateTime.Today;
+        Ativo = true;
+        Telefone = string.Empty;
+        Whatsapp = string.Empty;
+        DataCadastro = DateTime.Today;
+        Rua = string.Empty;
+        Numero = string.Empty;
+        _complemento = string.Empty;
+        Bairro = string.Empty;
+        Cidade = "Osasco";
+        Uf = "SP";
+        Cep = string.Empty;
+        IsEditMode = false;
+    }
+
     [RelayCommand]
     public async Task SalvarAsync()
     {
@@ -308,6 +328,39 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         {
             await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento, Endereco, Telefone, Whatsapp, DataCadastro));
         }
-        await Shell.Current.GoToAsync("..", true);
+        
+        if (IsEditMode)
+        {
+            // Se está editando, apenas voltar à lista
+            await Shell.Current.GoToAsync("..", true);
+        }
+        else
+        {
+            // Se é novo cadastro, perguntar se deseja cadastrar outro
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+            {
+                var resultado = await mainPage.DisplayAlertAsync(
+                    "Sucesso",
+                    "Dizimista cadastrado com sucesso! Deseja cadastrar outro dizimista?",
+                    "Sim",
+                    "Não");
+
+                if (resultado)
+                {
+                    // Limpar o formulário para novo cadastro
+                    LimparCampos();
+                }
+                else
+                {
+                    // Ir para a lista de dizimistas
+                    await Shell.Current.GoToAsync("..", true);
+                }
+            }
+            else
+            {
+                await Shell.Current.GoToAsync("..", true);
+            }
+        }
     }
 }
