@@ -12,6 +12,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
+using System.Collections.Generic;
+using Dizimo.Domain.Models;
 
 namespace Dizimo.ViewModels;
 
@@ -22,8 +24,6 @@ public partial class OfertaListViewModel : ObservableObject
     private readonly OfertaExcelService _excelService;
     private readonly IUnitOfWork _unitOfWork;
 
-    public List<Oferta> TodasOfertas { get; private set; } = new List<Oferta>();
-    
     private ObservableCollection<Oferta> _ofertas = new ObservableCollection<Oferta>();
     public ObservableCollection<Oferta> Ofertas
     {
@@ -44,9 +44,11 @@ public partial class OfertaListViewModel : ObservableObject
         get => _filtroDataInicio;
         set 
         { 
-            SetProperty(ref _filtroDataInicio, value);
-            // Aplicar filtros automaticamente quando a data muda
-            AplicarFiltros();
+            if (SetProperty(ref _filtroDataInicio, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
         }
     }
 
@@ -56,9 +58,11 @@ public partial class OfertaListViewModel : ObservableObject
         get => _filtroDataFim;
         set 
         { 
-            SetProperty(ref _filtroDataFim, value);
-            // Aplicar filtros automaticamente quando a data muda
-            AplicarFiltros();
+            if (SetProperty(ref _filtroDataFim, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
         }
     }
 
@@ -69,9 +73,40 @@ public partial class OfertaListViewModel : ObservableObject
         set => SetProperty(ref _selectedOferta, value);
     }
 
-    private int paginaAtual = 1;
-    private const int tamanhoPagina = 20;
-    private bool carregandoMais = false;
+    private int _paginaAtual = 1;
+    private const int TAMANHO_PAGINA = 20;
+    private bool _carregandoMais = false;
+    private int _totalPaginas = 1;
+
+    private bool _temProxima = false;
+    public bool TemProxima
+    {
+        get => _temProxima;
+        private set => SetProperty(ref _temProxima, value);
+    }
+
+    private decimal _valorTotal;
+    public decimal ValorTotal
+    {
+        get => _valorTotal;
+        private set => SetProperty(ref _valorTotal, value);
+    }
+
+    public List<string> TiposPagamento { get; } = new List<string> { "Todos", "PIX", "Dinheiro", "Cartao" };
+
+    private string _filtroTipoPagamento = "Todos";
+    public string FiltroTipoPagamento
+    {
+        get => _filtroTipoPagamento;
+        set
+        {
+            if (SetProperty(ref _filtroTipoPagamento, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
+        }
+    }
 
     private ObservableCollection<Oferta> _ofertasSelecionadas = new();
     public ObservableCollection<Oferta> OfertasSelecionadas
@@ -108,83 +143,94 @@ public partial class OfertaListViewModel : ObservableObject
         Ofertas = new ObservableCollection<Oferta>();
     }
 
+    private void ResetarPaginacao()
+    {
+        _paginaAtual = 1;
+        TemProxima = false;
+        Ofertas.Clear();
+    }
+
     [RelayCommand]
     public async Task CarregarOfertasAsync()
     {
-        paginaAtual = 1;
+        ResetarPaginacao();
         await _unitOfWork.ClearDbContextAsync();
-        var lista = await _getHandlers.Handle(new GetAllOfertasQuery());
-        TodasOfertas = lista is List<Oferta> ofertaList ? ofertaList : lista.ToList();
-        
-        // Aplicar filtros automaticamente ap√≥s carregar
-        AplicarFiltros();
+        await CarregarProximaPaginaAsync();
     }
 
     [RelayCommand]
     public async Task CarregarMaisOfertasAsync()
     {
-        if (carregandoMais) return;
-        carregandoMais = true;
-        paginaAtual++;
-        var lista = await _getHandlers.Handle(new GetAllOfertasQuery());
-        var sourceList = lista is List<Oferta> ofertaList ? ofertaList : lista.ToList();
-        int start = (paginaAtual - 1) * tamanhoPagina;
-        int count = Math.Min(tamanhoPagina, sourceList.Count - start);
-        if (count > 0)
+        if (_carregandoMais || !TemProxima) return;
+        await CarregarProximaPaginaAsync();
+    }
+
+    private async Task CarregarProximaPaginaAsync()
+    {
+        if (_carregandoMais) return;
+        _carregandoMais = true;
+
+        try
         {
-            var novos = sourceList.GetRange(start, count);
-            foreach (var o in novos)
+            var result = await _getHandlers.Handle(new GetAllOfertasPaginatedQuery(
+                _paginaAtual, 
+                TAMANHO_PAGINA,
+                FiltroDataInicio,
+                FiltroDataFim,
+                FiltroTipoPagamento,
+                FiltroNome));
+            
+            // Aplicar filtro de nome client-side se necess·rio
+            var items = result.Items.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(FiltroNome))
             {
-                Ofertas.Add(o);
+                items = items.Where(o =>
+                {
+                    var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId).Result;
+                    return dizimista != null && (
+                        dizimista.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
+                        dizimista.NumeroCadastro.ToString().Contains(FiltroNome));
+                });
             }
-        }
-        carregandoMais = false;
-    }
 
-    private decimal _valorTotal;
-    public decimal ValorTotal
-    {
-        get => _valorTotal;
-        private set => SetProperty(ref _valorTotal, value);
-    }
+            _totalPaginas = result.TotalPages;
 
-    [RelayCommand]
-    public void AplicarFiltros()
-    {
-        IEnumerable<Oferta> filtrados = TodasOfertas;
-
-        // Filtro por data (apenas se uma data foi selecionada)
-        if (FiltroDataInicio.HasValue)
-            filtrados = filtrados.Where(o => o.Data.Date >= FiltroDataInicio.Value.Date);
-
-        if (FiltroDataFim.HasValue)
-            filtrados = filtrados.Where(o => o.Data.Date <= FiltroDataFim.Value.Date);
-
-        // Filtro unificado: busca por nome do dizimista OU c√≥digo do dizimista
-        if (!string.IsNullOrWhiteSpace(FiltroNome))
-        {
-            filtrados = filtrados.Where(o =>
+            foreach (var oferta in items)
             {
-                var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId).Result;
-                return dizimista != null && (
-                    dizimista.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
-                    dizimista.NumeroCadastro.ToString().Contains(FiltroNome));
-            });
-        }
+                Ofertas.Add(oferta);
+            }
 
-        Ofertas = new ObservableCollection<Oferta>(filtrados);
-        
-        // Calcular total
+            _paginaAtual++;
+            TemProxima = _paginaAtual <= _totalPaginas;
+            AtualizarValorTotal();
+        }
+        finally
+        {
+            _carregandoMais = false;
+        }
+    }
+
+    private void AtualizarValorTotal()
+    {
         ValorTotal = Ofertas.Sum(o => o.Valor);
     }
 
     [RelayCommand]
-    public void LimparFiltros()
+    public async Task AplicarFiltros()
+    {
+        ResetarPaginacao();
+        await CarregarOfertasAsync();
+    }
+
+    [RelayCommand]
+    public async Task LimparFiltros()
     {
         FiltroNome = string.Empty;
         FiltroDataInicio = null;
         FiltroDataFim = null;
-        AplicarFiltros();
+        FiltroTipoPagamento = "Todos";
+        ResetarPaginacao();
+        await CarregarOfertasAsync();
     }
 
     [RelayCommand]
@@ -211,14 +257,14 @@ public partial class OfertaListViewModel : ObservableObject
     {
         if (oferta == null) return;
 
-        var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        var mainPage = GetMainPage();
         if (mainPage == null) return;
 
         bool confirm = await mainPage.DisplayAlertAsync(
-            "Confirma√ß√£o",
+            "ConfirmaÁ„o",
             $"Deseja excluir a oferta de valor {oferta.Valor:C} em {oferta.Data:dd/MM/yyyy}?",
             "Sim",
-            "N√£o"
+            "N„o"
         );
 
         if (confirm)
@@ -227,7 +273,7 @@ public partial class OfertaListViewModel : ObservableObject
             {
                 await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
                 await CarregarOfertasAsync();
-                await mainPage.DisplayAlertAsync("Sucesso", "Oferta exclu√≠da com sucesso.", "OK");
+                await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluÌda com sucesso.", "OK");
             }
             catch (Exception ex)
             {
@@ -240,10 +286,10 @@ public partial class OfertaListViewModel : ObservableObject
     public async Task ExcluirOfertasSelecionadasAsync()
     {
         if (OfertasSelecionadas.Count == 0) return;
-        var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        var mainPage = GetMainPage();
         if (mainPage != null)
         {
-            bool confirm = await mainPage.DisplayAlertAsync("Confirma√ß√£o", $"Deseja excluir {OfertasSelecionadas.Count} oferta(s)?", "Sim", "N√£o");
+            bool confirm = await mainPage.DisplayAlertAsync("ConfirmaÁ„o", $"Deseja excluir {OfertasSelecionadas.Count} oferta(s)?", "Sim", "N„o");
             if (!confirm) return;
         }
         foreach (var oferta in OfertasSelecionadas.ToList())
@@ -259,9 +305,7 @@ public partial class OfertaListViewModel : ObservableObject
     {
         try
         {
-            // Exportar considerando os filtros aplicados
             var excelStream = await _excelService.ExportarAsync(Ofertas.ToList());
-
             var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
 #if WINDOWS
@@ -270,17 +314,13 @@ public partial class OfertaListViewModel : ObservableObject
             if (result.IsSuccessful)
             {
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
-
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var mainPage = GetMainPage();
                 if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Exporta√ß√£o",
-                        $"Planilha de ofertas exportada com sucesso!", "OK");
-                }
+                    await mainPage.DisplayAlertAsync("ExportaÁ„o", $"Planilha de ofertas exportada com sucesso!", "OK");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"[INFO] Exporta√ß√£o cancelada pelo usu√°rio");
+                System.Diagnostics.Debug.WriteLine($"[INFO] ExportaÁ„o cancelada pelo usu·rio");
             }
 #else
             var downloadsPath = Path.Combine(
@@ -293,22 +333,17 @@ public partial class OfertaListViewModel : ObservableObject
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var mainPage = GetMainPage();
             if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync("Exporta√ß√£o",
-                    $"Planilha de ofertas exportada com sucesso!\n\nLocaliza√ß√£o: {filePath}", "OK");
-            }
+                await mainPage.DisplayAlertAsync("ExportaÁ„o", $"Planilha de ofertas exportada com sucesso!\n\nLocalizaÁ„o: {filePath}", "OK");
 #endif
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var mainPage = GetMainPage();
             if (mainPage != null)
-            {
                 await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
-            }
         }
     }
 
@@ -326,17 +361,13 @@ public partial class OfertaListViewModel : ObservableObject
             if (result.IsSuccessful)
             {
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {result.FilePath}");
-
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var mainPage = GetMainPage();
                 if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Modelo Baixado",
-                        $"Planilha modelo baixada com sucesso!", "OK");
-                }
+                    await mainPage.DisplayAlertAsync("Modelo Baixado", $"Planilha modelo baixada com sucesso!", "OK");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usu√°rio");
+                System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usu·rio");
             }
 #else
             var downloadsPath = Path.Combine(
@@ -349,23 +380,17 @@ public partial class OfertaListViewModel : ObservableObject
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var mainPage = GetMainPage();
             if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync("Modelo Baixado",
-                    $"Planilha modelo baixada com sucesso!\n\nLocaliza√ß√£o: {filePath}", "OK");
-            }
+                await mainPage.DisplayAlertAsync("Modelo Baixado", $"Planilha modelo baixada com sucesso!\n\nLocalizaÁ„o: {filePath}", "OK");
 #endif
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
-
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var mainPage = GetMainPage();
             if (mainPage != null)
-            {
                 await mainPage.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
-            }
         }
     }
 
@@ -376,7 +401,6 @@ public partial class OfertaListViewModel : ObservableObject
         {
             var mainPage = GetMainPage();
             
-            // Usar FilePicker para selecionar o arquivo
             var result = await FilePicker.PickAsync(new PickOptions
             {
                 PickerTitle = "Selecione um arquivo Excel",
@@ -391,46 +415,42 @@ public partial class OfertaListViewModel : ObservableObject
 
             if (result == null)
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Importa√ß√£o cancelada pelo usu√°rio");
+                System.Diagnostics.Debug.WriteLine("[INFO] ImportaÁ„o cancelada pelo usu·rio");
                 return;
             }
 
-            // Ler o arquivo selecionado
             var excelBytes = await File.ReadAllBytesAsync(result.FullPath);
-            var resultado = await _excelService.ImportarAsync(excelBytes);
+            var importResult = await _excelService.ImportarAsync(excelBytes);
             
-            // Adicionar ofertas importadas
-            foreach (var o in resultado.OfertasImportadas)
+            foreach (var o in importResult.OfertasImportadas)
             {
                 await _unitOfWork.Ofertas.AddAsync(o);
             }
             await _unitOfWork.SaveChangesAsync();
             await CarregarOfertasAsync();
             
-            // Montar mensagem de resultado
-            var mensagem = $"Importa√ß√£o conclu√≠da!\n\n";
-            mensagem += $"‚úì Ofertas importadas: {resultado.OfertasImportadas.Count}\n";
+            var mensagem = $"ImportaÁ„o concluÌda!\n\n";
+            mensagem += $"? Ofertas importadas: {importResult.OfertasImportadas.Count}\n";
             
-            if (resultado.Erros.Count > 0)
+            if (importResult.Erros.Count > 0)
             {
-                mensagem += $"\n‚ùå Ofertas n√£o importadas: {resultado.Erros.Count}\n\n";
+                mensagem += $"\n? Ofertas n„o importadas: {importResult.Erros.Count}\n\n";
                 mensagem += "Erros:\n";
                 
-                // Limitar a 10 erros para n√£o deixar a mensagem muito grande
-                var errosExibir = resultado.Erros.Take(10).ToList();
+                var errosExibir = importResult.Erros.Take(10).ToList();
                 foreach (var erro in errosExibir)
                 {
-                    mensagem += $"‚Ä¢ {erro}\n";
+                    mensagem += $"ï {erro}\n";
                 }
                 
-                if (resultado.Erros.Count > 10)
+                if (importResult.Erros.Count > 10)
                 {
-                    mensagem += $"\n... e mais {resultado.Erros.Count - 10} erro(s)";
+                    mensagem += $"\n... e mais {importResult.Erros.Count - 10} erro(s)";
                 }
             }
             
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Resultado da Importa√ß√£o", mensagem, "OK");
+                await mainPage.DisplayAlertAsync("Resultado da ImportaÁ„o", mensagem, "OK");
         }
         catch (Exception ex)
         {

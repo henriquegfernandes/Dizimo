@@ -11,6 +11,7 @@ using System.Linq;
 using Microsoft.Maui.Storage;
 using CommunityToolkit.Maui.Storage;
 using System.IO;
+using Dizimo.Domain.Models;
 
 namespace Dizimo.ViewModels
 {
@@ -22,7 +23,6 @@ namespace Dizimo.ViewModels
         private readonly DizimistaExcelService _excelService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public List<Dizimista> TodosDizimistas { get; private set; } = new List<Dizimista>();
         private ObservableCollection<Dizimista> _dizimistas = new ObservableCollection<Dizimista>();
 
         private string _filtroNome = string.Empty;
@@ -31,10 +31,7 @@ namespace Dizimo.ViewModels
         public ObservableCollection<Dizimista> Dizimistas
         {
             get => _dizimistas;
-            private set
-            {
-                SetProperty(ref _dizimistas, value);
-            }
+            private set => SetProperty(ref _dizimistas, value);
         }
 
         public Dizimista? SelectedDizimista
@@ -49,9 +46,17 @@ namespace Dizimo.ViewModels
             set => SetProperty(ref _filtroNome, value);
         }
 
-        private int paginaAtual = 1;
-        private const int tamanhoPagina = 20;
-        private bool carregandoMais = false;
+        private int _paginaAtual = 1;
+        private const int _tamanho_pagina = 20;
+        private bool _carregandoMais = false;
+        private int _totalPaginas = 1;
+
+        private bool _temProxima = false;
+        public bool TemProxima
+        {
+            get => _temProxima;
+            private set => SetProperty(ref _temProxima, value);
+        }
 
         public List<string> StatusOptions { get; } = new() { "Todos", "Ativos", "Inativos" };
         private string _statusSelecionado = "Todos";
@@ -61,7 +66,10 @@ namespace Dizimo.ViewModels
             set
             {
                 if (SetProperty(ref _statusSelecionado, value))
-                    AplicarFiltros();
+                {
+                    ResetarPaginacao();
+                    _ = CarregarDizimistasAsync();
+                }
             }
         }
 
@@ -102,73 +110,71 @@ namespace Dizimo.ViewModels
             Dizimistas = new ObservableCollection<Dizimista>();
         }
 
+        private void ResetarPaginacao()
+        {
+            _paginaAtual = 1;
+            TemProxima = false;
+            Dizimistas.Clear();
+        }
+
         [RelayCommand]
         public async Task CarregarDizimistasAsync()
         {
-            paginaAtual = 1;
-            await _unitOfWork.ClearDbContextAsync(); // Garante que o contexto não use cache
-            var lista = await _handlers.Handle(new GetAllDizimistasQuery());
-            TodosDizimistas = lista is List<Dizimista> dizimistaList ? dizimistaList : lista.ToList();
-            Dizimistas.Clear();
-            var novaLista = TodosDizimistas.Count > tamanhoPagina
-                ? TodosDizimistas.GetRange(0, tamanhoPagina)
-                : TodosDizimistas;
-            foreach (var d in novaLista)
-            {
-                Dizimistas.Add(d);
-            }
+            ResetarPaginacao();
+            await _unitOfWork.ClearDbContextAsync();
+            await CarregarProximaPaginaAsync();
         }
 
         [RelayCommand]
         public async Task CarregarMaisDizimistasAsync()
         {
-            if (carregandoMais) return;
-            carregandoMais = true;
-            paginaAtual++;
-            var lista = await _handlers.Handle(new GetAllDizimistasQuery());
-            var sourceList = lista is List<Dizimista> dizimistaList ? dizimistaList : lista.ToList();
-            int start = (paginaAtual - 1) * tamanhoPagina;
-            int count = Math.Min(tamanhoPagina, sourceList.Count - start);
-            if (count > 0)
-            {
-                var novos = sourceList.GetRange(start, count);
-                foreach (var d in novos)
-                {
-                    Dizimistas.Add(d);
-                }
-            }
-            carregandoMais = false;
+            if (_carregandoMais || !TemProxima) return;
+            await CarregarProximaPaginaAsync();
         }
 
-        [RelayCommand]
-        public void AplicarFiltros()
+        private async Task CarregarProximaPaginaAsync()
         {
-            IEnumerable<Dizimista> filtrados = TodosDizimistas;
-            
-            // Filtro unificado: busca por nome OU número
-            if (!string.IsNullOrWhiteSpace(FiltroNome))
+            if (_carregandoMais) return;
+            _carregandoMais = true;
+
+            try
             {
-                filtrados = filtrados.Where(d => 
-                    d.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
-                    d.NumeroCadastro.ToString().Contains(FiltroNome));
+                var result = await _handlers.Handle(new GetAllDizimistasPaginatedQuery(
+                    _paginaAtual, 
+                    _tamanho_pagina,
+                    FiltroNome,
+                    StatusSelecionado));
+                
+                _totalPaginas = result.TotalPages;
+
+                foreach (var dizimista in result.Items)
+                {
+                    Dizimistas.Add(dizimista);
+                }
+
+                _paginaAtual++;
+                TemProxima = _paginaAtual <= _totalPaginas;
             }
-            
-            // Filtro por status
-            if (StatusSelecionado == "Ativos")
-                filtrados = filtrados.Where(d => d.Ativo);
-            else if (StatusSelecionado == "Inativos")
-                filtrados = filtrados.Where(d => !d.Ativo);
-            
-            var filteredList = filtrados is List<Dizimista> dizimistaList ? dizimistaList : filtrados.ToList();
-            Dizimistas = new ObservableCollection<Dizimista>(filteredList);
+            finally
+            {
+                _carregandoMais = false;
+            }
         }
 
         [RelayCommand]
-        public void LimparFiltros()
+        public async Task AplicarFiltros()
+        {
+            ResetarPaginacao();
+            await CarregarDizimistasAsync();
+        }
+
+        [RelayCommand]
+        public async Task LimparFiltros()
         {
             FiltroNome = string.Empty;
             StatusSelecionado = "Todos";
-            AplicarFiltros();
+            ResetarPaginacao();
+            await CarregarDizimistasAsync();
         }
 
         [RelayCommand]
@@ -225,13 +231,13 @@ namespace Dizimo.ViewModels
                     var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                     if (mainPage != null)
                     {
-                        await mainPage.DisplayAlertAsync("Exportação", 
+                        await mainPage.DisplayAlertAsync("Exporta��o", 
                             $"Planilha de dizimistas exportada com sucesso!", "OK");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
+                    System.Diagnostics.Debug.WriteLine("[INFO] Exporta��o cancelada pelo usu�rio");
                 }
 #else
                 var downloadsPath = Path.Combine(
@@ -247,8 +253,8 @@ namespace Dizimo.ViewModels
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
-                    await mainPage.DisplayAlertAsync("Exportação", 
-                        $"Planilha de dizimistas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
+                    await mainPage.DisplayAlertAsync("Exporta��o", 
+                        $"Planilha de dizimistas exportada com sucesso!\n\nLocaliza��o: {filePath}", "OK");
                 }
 #endif
             }
@@ -290,7 +296,7 @@ namespace Dizimo.ViewModels
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
+                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usu�rio");
                 }
 #else
                 var downloadsPath = Path.Combine(
@@ -307,7 +313,7 @@ namespace Dizimo.ViewModels
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Modelo Baixado", 
-                        $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
+                        $"Planilha modelo baixada com sucesso!\n\nLocaliza��o: {filePath}", "OK");
                 }
 #endif
             }
@@ -331,7 +337,6 @@ namespace Dizimo.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
                 
-                // Permitir o usuário selecionar o arquivo Excel
                 var result = await FilePicker.Default.PickAsync(new PickOptions
                 {
                     FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
@@ -345,7 +350,7 @@ namespace Dizimo.ViewModels
 
                 if (result == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
+                    System.Diagnostics.Debug.WriteLine("[INFO] Importa��o cancelada pelo usu�rio");
                     return;
                 }
 
@@ -362,13 +367,13 @@ namespace Dizimo.ViewModels
                 await _unitOfWork.SaveChangesAsync();
                 await CarregarDizimistasAsync();
                 
-                System.Diagnostics.Debug.WriteLine("[INFO] Importação concluída com sucesso");
+                System.Diagnostics.Debug.WriteLine("[INFO] Importa��o conclu�da com sucesso");
                 
                 var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPageSuccess != null)
                 {
-                    await mainPageSuccess.DisplayAlertAsync("Importação", 
-                        $"Importação concluída com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
+                    await mainPageSuccess.DisplayAlertAsync("Importa��o", 
+                        $"Importa��o conclu�da com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
                 }
             }
             catch (Exception ex)
@@ -391,7 +396,7 @@ namespace Dizimo.ViewModels
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
             {
-                await mainPage.DisplayAlertAsync("Relatório Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
+                await mainPage.DisplayAlertAsync("Relat�rio Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
             }
         }
 
@@ -401,25 +406,24 @@ namespace Dizimo.ViewModels
             try
             {
                 var sb = new System.Text.StringBuilder();
-                sb.AppendLine("NumeroCadastro,Nome,DataNascimento,Ativo");
-                foreach (var d in Dizimistas)
-                {
-                    sb.AppendLine($"{d.NumeroCadastro},\"{d.Nome}\",{d.DataNascimento:yyyy-MM-dd},{d.Ativo}");
-                }
-                var filePath = System.IO.Path.Combine(FileSystem.Current.AppDataDirectory, "relatorio_dizimistas.csv");
-                System.IO.File.WriteAllText(filePath, sb.ToString());
+                sb.AppendLine("Relat�rio Geral de Dizimistas");
+                sb.AppendLine($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
+                sb.AppendLine($"Total de Dizimistas: {Dizimistas.Count}");
+                sb.AppendLine();
+                
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
-                    await mainPage.DisplayAlertAsync("Exportação", $"Relatório geral exportado para: {filePath}", "OK");
+                    await mainPage.DisplayAlertAsync("Relat�rio", sb.ToString(), "OK");
                 }
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relat�rio: {ex.Message}");
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
                 {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar relatório: {ex.Message}", "OK");
+                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relat�rio: {ex.Message}", "OK");
                 }
             }
         }
@@ -431,7 +435,7 @@ namespace Dizimo.ViewModels
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
+                bool confirm = await mainPage.DisplayAlertAsync("Confirma��o", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "N�o");
                 if (!confirm) return;
             }
             foreach (var dizimista in DizimistasSelecionados.ToList())
@@ -449,7 +453,7 @@ namespace Dizimo.ViewModels
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
+                bool confirm = await mainPage.DisplayAlertAsync("Confirma��o", $"Deseja ativar/inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "N�o");
                 if (!confirm) return;
             }
             foreach (var dizimista in DizimistasSelecionados.ToList())
