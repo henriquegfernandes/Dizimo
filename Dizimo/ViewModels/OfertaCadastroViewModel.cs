@@ -197,6 +197,9 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     private bool _dizimistaEncontrado;
     public bool DizimistaEncontrado { get => _dizimistaEncontrado; set => SetProperty(ref _dizimistaEncontrado, value); }
 
+    private bool _dizimistaAtivo;
+    public bool DizimistaAtivo { get => _dizimistaAtivo; set => SetProperty(ref _dizimistaAtivo, value); }
+
     public IAsyncRelayCommand BuscarDizimistaCommand => new AsyncRelayCommand(BuscarDizimistaAsync);
 
     public async Task BuscarDizimistaAsync()
@@ -205,6 +208,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         {
             NomeDizimista = string.Empty;
             DizimistaEncontrado = false;
+            DizimistaAtivo = false;
             DizimistaIdProp = Guid.Empty;
             return;
         }
@@ -216,14 +220,29 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             if (dizimista != null)
             {
+                // Verificar se o dizimista está ativo
+                if (!dizimista.Ativo)
+                {
+                    NomeDizimista = "Dizimista inativo";
+                    DizimistaEncontrado = false;
+                    DizimistaAtivo = false;
+                    DizimistaIdProp = Guid.Empty;
+                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    if (mainPage != null)
+                        await mainPage.DisplayAlertAsync("Aviso", $"O dizimista com código {CodigoDizimista} está inativo. Não é possível criar ofertas para dizimistas inativos.", "OK");
+                    return;
+                }
+
                 NomeDizimista = dizimista.Nome;
                 DizimistaIdProp = dizimista.Id;
                 DizimistaEncontrado = true;
+                DizimistaAtivo = true;
             }
             else
             {
                 NomeDizimista = "Dizimista não encontrado";
                 DizimistaEncontrado = false;
+                DizimistaAtivo = false;
                 DizimistaIdProp = Guid.Empty;
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)
@@ -234,6 +253,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         {
             NomeDizimista = "Erro ao buscar";
             DizimistaEncontrado = false;
+            DizimistaAtivo = false;
             DizimistaIdProp = Guid.Empty;
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
@@ -293,6 +313,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         TipoPagamento = "PIX";
         IsEditMode = false;
         DizimistaEncontrado = false;
+        DizimistaAtivo = false;
         UsarRangoMeses = false;
     }
 
@@ -305,6 +326,14 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Validação", "Dizimista não encontrado. Por favor, insira um código válido.", "OK");
+            return;
+        }
+
+        if (!DizimistaAtivo)
+        {
+            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Validação", "O dizimista selecionado está inativo. Não é possível criar ofertas para dizimistas inativos.", "OK");
             return;
         }
 
@@ -427,9 +456,28 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Sucesso", "Oferta(s) salva(s) com sucesso!", "OK");
+            {
+                var resultado = await mainPage.DisplayAlertAsync(
+                    "Sucesso",
+                    "Oferta(s) salva(s) com sucesso! Deseja cadastrar outra oferta?",
+                    "Sim",
+                    "Não");
 
-            await Shell.Current.GoToAsync("///ofertas", true);
+                if (resultado)
+                {
+                    // Limpar o formulário para novo cadastro
+                    LimparCampos();
+                }
+                else
+                {
+                    // Ir para a lista de ofertas
+                    await Shell.Current.GoToAsync("///ofertas", true);
+                }
+            }
+            else
+            {
+                await Shell.Current.GoToAsync("///ofertas", true);
+            }
         }
         catch (Exception ex)
         {

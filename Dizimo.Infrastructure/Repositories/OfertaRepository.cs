@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using Dizimo.Domain.Models;
 
 namespace Dizimo.Infrastructure.Repositories;
 
@@ -25,6 +26,47 @@ public class OfertaRepository : IOfertaRepository
         return await query.ToListAsync();
     }
     public async Task<IEnumerable<Oferta>> GetAllAsync() => await _context.Ofertas.ToListAsync();
+
+    public async Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 20;
+
+        var query = _context.Ofertas.AsQueryable();
+
+        // Aplicar filtros de data no SQL
+        if (dataInicio.HasValue)
+            query = query.Where(o => o.Data.Date >= dataInicio.Value.Date);
+
+        if (dataFim.HasValue)
+            query = query.Where(o => o.Data.Date <= dataFim.Value.Date);
+
+        // Aplicar filtro de tipo de pagamento no SQL
+        if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
+        {
+            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+                query = query.Where(o => o.TipoPagamento == tipo);
+        }
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(o => o.Data)
+            .ThenBy(o => o.DizimistaId)
+            .ThenBy(o => o.AnoReferencia)
+            .ThenBy(o => o.MesReferencia)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<Oferta>
+        {
+            Items = items,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+    }
+
     public async Task AddAsync(Oferta oferta) { await _context.Ofertas.AddAsync(oferta); }
     public async Task UpdateAsync(Oferta oferta)
     {
@@ -46,3 +88,4 @@ public class OfertaRepository : IOfertaRepository
         if (entity != null) _context.Ofertas.Remove(entity);
     }
 }
+
