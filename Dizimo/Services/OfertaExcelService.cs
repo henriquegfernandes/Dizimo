@@ -20,6 +20,10 @@ public class OfertaExcelService
             ofertas = todasOfertas is List<Oferta> l ? l : todasOfertas.ToList();
         }
 
+        // Buscar todos os dizimistas uma única vez
+        var todosDizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
+        var dicionarioDizimistas = todosDizimistas.ToDictionary(d => d.Id);
+
         // Aplicar filtros
         var ofertasFiltradas = ofertas.AsEnumerable();
 
@@ -38,21 +42,18 @@ public class OfertaExcelService
                 ofertasFiltradas = ofertasFiltradas.Where(o => o.TipoPagamento == tipo);
         }
 
-        // Filtro de nome do dizimista (precisa trazer do banco)
+        // Filtro de nome do dizimista (usando dicionário em memória)
         if (!string.IsNullOrWhiteSpace(filtroNome))
         {
-            var ofertasComFiltro = new List<Oferta>();
-            foreach (var oferta in ofertasFiltradas)
+            ofertasFiltradas = ofertasFiltradas.Where(oferta =>
             {
-                var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(oferta.DizimistaId);
-                if (dizimista != null && (
-                    dizimista.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
-                    dizimista.NumeroCadastro.ToString().Contains(filtroNome)))
+                if (dicionarioDizimistas.TryGetValue(oferta.DizimistaId, out var dizimista))
                 {
-                    ofertasComFiltro.Add(oferta);
+                    return dizimista.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
+                           dizimista.NumeroCadastro.ToString().Contains(filtroNome);
                 }
-            }
-            ofertasFiltradas = ofertasComFiltro;
+                return false;
+            });
         }
 
         ofertas = ofertasFiltradas.ToList();
@@ -82,9 +83,14 @@ public class OfertaExcelService
         
         foreach (var o in ofertas)
         {
-            var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId);
-            var codigoDizimista = dizimista?.NumeroCadastro.ToString() ?? "";
-            var nomeDizimista = dizimista?.Nome ?? "";
+            var codigoDizimista = "";
+            var nomeDizimista = "";
+
+            if (dicionarioDizimistas.TryGetValue(o.DizimistaId, out var dizimista))
+            {
+                codigoDizimista = dizimista.NumeroCadastro.ToString();
+                nomeDizimista = dizimista.Nome;
+            }
 
             worksheet.Cell(rowNumber, 1).Value = codigoDizimista;
             worksheet.Cell(rowNumber, 2).Value = nomeDizimista;

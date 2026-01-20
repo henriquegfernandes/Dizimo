@@ -216,7 +216,7 @@ public partial class OfertaListViewModel : ObservableObject
             OnPropertyChanged(nameof(TextoResultados));
             _paginaAtual++;
             TemProxima = _paginaAtual <= _totalPaginas;
-            AtualizarValorTotal();
+            await AtualizarValorTotal();
         }
         finally
         {
@@ -224,7 +224,7 @@ public partial class OfertaListViewModel : ObservableObject
         }
     }
 
-    private async void AtualizarValorTotal()
+    private async Task AtualizarValorTotal()
     {
         // Calcular o total de TODAS as ofertas filtradas (não apenas as carregadas)
         ValorTotal = await _unitOfWork.Ofertas.GetTotalValorAsync(
