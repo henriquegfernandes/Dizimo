@@ -44,6 +44,9 @@ public class DashboardService
         var dizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
         var ofertas = await _unitOfWork.Ofertas.GetAllAsync();
 
+        // Filtrar apenas dizimistas ativos
+        var dizimistasAtivos = dizimistas.Where(d => d.Ativo).ToList();
+
         var hoje = DateTime.Today;
         var dados = new List<DizimistaPeriodoOfertaData>();
 
@@ -56,7 +59,7 @@ public class DashboardService
             { "Mais de 1 ano", 0 }
         };
 
-        foreach (var dizimista in dizimistas)
+        foreach (var dizimista in dizimistasAtivos)
         {
             var ultimaOferta = ofertas
                 .Where(o => o.DizimistaId == dizimista.Id)
@@ -112,6 +115,7 @@ public class DashboardService
         var proximoSabado = sabadoPassado.AddDays(7);
 
         return dizimistas
+            .Where(d => d.Ativo)
             .Where(d =>
             {
                 var mesAno = new DateTime(hoje.Year, d.DataNascimento.Month, d.DataNascimento.Day);
@@ -119,6 +123,7 @@ public class DashboardService
             })
             .OrderBy(d => d.DataNascimento.Month)
             .ThenBy(d => d.DataNascimento.Day)
+            .ThenBy(d => d.Nome)
             .ToList();
     }
 
@@ -134,6 +139,7 @@ public class DashboardService
         return dizimistas
             .Where(d => d.DataNascimento.Month == referenceMonth && d.Ativo == true)
             .OrderBy(d => d.DataNascimento.Day)
+            .ThenBy(d => d.Nome)
             .ToList();
     }
 }

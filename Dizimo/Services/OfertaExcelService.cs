@@ -11,14 +11,52 @@ public class OfertaExcelService
     
     public OfertaExcelService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null)
+    public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
-        // Se nenhuma lista for passada, exporta todas
+        // Se nenhuma lista for passada, busca todas as ofertas
         if (ofertas == null)
         {
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
             ofertas = todasOfertas is List<Oferta> l ? l : todasOfertas.ToList();
         }
+
+        // Buscar todos os dizimistas uma única vez
+        var todosDizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
+        var dicionarioDizimistas = todosDizimistas.ToDictionary(d => d.Id);
+
+        // Aplicar filtros
+        var ofertasFiltradas = ofertas.AsEnumerable();
+
+        // Filtro de data início
+        if (dataInicio.HasValue)
+            ofertasFiltradas = ofertasFiltradas.Where(o => o.Data.Date >= dataInicio.Value.Date);
+
+        // Filtro de data fim
+        if (dataFim.HasValue)
+            ofertasFiltradas = ofertasFiltradas.Where(o => o.Data.Date <= dataFim.Value.Date);
+
+        // Filtro de tipo de pagamento
+        if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
+        {
+            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+                ofertasFiltradas = ofertasFiltradas.Where(o => o.TipoPagamento == tipo);
+        }
+
+        // Filtro de nome do dizimista (usando dicionário em memória)
+        if (!string.IsNullOrWhiteSpace(filtroNome))
+        {
+            ofertasFiltradas = ofertasFiltradas.Where(oferta =>
+            {
+                if (dicionarioDizimistas.TryGetValue(oferta.DizimistaId, out var dizimista))
+                {
+                    return dizimista.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
+                           dizimista.NumeroCadastro.ToString().Contains(filtroNome);
+                }
+                return false;
+            });
+        }
+
+        ofertas = ofertasFiltradas.ToList();
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Ofertas");
@@ -45,9 +83,14 @@ public class OfertaExcelService
         
         foreach (var o in ofertas)
         {
-            var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId);
-            var codigoDizimista = dizimista?.NumeroCadastro.ToString() ?? "";
-            var nomeDizimista = dizimista?.Nome ?? "";
+            var codigoDizimista = "";
+            var nomeDizimista = "";
+
+            if (dicionarioDizimistas.TryGetValue(o.DizimistaId, out var dizimista))
+            {
+                codigoDizimista = dizimista.NumeroCadastro.ToString();
+                nomeDizimista = dizimista.Nome;
+            }
 
             worksheet.Cell(rowNumber, 1).Value = codigoDizimista;
             worksheet.Cell(rowNumber, 2).Value = nomeDizimista;
