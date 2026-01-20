@@ -27,6 +27,27 @@ public class OfertaRepository : IOfertaRepository
     }
     public async Task<IEnumerable<Oferta>> GetAllAsync() => await _context.Ofertas.ToListAsync();
 
+    public async Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null)
+    {
+        var query = _context.Ofertas.AsQueryable();
+
+        // Aplicar filtros de data no SQL
+        if (dataInicio.HasValue)
+            query = query.Where(o => o.Data.Date >= dataInicio.Value.Date);
+
+        if (dataFim.HasValue)
+            query = query.Where(o => o.Data.Date <= dataFim.Value.Date);
+
+        // Aplicar filtro de tipo de pagamento no SQL
+        if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
+        {
+            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+                query = query.Where(o => o.TipoPagamento == tipo);
+        }
+
+        return await query.SumAsync(o => o.Valor);
+    }
+
     public async Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null)
     {
         if (pageNumber < 1) pageNumber = 1;

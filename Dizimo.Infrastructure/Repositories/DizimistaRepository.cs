@@ -55,7 +55,7 @@ public class DizimistaRepository : IDizimistaRepository
             // Sem filtro de nome: fazer tudo no SQL (mais eficiente)
             var totalCount = await query.CountAsync();
             var items = await query
-                .OrderBy(d => d.NumeroCadastro)
+                .OrderBy(d => d.Nome)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -72,7 +72,7 @@ public class DizimistaRepository : IDizimistaRepository
         {
             // Com filtro de nome: precisa trazer para cliente
             var itemsFromDb = await query
-                .OrderBy(d => d.NumeroCadastro)
+                .OrderBy(d => d.Nome)
                 .ToListAsync();
 
             var filteredItems = itemsFromDb.Where(d =>

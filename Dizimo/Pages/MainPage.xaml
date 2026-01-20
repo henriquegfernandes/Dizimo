@@ -25,16 +25,106 @@
         <ScrollView Grid.Row="0" Grid.Column="0">
             <VerticalStackLayout Padding="{StaticResource LayoutPadding}" 
                                 Spacing="{StaticResource LayoutSpacing}">
+                <!-- Seção: Dizimistas por Período de Última Oferta -->
+                <Label Text="Dizimistas por Período de Última Oferta"
+                    Style="{StaticResource Title2}" 
+                    SemanticProperties.HeadingLevel="Level1"
+                       Margin="0,20,0,0"/>
+
+                <!-- Gráfico Circular -->
+                <Border StrokeShape="RoundRectangle 10"
+                    Padding="12"
+                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2c3e50}"
+                    HeightRequest="400">
+                    <chart:SfCircularChart>
+                        <chart:DoughnutSeries 
+                            ItemsSource="{Binding DizimistasAgrupadosPeriodo}"
+                            PaletteBrushes="{Binding DizimistasAgrupadosPeriodo, Converter={StaticResource DizimistaPeriodoColorConverter}}"
+                            XBindingPath="Periodo"
+                            YBindingPath="Quantidade"
+                            ShowDataLabels="True"
+                            EnableTooltip="True"
+                            EnableAnimation="True"
+                            x:Name="doughnutSeries"
+                            Radius="{OnIdiom 0.8, Phone=0.6}"
+                            InnerRadius="0.5">
+                            <chart:DoughnutSeries.TooltipTemplate>
+                                <DataTemplate x:DataType="chart:TooltipInfo">
+                                    <VerticalStackLayout Padding="10" Spacing="4">
+                                        <Label Text="{Binding Item.Periodo, StringFormat='Período: {0}'}"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            TextColor="White" />
+                                        <Label Text="{Binding Item.Quantidade, StringFormat='Quantidade: {0}'}"
+                                            FontSize="11"
+                                            TextColor="White" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </chart:DoughnutSeries.TooltipTemplate>
+                            <chart:DoughnutSeries.DataLabelSettings>
+                                <chart:CircularDataLabelSettings LabelPosition="Outside" SmartLabelAlignment="Shift">
+                                    <chart:CircularDataLabelSettings.ConnectorLineSettings>
+                                        <chart:ConnectorLineStyle ConnectorType="Line" StrokeWidth="2" Stroke="#800000" />
+                                    </chart:CircularDataLabelSettings.ConnectorLineSettings>
+                                </chart:CircularDataLabelSettings>
+                            </chart:DoughnutSeries.DataLabelSettings>
+                        </chart:DoughnutSeries>
+                    </chart:SfCircularChart>
+                </Border>
+
+                <!-- Legenda das cores em Grid 2x2 -->
+                <Grid ColumnDefinitions="*,*" 
+                      RowDefinitions="Auto,Auto" 
+                      ColumnSpacing="20" 
+                      RowSpacing="10"
+                      Margin="10">
+                    <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8">
+                        <BoxView BackgroundColor="#22C55E" 
+                                 WidthRequest="14" 
+                                 HeightRequest="14" 
+                                 CornerRadius="2" />
+                        <Label Text="Últimos 2 meses" 
+                               VerticalOptions="Center" 
+                               FontSize="12" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8">
+                        <BoxView BackgroundColor="#FBBF24" 
+                                 WidthRequest="14"
+                                 HeightRequest="14"
+                                 CornerRadius="2" />
+                        <Label Text="2-6 meses"
+                               VerticalOptions="Center"
+                               FontSize="12" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
+                        <BoxView BackgroundColor="#F97316"
+                                 WidthRequest="14"
+                                 HeightRequest="14"
+                                 CornerRadius="2" />
+                        <Label Text="6-12 meses"
+                               VerticalOptions="Center"
+                               FontSize="12" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
+                        <BoxView BackgroundColor="#EF4444"
+                                 WidthRequest="14" 
+                                 HeightRequest="14" 
+                                 CornerRadius="2" />
+                        <Label Text="Mais de 1 ano" 
+                               VerticalOptions="Center" 
+                               FontSize="12" />
+                    </HorizontalStackLayout>
+                </Grid>
 
                 <!-- Seção: Aniversariantes -->
                 <Grid ColumnDefinitions="*,Auto" 
-    RowDefinitions="Auto" 
-    ColumnSpacing="10">
+                      RowDefinitions="Auto" 
+                      ColumnSpacing="10">
                     <Label Grid.Column="0"
-        Text="Aniversariantes" 
-        Style="{StaticResource Title2}" 
-        SemanticProperties.HeadingLevel="Level1" 
-        VerticalOptions="Center" />
+                        Text="Aniversariantes" 
+                        Style="{StaticResource Title2}" 
+                        SemanticProperties.HeadingLevel="Level1" 
+                        VerticalOptions="Center" />
                     <HorizontalStackLayout Grid.Column="1" 
                         Spacing="8" 
                         VerticalOptions="Center">
@@ -114,97 +204,6 @@
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                 </Border>
-
-                <!-- Seção: Dizimistas por Período de Última Oferta -->
-                <Label Text="Dizimistas por Período de Última Oferta"
-                    Style="{StaticResource Title2}" 
-                    SemanticProperties.HeadingLevel="Level1"
-                       Margin="0,20,0,0"/>
-
-                <!-- Gráfico Circular -->
-                <Border StrokeShape="RoundRectangle 10"
-                    Padding="12"
-                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2c3e50}"
-                    HeightRequest="400">
-                    <chart:SfCircularChart>
-                        <chart:DoughnutSeries 
-                            ItemsSource="{Binding DizimistasAgrupadosPeriodo}"
-                            PaletteBrushes="{Binding DizimistasAgrupadosPeriodo, Converter={StaticResource DizimistaPeriodoColorConverter}}"
-                            XBindingPath="Periodo"
-                            YBindingPath="Quantidade"
-                            ShowDataLabels="True"
-                            EnableTooltip="True"
-                            EnableAnimation="True"
-                            x:Name="doughnutSeries"
-                            Radius="{OnIdiom 0.8, Phone=0.6}"
-                            InnerRadius="0.5">
-                            <chart:DoughnutSeries.TooltipTemplate>
-                                <DataTemplate x:DataType="chart:TooltipInfo">
-                                    <VerticalStackLayout Padding="10" Spacing="4">
-                                        <Label Text="{Binding Item.Periodo, StringFormat='Período: {0}'}"
-                                            FontSize="12"
-                                            FontAttributes="Bold"
-                                            TextColor="White" />
-                                        <Label Text="{Binding Item.Quantidade, StringFormat='Quantidade: {0}'}"
-                                            FontSize="11"
-                                            TextColor="White" />
-                                    </VerticalStackLayout>
-                                </DataTemplate>
-                            </chart:DoughnutSeries.TooltipTemplate>
-                            <chart:DoughnutSeries.DataLabelSettings>
-                                <chart:CircularDataLabelSettings LabelPosition="Outside" SmartLabelAlignment="Shift">
-                                    <chart:CircularDataLabelSettings.ConnectorLineSettings>
-                                        <chart:ConnectorLineStyle ConnectorType="Line" StrokeWidth="2" Stroke="#800000" />
-                                    </chart:CircularDataLabelSettings.ConnectorLineSettings>
-                                </chart:CircularDataLabelSettings>
-                            </chart:DoughnutSeries.DataLabelSettings>
-                        </chart:DoughnutSeries>
-                    </chart:SfCircularChart>
-                </Border>
-
-                <!-- Legenda das cores em Grid 2x2 -->
-                <Grid ColumnDefinitions="*,*" 
-                    RowDefinitions="Auto,Auto" 
-                    ColumnSpacing="20" 
-                    RowSpacing="10"
-                    Margin="10">
-                    <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8">
-                        <BoxView BackgroundColor="#22C55E" 
-                            WidthRequest="14" 
-                            HeightRequest="14" 
-                            CornerRadius="2" />
-                        <Label Text="Últimos 2 meses" 
-                            VerticalOptions="Center" 
-                            FontSize="12" />
-                    </HorizontalStackLayout>
-                    <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8">
-                        <BoxView BackgroundColor="#FBBF24" 
-                            WidthRequest="14" 
-                            HeightRequest="14" 
-                            CornerRadius="2" />
-                        <Label Text="2-6 meses" 
-                            VerticalOptions="Center" 
-                            FontSize="12" />
-                    </HorizontalStackLayout>
-                    <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
-                        <BoxView BackgroundColor="#F97316" 
-                            WidthRequest="14" 
-                            HeightRequest="14" 
-                            CornerRadius="2" />
-                        <Label Text="6-12 meses" 
-                            VerticalOptions="Center" 
-                            FontSize="12" />
-                    </HorizontalStackLayout>
-                    <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
-                        <BoxView BackgroundColor="#EF4444" 
-                            WidthRequest="14" 
-                            HeightRequest="14" 
-                            CornerRadius="2" />
-                        <Label Text="Mais de 1 ano" 
-                            VerticalOptions="Center" 
-                            FontSize="12" />
-                    </HorizontalStackLayout>
-                </Grid>
             </VerticalStackLayout>
         </ScrollView>
 

@@ -58,6 +58,18 @@ namespace Dizimo.ViewModels
             private set => SetProperty(ref _temProxima, value);
         }
 
+        private int _totalDizimistas = 0;
+        public int TotalDizimistas
+        {
+            get => _totalDizimistas;
+            private set => SetProperty(ref _totalDizimistas, value);
+        }
+
+        public string TextoResultados
+        {
+            get => $"{Dizimistas.Count} de {TotalDizimistas} resultados";
+        }
+
         public List<string> StatusOptions { get; } = new() { "Todos", "Ativos", "Inativos" };
         private string _statusSelecionado = "Todos";
         public string StatusSelecionado
@@ -126,7 +138,7 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public async Task CarregarMaisDizimistasAsync()
+        public async Task CarregarMaisDizimistas()
         {
             if (_carregandoMais || !TemProxima) return;
             await CarregarProximaPaginaAsync();
@@ -146,11 +158,14 @@ namespace Dizimo.ViewModels
                     StatusSelecionado));
                 
                 _totalPaginas = result.TotalPages;
+                TotalDizimistas = result.TotalCount;
 
                 foreach (var dizimista in result.Items)
                 {
                     Dizimistas.Add(dizimista);
                 }
+
+                OnPropertyChanged(nameof(TextoResultados));
 
                 _paginaAtual++;
                 TemProxima = _paginaAtual <= _totalPaginas;
@@ -217,7 +232,8 @@ namespace Dizimo.ViewModels
             try
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] ExportarAsync iniciado");
-                var excelStream = await _excelService.ExportarAsync();
+                // Passar os filtros aplicados para exportação
+                var excelStream = await _excelService.ExportarAsync(FiltroNome, StatusSelecionado);
                 
                 var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 
@@ -227,6 +243,20 @@ namespace Dizimo.ViewModels
                 if (result.IsSuccessful)
                 {
                     System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
+
+                    // Abrir arquivo automaticamente
+                    try
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = result.FilePath,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                    }
 
                     var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                     if (mainPage != null)
@@ -249,6 +279,20 @@ namespace Dizimo.ViewModels
                 
                 var filePath = Path.Combine(downloadsPath, fileName);
                 await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
+
+                // Abrir arquivo automaticamente
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = filePath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                }
                 
                 var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
                 if (mainPage != null)

@@ -11,9 +11,31 @@ public class DizimistaExcelService
     
     public DizimistaExcelService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    public async Task<MemoryStream> ExportarAsync()
+    public async Task<MemoryStream> ExportarAsync(string? filtroNome = null, string? statusSelecionado = null)
     {
         var dizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
+
+        // Aplicar filtros
+        var dizimistasFiltrados = dizimistas.AsEnumerable();
+
+        // Filtro de status
+        if (!string.IsNullOrWhiteSpace(statusSelecionado) && statusSelecionado != "Todos")
+        {
+            if (statusSelecionado == "Ativos")
+                dizimistasFiltrados = dizimistasFiltrados.Where(d => d.Ativo);
+            else if (statusSelecionado == "Inativos")
+                dizimistasFiltrados = dizimistasFiltrados.Where(d => !d.Ativo);
+        }
+
+        // Filtro de nome
+        if (!string.IsNullOrWhiteSpace(filtroNome))
+        {
+            dizimistasFiltrados = dizimistasFiltrados.Where(d =>
+                d.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
+                d.NumeroCadastro.ToString().Contains(filtroNome));
+        }
+
+        dizimistas = dizimistasFiltrados.ToList();
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Dizimistas");

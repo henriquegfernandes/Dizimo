@@ -11,14 +11,51 @@ public class OfertaExcelService
     
     public OfertaExcelService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null)
+    public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
-        // Se nenhuma lista for passada, exporta todas
+        // Se nenhuma lista for passada, busca todas as ofertas
         if (ofertas == null)
         {
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
             ofertas = todasOfertas is List<Oferta> l ? l : todasOfertas.ToList();
         }
+
+        // Aplicar filtros
+        var ofertasFiltradas = ofertas.AsEnumerable();
+
+        // Filtro de data início
+        if (dataInicio.HasValue)
+            ofertasFiltradas = ofertasFiltradas.Where(o => o.Data.Date >= dataInicio.Value.Date);
+
+        // Filtro de data fim
+        if (dataFim.HasValue)
+            ofertasFiltradas = ofertasFiltradas.Where(o => o.Data.Date <= dataFim.Value.Date);
+
+        // Filtro de tipo de pagamento
+        if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
+        {
+            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+                ofertasFiltradas = ofertasFiltradas.Where(o => o.TipoPagamento == tipo);
+        }
+
+        // Filtro de nome do dizimista (precisa trazer do banco)
+        if (!string.IsNullOrWhiteSpace(filtroNome))
+        {
+            var ofertasComFiltro = new List<Oferta>();
+            foreach (var oferta in ofertasFiltradas)
+            {
+                var dizimista = await _unitOfWork.Dizimistas.GetByIdAsync(oferta.DizimistaId);
+                if (dizimista != null && (
+                    dizimista.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
+                    dizimista.NumeroCadastro.ToString().Contains(filtroNome)))
+                {
+                    ofertasComFiltro.Add(oferta);
+                }
+            }
+            ofertasFiltradas = ofertasComFiltro;
+        }
+
+        ofertas = ofertasFiltradas.ToList();
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Ofertas");

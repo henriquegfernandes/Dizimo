@@ -92,6 +92,18 @@ public partial class OfertaListViewModel : ObservableObject
         private set => SetProperty(ref _valorTotal, value);
     }
 
+    private int _totalOfertas = 0;
+    public int TotalOfertas
+    {
+        get => _totalOfertas;
+        private set => SetProperty(ref _totalOfertas, value);
+    }
+
+    public string TextoResultados
+    {
+        get => $"{Ofertas.Count} de {TotalOfertas} resultados";
+    }
+
     public List<string> TiposPagamento { get; } = new List<string> { "Todos", "PIX", "Dinheiro", "Cartao" };
 
     private string _filtroTipoPagamento = "Todos";
@@ -159,7 +171,7 @@ public partial class OfertaListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task CarregarMaisOfertasAsync()
+    public async Task CarregarMaisOfertas()
     {
         if (_carregandoMais || !TemProxima) return;
         await CarregarProximaPaginaAsync();
@@ -194,12 +206,14 @@ public partial class OfertaListViewModel : ObservableObject
             }
 
             _totalPaginas = result.TotalPages;
+            TotalOfertas = result.TotalCount;
 
             foreach (var oferta in items)
             {
                 Ofertas.Add(oferta);
             }
 
+            OnPropertyChanged(nameof(TextoResultados));
             _paginaAtual++;
             TemProxima = _paginaAtual <= _totalPaginas;
             AtualizarValorTotal();
@@ -210,9 +224,14 @@ public partial class OfertaListViewModel : ObservableObject
         }
     }
 
-    private void AtualizarValorTotal()
+    private async void AtualizarValorTotal()
     {
-        ValorTotal = Ofertas.Sum(o => o.Valor);
+        // Calcular o total de TODAS as ofertas filtradas (não apenas as carregadas)
+        ValorTotal = await _unitOfWork.Ofertas.GetTotalValorAsync(
+            FiltroDataInicio,
+            FiltroDataFim,
+            FiltroTipoPagamento != "Todos" ? FiltroTipoPagamento : null);
+        OnPropertyChanged(nameof(TextoResultados));
     }
 
     [RelayCommand]
@@ -305,7 +324,14 @@ public partial class OfertaListViewModel : ObservableObject
     {
         try
         {
-            var excelStream = await _excelService.ExportarAsync(Ofertas.ToList());
+            // Trazer TODAS as ofertas do banco COM OS FILTROS aplicados
+            var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
+            var excelStream = await _excelService.ExportarAsync(
+                todasOfertas.ToList(),
+                FiltroDataInicio,
+                FiltroDataFim,
+                FiltroTipoPagamento,
+                FiltroNome);
             var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
 #if WINDOWS
@@ -314,6 +340,21 @@ public partial class OfertaListViewModel : ObservableObject
             if (result.IsSuccessful)
             {
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
+                
+                // Abrir arquivo automaticamente
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = result.FilePath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                }
+                
                 var mainPage = GetMainPage();
                 if (mainPage != null)
                     await mainPage.DisplayAlertAsync("Exportação", $"Planilha de ofertas exportada com sucesso!", "OK");
@@ -322,6 +363,7 @@ public partial class OfertaListViewModel : ObservableObject
             {
                 System.Diagnostics.Debug.WriteLine($"[INFO] Exportação cancelada pelo usuário");
             }
+
 #else
             var downloadsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -332,6 +374,20 @@ public partial class OfertaListViewModel : ObservableObject
 
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
+
+            // Abrir arquivo automaticamente
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+            }
 
             var mainPage = GetMainPage();
             if (mainPage != null)
