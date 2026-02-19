@@ -411,11 +411,13 @@ public partial class OfertaListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task BaixarModeloAsync()
+    public static async Task BaixarModeloAsync()
     {
         try
         {
-            var excelStream = _excelService.GerarModelo();
+            System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
+
+            var excelStream = OfertaExcelService.GerarModelo();
             var fileName = "ofertas_modelo.xlsx";
 
 #if WINDOWS

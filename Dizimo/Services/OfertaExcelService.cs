@@ -5,11 +5,9 @@ using System.Globalization;
 
 namespace Dizimo.Services;
 
-public class OfertaExcelService
+public class OfertaExcelService(IUnitOfWork unitOfWork)
 {
-    private readonly IUnitOfWork _unitOfWork;
-    
-    public OfertaExcelService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
@@ -17,7 +15,7 @@ public class OfertaExcelService
         if (ofertas == null)
         {
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
-            ofertas = todasOfertas is List<Oferta> l ? l : todasOfertas.ToList();
+            ofertas = todasOfertas is List<Oferta> l ? l : [.. todasOfertas];
         }
 
         // Buscar todos os dizimistas uma única vez
@@ -56,7 +54,12 @@ public class OfertaExcelService
             });
         }
 
-        ofertas = ofertasFiltradas.ToList();
+        // Aplicar a mesma ordenação que a página: OrderByDescending(o => o.Data).ThenBy(o => o.DizimistaId).ThenBy(o => o.AnoReferencia).ThenBy(o => o.MesReferencia)
+        ofertas = [.. ofertasFiltradas
+            .OrderByDescending(o => o.Data)
+            .ThenBy(o => o.DizimistaId)
+            .ThenBy(o => o.AnoReferencia)
+            .ThenBy(o => o.MesReferencia)];
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Ofertas");
@@ -129,7 +132,7 @@ public class OfertaExcelService
         return stream;
     }
 
-    public MemoryStream GerarModelo()
+    public static MemoryStream GerarModelo()
     {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Ofertas");
@@ -185,8 +188,8 @@ public class OfertaExcelService
 
     public class ResultadoImportacao
     {
-        public List<Oferta> OfertasImportadas { get; set; } = new();
-        public List<string> Erros { get; set; } = new();
+        public List<Oferta> OfertasImportadas { get; set; } = [.. new List<Oferta>()];
+        public List<string> Erros { get; set; } = [.. new List<string>()];
     }
 
     public async Task<ResultadoImportacao> ImportarAsync(byte[] excelBytes)

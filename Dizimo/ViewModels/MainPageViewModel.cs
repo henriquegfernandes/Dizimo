@@ -76,11 +76,16 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
         }
     }
 
-    public static List<string> MesesDisponiveis =>
+    private readonly ObservableCollection<string> _mesesDisponiveis = 
     [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
+
+    public ObservableCollection<string> MesesDisponiveis
+    {
+        get => _mesesDisponiveis;
+    }
 
     public static string Titulo => $"Dashboard - {DateTime.Now:dddd, dd 'de' MMMM 'de' yyyy}";
 
@@ -198,6 +203,23 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
                     await mainPage.DisplayAlertAsync("Exportação",
                         $"Aniversariantes exportados com sucesso!", "OK");
                 }
+
+                // Tentar abrir o arquivo salvo
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(result.FilePath))
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = result.FilePath,
+                            UseShellExecute = true
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                }
             }
 #else
             var downloadsPath = Path.Combine(
@@ -209,7 +231,7 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
                 Directory.CreateDirectory(downloadsPath);
             }
 
-            var filePath = Path.Combine(downloadsPath, fileName);
+            filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
             var mainPageSuccess = GetMainPage();
@@ -217,6 +239,23 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
             {
                 await mainPageSuccess.DisplayAlertAsync("Exportação",
                     $"Aniversariantes exportados com sucesso!\n\nLocalização: {filePath}", "OK");
+            }
+
+            // Abrir o arquivo automaticamente
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                var mainPageError = GetMainPage();
+                if (mainPageError != null)
+                    await mainPageError.DisplayAlertAsync("Aviso", "Arquivo salvo com sucesso, mas não foi possível abrir automaticamente.", "OK");
             }
 #endif
         }

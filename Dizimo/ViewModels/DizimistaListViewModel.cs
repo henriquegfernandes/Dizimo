@@ -324,13 +324,13 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public async Task BaixarModeloAsync()
+        public static async Task BaixarModeloAsync()
         {
             try
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
                 
-                var excelStream = _excelService.GerarModelo();
+                var excelStream = DizimistaExcelService.GerarModelo();
                 var fileName = "dizimistas_modelo.xlsx";
 
 #if WINDOWS
@@ -406,7 +406,7 @@ namespace Dizimo.ViewModels
 
                 System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {result.FullPath}");
                 var excelBytes = await File.ReadAllBytesAsync(result.FullPath);
-                var dizimistas = await _excelService.ImportarAsync(excelBytes);
+                var dizimistas = await DizimistaExcelService.ImportarAsync(excelBytes);
                 
                 System.Diagnostics.Debug.WriteLine($"[INFO] {dizimistas.Count} dizimistas lidos do arquivo");
                 

@@ -631,7 +631,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         {
             var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>()?? throw new InvalidOperationException("OfertaExcelService não está registrado no contêiner de serviços.");
 
-            var templateStream = excelService.GerarModelo();
+            var templateStream = OfertaExcelService.GerarModelo();
             var fileName = $"oferta_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
 #if WINDOWS

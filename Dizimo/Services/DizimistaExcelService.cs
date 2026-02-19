@@ -5,11 +5,9 @@ using System.Globalization;
 
 namespace Dizimo.Services;
 
-public class DizimistaExcelService
+public class DizimistaExcelService(IUnitOfWork unitOfWork)
 {
-    private readonly IUnitOfWork _unitOfWork;
-    
-    public DizimistaExcelService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<MemoryStream> ExportarAsync(string? filtroNome = null, string? statusSelecionado = null)
     {
@@ -35,7 +33,8 @@ public class DizimistaExcelService
                 d.NumeroCadastro.ToString().Contains(filtroNome));
         }
 
-        dizimistas = dizimistasFiltrados.ToList();
+        // Aplicar a mesma ordenação que a página: OrderBy(d => d.Nome)
+        dizimistas = [.. dizimistasFiltrados.OrderBy(d => d.Nome)];
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Dizimistas");
@@ -112,7 +111,7 @@ public class DizimistaExcelService
         return stream;
     }
 
-    public MemoryStream GerarModelo()
+    public static MemoryStream GerarModelo()
     {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Dizimistas");
@@ -190,7 +189,7 @@ public class DizimistaExcelService
         return stream;
     }
 
-    public async Task<List<Dizimista>> ImportarAsync(byte[] excelBytes)
+    public static async Task<List<Dizimista>> ImportarAsync(byte[] excelBytes)
     {
         var result = new List<Dizimista>();
 

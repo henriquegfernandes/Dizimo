@@ -393,7 +393,7 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
                 return;
             }
 
-            var templateStream = excelService.GerarModelo();
+            var templateStream = DizimistaExcelService.GerarModelo();
             var fileName = $"dizimista_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
 #if WINDOWS
@@ -466,7 +466,7 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
             var fileBytes = memoryStream.ToArray();
-            var dizimistas = await excelService.ImportarAsync(fileBytes);
+            var dizimistas = await DizimistaExcelService.ImportarAsync(fileBytes);
 
             if (dizimistas.Count > 0)
             {
