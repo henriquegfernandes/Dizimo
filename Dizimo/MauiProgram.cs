@@ -12,6 +12,7 @@ using Dizimo.Application.Dashboard;
 using Dizimo.Application.Usuarios.Handlers;
 using Dizimo.Services;
 using System.Globalization;
+using Dizimo.Resources.Fonts;
 
 namespace Dizimo
 {
@@ -20,7 +21,7 @@ namespace Dizimo
         public static MauiApp CreateMauiApp()
         {
             // Configurar cultura global para PT-BR
-            CultureInfo ptBr = new CultureInfo("pt-BR");
+            CultureInfo ptBr = new("pt-BR");
             CultureInfo.DefaultThreadCurrentCulture = ptBr;
             CultureInfo.DefaultThreadCurrentUICulture = ptBr;
 

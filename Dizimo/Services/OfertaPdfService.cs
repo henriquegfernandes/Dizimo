@@ -5,11 +5,9 @@ using System.Text;
 
 namespace Dizimo.Services;
 
-public class OfertaPdfService
+public class OfertaPdfService(IUnitOfWork unitOfWork)
 {
-    private readonly IUnitOfWork _unitOfWork;
-
-    public OfertaPdfService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<MemoryStream> ImprimirAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
@@ -17,7 +15,7 @@ public class OfertaPdfService
         if (ofertas == null)
         {
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
-            ofertas = todasOfertas is List<Oferta> l ? l : todasOfertas.ToList();
+            ofertas = todasOfertas is List<Oferta> l ? l : [.. todasOfertas];
         }
 
         // Buscar todos os dizimistas uma única vez
@@ -56,7 +54,7 @@ public class OfertaPdfService
             });
         }
 
-        ofertas = ofertasFiltradas.ToList();
+        ofertas = [.. ofertasFiltradas];
 
         // Gerar HTML para impressão
         var html = GerarHtmlOfertas(ofertas, dicionarioDizimistas);
@@ -67,7 +65,7 @@ public class OfertaPdfService
         return pdfStream;
     }
 
-    private string GerarHtmlOfertas(List<Oferta> ofertas, Dictionary<Guid, Dizimista> dicionarioDizimistas)
+    private static string GerarHtmlOfertas(List<Oferta> ofertas, Dictionary<Guid, Dizimista> dicionarioDizimistas)
     {
         var sb = new StringBuilder();
         decimal totalValor = 0;
@@ -157,7 +155,7 @@ public class OfertaPdfService
         return sb.ToString();
     }
 
-    private MemoryStream ConvertHtmlToPdf(string html)
+    private static MemoryStream ConvertHtmlToPdf(string html)
     {
         var stream = new MemoryStream();
 

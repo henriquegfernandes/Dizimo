@@ -22,11 +22,19 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     private readonly GetOfertaHandlers _getHandler;
     private readonly IUnitOfWork _unitOfWork;
 
-    private readonly string[] _mesesArray = new[]
+    private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
     {
+        { DevicePlatform.WinUI, new[] { ".xlsx" } },
+        { DevicePlatform.macOS, new[] { ".xlsx" } },
+        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
+        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
+    });
+
+    private readonly string[] _mesesArray =
+    [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    };
+    ];
 
     public OfertaCadastroViewModel(
         CreateOfertaHandler createHandler,
@@ -229,7 +237,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                     DizimistaEncontrado = false;
                     DizimistaAtivo = false;
                     DizimistaIdProp = Guid.Empty;
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                     if (mainPage != null)
                         await mainPage.DisplayAlertAsync("Aviso", $"O dizimista com código {CodigoDizimista} está inativo. Não é possível criar ofertas para dizimistas inativos.", "OK");
                     return;
@@ -248,10 +257,11 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 DizimistaAtivo = true; // Permitir prosseguir
                 DizimistaIdProp = Guid.Empty;
 
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
-                    bool criarNovo = await mainPage.DisplayAlert(
+                    bool criarNovo = await mainPage.DisplayAlertAsync(
                         "Dizimista Não Encontrado", 
                         $"Nenhum dizimista encontrado com o código {CodigoDizimista}.\n\n" +
                         $"Se você prosseguir com o cadastro, um novo dizimista será criado com este código. " +
@@ -277,7 +287,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             DizimistaEncontrado = false;
             DizimistaAtivo = false;
             DizimistaIdProp = Guid.Empty;
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Erro", $"Erro ao buscar dizimista: {ex.Message}", "OK");
         }
@@ -346,7 +357,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         // Validações iniciais
         if (CodigoDizimista <= 0)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Validação", "Por favor, insira um código de dizimista.", "OK");
             return;
@@ -354,7 +366,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
         if (!DizimistaAtivo)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Validação", "O dizimista selecionado está inativo. Não é possível criar ofertas para dizimistas inativos.", "OK");
             return;
@@ -362,7 +375,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
         if (Valor <= 0)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Validação", "O valor da oferta deve ser maior que zero.", "OK");
             return;
@@ -382,7 +396,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             if (dataFim < dataInicio)
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                     await mainPage.DisplayAlertAsync("Validação", "A data final deve ser maior ou igual à data de início. Por favor, verifique o período selecionado.", "OK");
                 return;
@@ -394,7 +409,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         {
             if (string.IsNullOrWhiteSpace(NomeDizimista))
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                     await mainPage.DisplayAlertAsync("Validação", "Por favor, insira o nome do dizimista.", "OK");
                 return;
@@ -422,7 +438,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 DizimistaIdProp = novoDizimista.Id;
                 DizimistaEncontrado = true;
 
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync(
@@ -433,7 +450,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             }
             catch (Exception ex)
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao criar novo dizimista: {ex.Message}", "OK");
                 return;
@@ -442,7 +460,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
         if (!DizimistaEncontrado || DizimistaIdProp == Guid.Empty)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Validação", "Dizimista inválido. Por favor, verifique o código.", "OK");
             return;
@@ -451,7 +470,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         try
         {
             var tipoPagamentoSelecionado = TipoPagamento.Replace("Cartão", "Cartao");
-            var tipoPagamento = (Dizimo.Domain.Entities.TipoPagamento)Enum.Parse(typeof(Dizimo.Domain.Entities.TipoPagamento), tipoPagamentoSelecionado);
+            TipoPagamento tipoPagamento = (TipoPagamento)Enum.Parse<TipoPagamento>(tipoPagamentoSelecionado);
 
             if (IsEditMode)
             {
@@ -536,7 +555,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 }
             }
 
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 var resultado = await mainPage.DisplayAlertAsync(
@@ -563,7 +583,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         }
         catch (Exception ex)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Erro", $"Erro ao salvar oferta: {ex.Message}", "OK");
         }
@@ -575,7 +596,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     {
         if (IsEditMode && Id != Guid.Empty)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 bool confirm = await mainPage.DisplayAlertAsync(
@@ -601,21 +623,13 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         }
     }
 
-    public IAsyncRelayCommand BaixarModeloCommand => new AsyncRelayCommand(BaixarModeloAsync);
+    public static IAsyncRelayCommand BaixarModeloCommand => new AsyncRelayCommand(BaixarModeloAsync);
 
-    public async Task BaixarModeloAsync()
+    public static async Task BaixarModeloAsync()
     {
         try
         {
-            var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>();
-
-            if (excelService == null)
-            {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Erro", "Serviço de Excel não está disponível.", "OK");
-                return;
-            }
+            var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>()?? throw new InvalidOperationException("OfertaExcelService não está registrado no contêiner de serviços.");
 
             var templateStream = excelService.GerarModelo();
             var fileName = $"oferta_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -623,7 +637,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 #if WINDOWS
             var result = await FileSaver.Default.SaveAsync(fileName, templateStream, CancellationToken.None);
 
-            var mainPageResult = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageResult = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPageResult != null)
             {
                 if (result.IsSuccessful)
@@ -652,7 +667,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         }
         catch (Exception ex)
         {
-            var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageError = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPageError != null)
                 await mainPageError.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
         }
@@ -667,13 +683,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             var result = await FilePicker.Default.PickAsync(new PickOptions
             {
                 PickerTitle = "Selecione a planilha de ofertas",
-                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                {
-                    { DevicePlatform.WinUI, new[] { ".xlsx" } },
-                    { DevicePlatform.macOS, new[] { ".xlsx" } },
-                    { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
-                    { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-                }),
+                FileTypes = ExcelFileType
             });
 
             if (result == null)
@@ -683,54 +693,57 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             if (excelService == null)
             {
-                var mainPageNull = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windowsNull = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPageNull = windowsNull is { Count: > 0 } ? windowsNull[0].Page : null;
                 if (mainPageNull != null)
                     await mainPageNull.DisplayAlertAsync("Erro", "Serviço de Excel não está disponível.", "OK");
                 return;
             }
 
-            using (var stream = await result.OpenReadAsync())
+            using var stream = await result.OpenReadAsync();
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+            var resultado = await excelService.ImportarAsync(fileBytes);
+
+            if (resultado.OfertasImportadas.Count > 0)
             {
-                var fileBytes = new byte[stream.Length];
-                await stream.ReadAsync(fileBytes, 0, fileBytes.Length);
-                var resultado = await excelService.ImportarAsync(fileBytes);
-
-                if (resultado.OfertasImportadas.Count > 0)
+                var windowsConfirm = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windowsConfirm is { Count: > 0 } ? windowsConfirm[0].Page : null;
+                if (mainPage != null)
                 {
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                    if (mainPage != null)
+                    bool confirmar = await mainPage.DisplayAlertAsync(
+                        "Confirmar Importação",
+                        $"{resultado.OfertasImportadas.Count} oferta(s) encontrada(s). Deseja importar?",
+                        "Sim", "Não");
+
+                    if (confirmar)
                     {
-                        bool confirmar = await mainPage.DisplayAlertAsync(
-                            "Confirmar Importação",
-                            $"{resultado.OfertasImportadas.Count} oferta(s) encontrada(s). Deseja importar?",
-                            "Sim", "Não");
-
-                        if (confirmar)
+                        foreach (var oferta in resultado.OfertasImportadas)
                         {
-                            foreach (var oferta in resultado.OfertasImportadas)
-                            {
-                                await _unitOfWork.Ofertas.AddAsync(oferta);
-                            }
-                            await _unitOfWork.SaveChangesAsync();
-
-                            await mainPage.DisplayAlertAsync("Sucesso", 
-                                $"{resultado.OfertasImportadas.Count} oferta(s) importada(s) com sucesso!", "OK");
-
-                            LimparCampos();
+                            await _unitOfWork.Ofertas.AddAsync(oferta);
                         }
+                        await _unitOfWork.SaveChangesAsync();
+
+                        await mainPage.DisplayAlertAsync("Sucesso", 
+                            $"{resultado.OfertasImportadas.Count} oferta(s) importada(s) com sucesso!", "OK");
+
+                        LimparCampos();
                     }
                 }
-                else
-                {
-                    var mainPageEmpty = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                    if (mainPageEmpty != null)
-                        await mainPageEmpty.DisplayAlertAsync("Aviso", "Nenhuma oferta encontrada na planilha.", "OK");
-                }
+            }
+            else
+            {
+                var windowsEmpty = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPageEmpty = windowsEmpty is { Count: > 0 } ? windowsEmpty[0].Page : null;
+                if (mainPageEmpty != null)
+                    await mainPageEmpty.DisplayAlertAsync("Aviso", "Nenhuma oferta encontrada na planilha.", "OK");
             }
         }
         catch (Exception ex)
         {
-            var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windowsError = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageError = windowsError is { Count: > 0 } ? windowsError[0].Page : null;
             if (mainPageError != null)
                 await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
         }

@@ -20,10 +20,7 @@ public partial class OfertaListPage : ContentPage
 
         // Registrar UnitOfWork no converter
         var dizimistaConverter = Resources["DizimistaIdToNomeConverter"] as DizimistaIdToNomeConverter;
-        if (dizimistaConverter != null)
-        {
-            dizimistaConverter.SetUnitOfWork(_unitOfWork);
-        }
+        dizimistaConverter?.SetUnitOfWork(_unitOfWork);
     }
 
     protected override async void OnAppearing()
@@ -55,7 +52,7 @@ public partial class OfertaListPage : ContentPage
         var viewModel = (OfertaListViewModel)BindingContext;
         viewModel.OfertasSelecionadas.Clear();
 
-        foreach (Oferta item in e.CurrentSelection)
+        foreach (Oferta item in e.CurrentSelection.Cast<Oferta>())
         {
             viewModel.OfertasSelecionadas.Add(item);
         }

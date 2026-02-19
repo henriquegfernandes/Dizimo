@@ -25,7 +25,15 @@ public partial class OfertaListViewModel : ObservableObject
     private readonly OfertaExcelService _excelService;
     private readonly IUnitOfWork _unitOfWork;
 
-    private ObservableCollection<Oferta> _ofertas = new ObservableCollection<Oferta>();
+    private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+    {
+        { DevicePlatform.WinUI, new[] { ".xlsx" } },
+        { DevicePlatform.macOS, new[] { ".xlsx" } },
+        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
+        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
+    });
+
+    private ObservableCollection<Oferta> _ofertas = [];
     public ObservableCollection<Oferta> Ofertas
     {
         get => _ofertas;
@@ -105,7 +113,7 @@ public partial class OfertaListViewModel : ObservableObject
         get => $"{Ofertas.Count} de {TotalOfertas} resultados";
     }
 
-    public List<string> TiposPagamento { get; } = new List<string> { "Todos", "PIX", "Dinheiro", "Cartao" };
+    public List<string> TiposPagamento { get; } = [ "Todos", "PIX", "Dinheiro", "Cartao" ];
 
     private string _filtroTipoPagamento = "Todos";
     public string FiltroTipoPagamento
@@ -121,17 +129,15 @@ public partial class OfertaListViewModel : ObservableObject
         }
     }
 
-    private ObservableCollection<Oferta> _ofertasSelecionadas = new();
+    private ObservableCollection<Oferta> _ofertasSelecionadas = [];
     public ObservableCollection<Oferta> OfertasSelecionadas
     {
         get => _ofertasSelecionadas;
         set
         {
-            if (_ofertasSelecionadas != null)
-                _ofertasSelecionadas.CollectionChanged -= OfertasSelecionadas_CollectionChanged;
+            _ofertasSelecionadas?.CollectionChanged -= OfertasSelecionadas_CollectionChanged;
             SetProperty(ref _ofertasSelecionadas, value);
-            if (_ofertasSelecionadas != null)
-                _ofertasSelecionadas.CollectionChanged += OfertasSelecionadas_CollectionChanged;
+            _ofertasSelecionadas?.CollectionChanged += OfertasSelecionadas_CollectionChanged;
             OnPropertyChanged(nameof(OfertasSelecionadas));
             OnPropertyChanged(nameof(OfertasSelecionadas.Count));
         }
@@ -153,7 +159,7 @@ public partial class OfertaListViewModel : ObservableObject
         _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
         _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        Ofertas = new ObservableCollection<Oferta>();
+        Ofertas = [];
     }
 
     private void ResetarPaginacao()
@@ -254,13 +260,13 @@ public partial class OfertaListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task NovaOfertaAsync()
+    public static async Task NovaOfertaAsync()
     {
         await Shell.Current.GoToAsync("oferta-cadastro");
     }
 
     [RelayCommand]
-    public async Task EditarOfertaAsync(Oferta oferta)
+    public static async Task EditarOfertaAsync(Oferta oferta)
     {
         if (oferta != null)
         {
@@ -328,7 +334,7 @@ public partial class OfertaListViewModel : ObservableObject
             // Trazer TODAS as ofertas do banco COM OS FILTROS aplicados
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
             var excelStream = await _excelService.ExportarAsync(
-                todasOfertas.ToList(),
+                [..todasOfertas],
                 FiltroDataInicio,
                 FiltroDataFim,
                 FiltroTipoPagamento,
@@ -461,13 +467,7 @@ public partial class OfertaListViewModel : ObservableObject
             var result = await FilePicker.PickAsync(new PickOptions
             {
                 PickerTitle = "Selecione um arquivo Excel",
-                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                {
-                    { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
-                    { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-                    { DevicePlatform.WinUI, new[] { ".xlsx" } },
-                    { DevicePlatform.MacCatalyst, new[] { "xlsx" } },
-                })
+                FileTypes = ExcelFileType
             });
 
             if (result == null)
@@ -609,6 +609,7 @@ public partial class OfertaListViewModel : ObservableObject
 
     private static Page? GetMainPage()
     {
-        return Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+        return windows is { Count: > 0 } ? windows[0].Page : null;
     }
 }

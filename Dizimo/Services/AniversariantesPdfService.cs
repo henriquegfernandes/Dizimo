@@ -4,11 +4,9 @@ using System.Text;
 
 namespace Dizimo.Services;
 
-public class AniversariantesPdfService
+public class AniversariantesPdfService(IUnitOfWork unitOfWork)
 {
-    private readonly IUnitOfWork _unitOfWork;
-
-    public AniversariantesPdfService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<MemoryStream> ImprimirAsync(List<Dizimista>? aniversariantes = null)
     {
@@ -16,7 +14,7 @@ public class AniversariantesPdfService
         if (aniversariantes == null)
         {
             var todosDizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
-            aniversariantes = todosDizimistas is List<Dizimista> l ? l : todosDizimistas.ToList();
+            aniversariantes = todosDizimistas is List<Dizimista> l ? l : [.. todosDizimistas];
         }
 
         // Gerar HTML para impressão
@@ -28,7 +26,7 @@ public class AniversariantesPdfService
         return pdfStream;
     }
 
-    private string GerarHtmlAniversariantes(List<Dizimista> aniversariantes)
+    private static string GerarHtmlAniversariantes(List<Dizimista> aniversariantes)
     {
         var sb = new StringBuilder();
 
@@ -117,7 +115,7 @@ public class AniversariantesPdfService
         return sb.ToString();
     }
 
-    private int CalcularIdade(DateTime dataNascimento)
+    private static int CalcularIdade(DateTime dataNascimento)
     {
         var hoje = DateTime.Today;
         var idade = hoje.Year - dataNascimento.Year;
@@ -125,7 +123,7 @@ public class AniversariantesPdfService
         return idade;
     }
 
-    private MemoryStream ConvertHtmlToPdf(string html)
+    private static MemoryStream ConvertHtmlToPdf(string html)
     {
         var stream = new MemoryStream();
         

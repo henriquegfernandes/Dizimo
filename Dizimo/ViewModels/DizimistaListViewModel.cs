@@ -24,7 +24,15 @@ namespace Dizimo.ViewModels
         private readonly DizimistaExcelService _excelService;
         private readonly IUnitOfWork _unitOfWork;
 
-        private ObservableCollection<Dizimista> _dizimistas = new ObservableCollection<Dizimista>();
+        private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+        {
+            { DevicePlatform.WinUI, new[] { ".xlsx" } },
+            { DevicePlatform.macOS, new[] { ".xlsx" } },
+            { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
+            { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
+        });
+
+        private ObservableCollection<Dizimista> _dizimistas = [];
 
         private string _filtroNome = string.Empty;
         private Dizimista? _selectedDizimista;
@@ -71,7 +79,7 @@ namespace Dizimo.ViewModels
             get => $"{Dizimistas.Count} de {TotalDizimistas} resultados";
         }
 
-        public List<string> StatusOptions { get; } = new() { "Todos", "Ativos", "Inativos" };
+        public List<string> StatusOptions { get; } = [ "Todos", "Ativos", "Inativos" ];
         private string _statusSelecionado = "Todos";
         public string StatusSelecionado
         {
@@ -86,17 +94,15 @@ namespace Dizimo.ViewModels
             }
         }
 
-        private ObservableCollection<Dizimista> _dizimistasSelecionados = new();
+        private ObservableCollection<Dizimista> _dizimistasSelecionados = [];
         public ObservableCollection<Dizimista> DizimistasSelecionados
         {
             get => _dizimistasSelecionados;
             set
             {
-                if (_dizimistasSelecionados != null)
-                    _dizimistasSelecionados.CollectionChanged -= DizimistasSelecionados_CollectionChanged;
+                _dizimistasSelecionados?.CollectionChanged -= DizimistasSelecionados_CollectionChanged;
                 SetProperty(ref _dizimistasSelecionados, value);
-                if (_dizimistasSelecionados != null)
-                    _dizimistasSelecionados.CollectionChanged += DizimistasSelecionados_CollectionChanged;
+                _dizimistasSelecionados?.CollectionChanged += DizimistasSelecionados_CollectionChanged;
                 OnPropertyChanged(nameof(DizimistasSelecionados));
                 OnPropertyChanged(nameof(DizimistasSelecionados.Count));
             }
@@ -120,7 +126,7 @@ namespace Dizimo.ViewModels
             _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
             _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            Dizimistas = new ObservableCollection<Dizimista>();
+            Dizimistas = [];
         }
 
         private void ResetarPaginacao()
@@ -194,14 +200,14 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public async Task NovoDizimistaCommand()
+        public static async Task NovoDizimistaCommand()
         {
             System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
             await Shell.Current.GoToAsync("dizimista-cadastro");
         }
 
         [RelayCommand]
-        public async Task EditarDizimistaCommand(Dizimista dizimista)
+        public static async Task EditarDizimistaCommand(Dizimista dizimista)
         {
             if (dizimista != null)
             {
@@ -214,7 +220,7 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public async Task VerDetalhesDizimistaCommand(Dizimista dizimista)
+        public static async Task VerDetalhesDizimistaCommand(Dizimista dizimista)
         {
             if (dizimista != null)
             {
@@ -259,7 +265,8 @@ namespace Dizimo.ViewModels
                         System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
                     }
 
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                     if (mainPage != null)
                     {
                         await mainPage.DisplayAlertAsync("Exportação", 
@@ -307,7 +314,8 @@ namespace Dizimo.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
@@ -332,7 +340,8 @@ namespace Dizimo.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {result.FilePath}");
 
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                     if (mainPage != null)
                     {
                         await mainPage.DisplayAlertAsync("Modelo Baixado", 
@@ -367,7 +376,8 @@ namespace Dizimo.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
                 
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
@@ -384,12 +394,7 @@ namespace Dizimo.ViewModels
                 
                 var result = await FilePicker.Default.PickAsync(new PickOptions
                 {
-                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                    {
-                        { DevicePlatform.WinUI, new[] { ".xlsx" } },
-                        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-                        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } }
-                    }),
+                    FileTypes = ExcelFileType,
                     PickerTitle = "Selecionar arquivo Excel de dizimistas para importar"
                 });
 
@@ -414,7 +419,8 @@ namespace Dizimo.ViewModels
                 
                 System.Diagnostics.Debug.WriteLine("[INFO] Importação concluída com sucesso");
                 
-                var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPageSuccess = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPageSuccess != null)
                 {
                     await mainPageSuccess.DisplayAlertAsync("Importação", 
@@ -426,7 +432,8 @@ namespace Dizimo.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
                 
-                var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPageError = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPageError != null)
                 {
                     await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
@@ -438,7 +445,8 @@ namespace Dizimo.ViewModels
         public async Task GerarRelatorioGeralAsync()
         {
             await CarregarDizimistasAsync();
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 await mainPage.DisplayAlertAsync("Relatório Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
@@ -456,7 +464,8 @@ namespace Dizimo.ViewModels
                 sb.AppendLine($"Total de Dizimistas: {Dizimistas.Count}");
                 sb.AppendLine();
                 
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Relatório", sb.ToString(), "OK");
@@ -465,7 +474,8 @@ namespace Dizimo.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows ;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
@@ -477,7 +487,8 @@ namespace Dizimo.ViewModels
         public async Task ExcluirDizimistasSelecionadosAsync()
         {
             if (DizimistasSelecionados.Count == 0) return;
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
@@ -495,7 +506,8 @@ namespace Dizimo.ViewModels
         public async Task InativarDizimistasSelecionadosAsync()
         {
             if (DizimistasSelecionados.Count == 0) return;
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja ativar/inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
@@ -549,7 +561,8 @@ namespace Dizimo.ViewModels
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                     if (mainPage != null)
                         await mainPage.DisplayAlertAsync("Aviso", "Não foi possível abrir o navegador. Verifique se possui um navegador padrão configurado.", "OK");
                 }
@@ -557,7 +570,8 @@ namespace Dizimo.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                     await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
             }

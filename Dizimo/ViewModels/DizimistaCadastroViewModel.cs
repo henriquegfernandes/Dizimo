@@ -10,11 +10,19 @@ using Microsoft.Maui.Controls;
 
 namespace Dizimo.ViewModels;
 
-public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttributable
+public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHandler, UpdateDizimistaHandler updateHandler, GetDizimistaHandlers getHandler) : ObservableObject, IQueryAttributable
 {
-    private readonly CreateDizimistaHandler _createHandler;
-    private readonly UpdateDizimistaHandler _updateHandler;
-    private readonly GetDizimistaHandlers _getHandler;
+    private readonly CreateDizimistaHandler _createHandler = createHandler;
+    private readonly UpdateDizimistaHandler _updateHandler = updateHandler;
+    private readonly GetDizimistaHandlers _getHandler = getHandler;
+
+    private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+    {
+        { DevicePlatform.WinUI, new[] { ".xlsx" } },
+        { DevicePlatform.macOS, new[] { ".xlsx" } },
+        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
+        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
+    });
 
     private int _numeroCadastro;
     public int NumeroCadastro
@@ -128,19 +136,12 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         set => SetProperty(ref _complemento, value);
     }
 
-    public List<string> EstadosBrasileiros { get; } = new()
-    {
+    public List<string> EstadosBrasileiros { get; } =
+    [
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-    };
+    ];
 
-    public DizimistaCadastroViewModel(CreateDizimistaHandler createHandler, UpdateDizimistaHandler updateHandler, GetDizimistaHandlers getHandler)
-    {
-        _createHandler = createHandler;
-        _updateHandler = updateHandler;
-        _getHandler = getHandler;
-    }
-
-    public Endereco Endereco => new Endereco
+    public Endereco Endereco => new()
     {
         Rua = Rua,
         Numero = Numero,
@@ -157,16 +158,16 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     private void LimparCamposNumericos()
     {
         // Remove caracteres não numéricos do telefone
-        Telefone = new string(Telefone.Where(char.IsDigit).ToArray());
+        Telefone = new string([.. Telefone.Where(char.IsDigit)]);
         
         // Remove caracteres não numéricos do whatsapp
-        Whatsapp = new string(Whatsapp.Where(char.IsDigit).ToArray());
+        Whatsapp = new string([.. Whatsapp.Where(char.IsDigit)]);
         
         // Remove caracteres não numéricos do CEP
-        Cep = new string(Cep.Where(char.IsDigit).ToArray());
+        Cep = new string([.. Cep.Where(char.IsDigit)]);
         
         // Remove caracteres não numéricos do número
-        Numero = new string(Numero.Where(char.IsDigit).ToArray());
+        Numero = new string([.. Numero.Where(char.IsDigit)]);
     }
 
     /// <summary>
@@ -176,13 +177,13 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     private string? ValidarCampos()
     {
         // Contar apenas dígitos do telefone
-        var telefoneLimpo = new string(Telefone.Where(char.IsDigit).ToArray());
+        var telefoneLimpo = new string([.. Telefone.Where(char.IsDigit)]);
         
         // Contar apenas dígitos do whatsapp
-        var whatsappLimpo = new string(Whatsapp.Where(char.IsDigit).ToArray());
+        var whatsappLimpo = new string([.. Whatsapp.Where(char.IsDigit)]);
         
         // Contar apenas dígitos do CEP
-        var cepLimpo = new string(Cep.Where(char.IsDigit).ToArray());
+        var cepLimpo = new string([.. Cep.Where(char.IsDigit)]);
 
         // Validar telefone
         if (!string.IsNullOrWhiteSpace(telefoneLimpo))
@@ -290,7 +291,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         var erroValidacao = ValidarCampos();
         if (!string.IsNullOrEmpty(erroValidacao))
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            Page? mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 await mainPage.DisplayAlertAsync("Erro de Validação", erroValidacao, "OK");
@@ -304,7 +306,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
             if (dizimistaExistente != null)
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                Page? mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Código Duplicado", $"Já existe um dizimista cadastrado com o código {NumeroCadastro}. Por favor, insira um código diferente.", "OK");
@@ -319,7 +322,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
             if (dizimistaExistente != null && dizimistaExistente.Id != Id)
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                Page? mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                 {
                     await mainPage.DisplayAlertAsync("Código Duplicado", $"Já existe outro dizimista cadastrado com o código {NumeroCadastro}. Por favor, insira um código diferente.", "OK");
@@ -345,7 +349,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         else
         {
             // Se é novo cadastro, perguntar se deseja cadastrar outro
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 var resultado = await mainPage.DisplayAlertAsync(
@@ -373,7 +378,7 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
     }
 
     [RelayCommand]
-    public async Task BaixarModeloAsync()
+    public static async Task BaixarModeloAsync()
     {
         try
         {
@@ -381,7 +386,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
 
             if (excelService == null)
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
                     await mainPage.DisplayAlertAsync("Erro", "Serviço de Excel não está disponível.", "OK");
                 return;
@@ -393,7 +399,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
 #if WINDOWS
             var result = await CommunityToolkit.Maui.Storage.FileSaver.Default.SaveAsync(fileName, templateStream, CancellationToken.None);
 
-            var mainPageResult = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows2 = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageResult = windows2 is { Count: > 0 } ? windows2[0].Page : null;
             if (mainPageResult != null)
             {
                 if (result.IsSuccessful)
@@ -414,7 +421,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, templateStream.ToArray());
 
-            var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows3 = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageSuccess = windows3 is { Count: > 0 } ? windows3[0].Page : null;
             if (mainPageSuccess != null)
                 await mainPageSuccess.DisplayAlertAsync("Sucesso", 
                     $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
@@ -422,7 +430,8 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
         }
         catch (Exception ex)
         {
-            var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageError = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPageError != null)
                 await mainPageError.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
         }
@@ -436,13 +445,7 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
             var result = await FilePicker.Default.PickAsync(new PickOptions
             {
                 PickerTitle = "Selecione a planilha de dizimistas",
-                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                {
-                    { DevicePlatform.WinUI, new[] { ".xlsx" } },
-                    { DevicePlatform.macOS, new[] { ".xlsx" } },
-                    { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
-                    { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-                }),
+                FileTypes = ExcelFileType,
             });
 
             if (result == null)
@@ -452,48 +455,51 @@ public partial class DizimistaCadastroViewModel : ObservableObject, IQueryAttrib
 
             if (excelService == null)
             {
-                var mainPageNull = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPageNull = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPageNull != null)
                     await mainPageNull.DisplayAlertAsync("Erro", "Serviço de Excel não está disponível.", "OK");
                 return;
             }
 
-            using (var stream = await result.OpenReadAsync())
+            using var stream = await result.OpenReadAsync();
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+            var dizimistas = await excelService.ImportarAsync(fileBytes);
+
+            if (dizimistas.Count > 0)
             {
-                var fileBytes = new byte[stream.Length];
-                await stream.ReadAsync(fileBytes, 0, fileBytes.Length);
-                var dizimistas = await excelService.ImportarAsync(fileBytes);
-
-                if (dizimistas.Count > 0)
+                var windows2 = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows2 is { Count: > 0 } ? windows2[0].Page : null;
+                if (mainPage != null)
                 {
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                    if (mainPage != null)
-                    {
-                        bool confirmar = await mainPage.DisplayAlertAsync(
-                            "Confirmar Importação",
-                            $"{dizimistas.Count} dizimista(s) encontrado(s). Deseja importar?",
-                            "Sim", "Não");
+                    bool confirmar = await mainPage.DisplayAlertAsync(
+                        "Confirmar Importação",
+                        $"{dizimistas.Count} dizimista(s) encontrado(s). Deseja importar?",
+                        "Sim", "Não");
 
-                        if (confirmar)
-                        {
-                            LimparCampos();
-                            // Mensagem de sucesso
-                            await mainPage.DisplayAlertAsync("Sucesso", 
-                                $"{dizimistas.Count} dizimista(s) importado(s) com sucesso!", "OK");
-                        }
+                    if (confirmar)
+                    {
+                        LimparCampos();
+                        // Mensagem de sucesso
+                        await mainPage.DisplayAlertAsync("Sucesso",
+                            $"{dizimistas.Count} dizimista(s) importado(s) com sucesso!", "OK");
                     }
                 }
-                else
-                {
-                    var mainPageEmpty = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                    if (mainPageEmpty != null)
-                        await mainPageEmpty.DisplayAlertAsync("Aviso", "Nenhum dizimista encontrado na planilha.", "OK");
-                }
+            }
+            else
+            {
+                var windows3 = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPageEmpty = windows3 is { Count: > 0 } ? windows3[0].Page : null;
+                if (mainPageEmpty != null)
+                    await mainPageEmpty.DisplayAlertAsync("Aviso", "Nenhum dizimista encontrado na planilha.", "OK");
             }
         }
         catch (Exception ex)
         {
-            var mainPageError = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPageError = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPageError != null)
                 await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
         }

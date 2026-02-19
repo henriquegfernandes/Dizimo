@@ -9,14 +9,15 @@ using CommunityToolkit.Maui.Storage;
 
 namespace Dizimo.ViewModels;
 
-public partial class MainPageViewModel : ObservableObject
+public partial class MainPageViewModel(DashboardService dashboardService, AniversariantesExcelService aniversariantesExcelService, AniversariantesPdfService aniversariantesPdfService) : ObservableObject
 {
-    private readonly DashboardService _dashboardService;
-    private readonly AniversariantesExcelService _aniversariantesExcelService;
+    private readonly DashboardService _dashboardService = dashboardService ?? throw new ArgumentNullException(nameof(dashboardService));
+    private readonly AniversariantesExcelService _aniversariantesExcelService = aniversariantesExcelService ?? throw new ArgumentNullException(nameof(aniversariantesExcelService));
+    private readonly AniversariantesPdfService _aniversariantesPdfService = aniversariantesPdfService ?? throw new ArgumentNullException(nameof(aniversariantesPdfService));
 
-    private ObservableCollection<DashboardService.DizimistaPeriodoOfertaData> _dizimistasAgrupadosPeriodo = new();
+    private ObservableCollection<DashboardService.DizimistaPeriodoOfertaData> _dizimistasAgrupadosPeriodo = [];
 
-    private ObservableCollection<Dizimista> _aniversariantes = new();
+    private ObservableCollection<Dizimista> _aniversariantes = [];
 
     private bool _isBusy;
 
@@ -75,19 +76,13 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
-    public List<string> MesesDisponiveis => new List<string>
-    {
+    public static List<string> MesesDisponiveis =>
+    [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    };
+    ];
 
-    public string Titulo => $"Dashboard - {DateTime.Now:dddd, dd 'de' MMMM 'de' yyyy}";
-
-    public MainPageViewModel(DashboardService dashboardService, AniversariantesExcelService aniversariantesExcelService)
-    {
-        _dashboardService = dashboardService ?? throw new ArgumentNullException(nameof(dashboardService));
-        _aniversariantesExcelService = aniversariantesExcelService ?? throw new ArgumentNullException(nameof(aniversariantesExcelService));
-    }
+    public static string Titulo => $"Dashboard - {DateTime.Now:dddd, dd 'de' MMMM 'de' yyyy}";
 
     [RelayCommand]
     public async Task CarregarDadosAsync()
@@ -251,8 +246,7 @@ public partial class MainPageViewModel : ObservableObject
             }
 
             // Usar a coleção de aniversariantes já carregada e ordenada na página
-            var pdfService = new AniversariantesPdfService(null);
-            var htmlStream = await pdfService.ImprimirAsync(Aniversariantes.ToList());
+            var htmlStream = await _aniversariantesPdfService.ImprimirAsync([.. Aniversariantes]);
 
             // Salvar em arquivo temporário
             var fileName = VisualizacaoAtual == "Semana"
@@ -292,22 +286,10 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
-    private string GerarCsvAniversariantes()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("NumeroCadastro,Nome,DataNascimento");
-
-        foreach (var d in Aniversariantes)
-        {
-            sb.AppendLine($"{d.NumeroCadastro},\"{d.Nome}\",{d.DataNascimento:yyyy-MM-dd}");
-        }
-
-        return sb.ToString();
-    }
-
     private static Page? GetMainPage()
     {
-        return Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+        return windows is { Count: > 0 } ? windows[0].Page : null;
     }
 
     public string TextoBotaoAlternarVisualizacao
