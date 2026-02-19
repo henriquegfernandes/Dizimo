@@ -128,18 +128,30 @@
         Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
 
-    <FontImageSource x:Key="IconUserCog"
+    <FontImageSource x:Key="IconConfig"
         Glyph="&#xf013d;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+    
+    <FontImageSource x:Key="IconUsers"
+        Glyph="&#xe8ed;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
         Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
 
     <FontImageSource x:Key="IconBackup"
-        Glyph="{x:Static f:FluentUI.save_24_regular}"
+        Glyph="&#xf0c2;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
-        Color="{AppThemeBinding Light={StaticResource DarkOnLightBackground}, Dark={StaticResource LightOnDarkBackground}}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
-    
+
+    <FontImageSource x:Key="IconRestore"
+        Glyph="&#xe3b2;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
     <FontImageSource x:Key="IconEdit"
         Glyph="&#xE5B4;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"

@@ -37,14 +37,14 @@
 
     <ShellContent
         Title="Usuários"
-        Icon="{StaticResource IconUserCog}"
+        Icon="{StaticResource IconUsers}"
         ContentTemplate="{DataTemplate pages:UsuarioListPage}"
         Route="usuarios"
         IsVisible="{Binding IsAdmin}" />
 
     <ShellContent
         Title="Configuração de Backup"
-        Icon="{StaticResource IconBackup}"
+        Icon="{StaticResource IconConfig}"
         ContentTemplate="{DataTemplate pages:BackupConfigPage}"
         Route="backupconfig"
         IsVisible="{Binding IsAdmin}" />

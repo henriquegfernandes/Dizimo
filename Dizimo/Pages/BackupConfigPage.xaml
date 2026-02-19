@@ -3,11 +3,26 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Dizimo.Pages.BackupConfigPage"
              Title="Configuração de Backup">
-    <VerticalStackLayout Padding="20" Spacing="20">
-        <Button Text="Escolher Pasta de Backup" Command="{Binding EscolherPastaCommand}" />
-        <Label Text="Pasta atual:" FontSize="14" />
-        <Label Text="{Binding BackupFolderPath}" FontSize="14" />
-        <Button Text="Backup para Pasta" Command="{Binding BackupCommand}" />
-        <Button Text="Restaurar da Pasta" Command="{Binding RestoreCommand}" />
-    </VerticalStackLayout>
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
+                <StackLayout Padding="16" Spacing="12" Orientation="Horizontal">
+                    <Label Text="Pasta de Backup:" FontSize="14" FontAttributes="Bold" VerticalTextAlignment="Center"/>
+                    <Label Text="{Binding BackupFolderPath}" FontSize="14" VerticalTextAlignment="Center"/>
+                    <Button Text="Editar" 
+                            Command="{Binding EscolherPastaCommand}"
+                            ImageSource="{StaticResource IconEdit}"
+                            ToolTipProperties.Text="Editar pasta de backup"/>
+                    <Button Text="Backup" 
+                            Command="{Binding BackupCommand}" 
+                            ImageSource="{StaticResource IconBackup}"
+                            ToolTipProperties.Text="Fazer backup"/>
+                    <Button Text="Restaurar" 
+                            Command="{Binding RestoreCommand}" 
+                            ImageSource="{StaticResource IconRestore}"
+                            ToolTipProperties.Text="Restaurar de backup"/>
+                </StackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>
