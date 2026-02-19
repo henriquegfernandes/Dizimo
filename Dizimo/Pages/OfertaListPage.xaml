@@ -61,33 +61,24 @@
                                 ToolTipProperties.Text="Limpar Filtros"
                                 CornerRadius="6" />
                     </Grid>
-                    <!-- Linha de botões de exportação/importação/modelo -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="3*,3*,3*">
-                        <Button Text="Exportar Planilha"
+                    <!-- Linha de botões de exportação/impressão -->
+                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,*">
+                        <Button Text="Exportar"
                                 Command="{Binding ExportarCommand}" 
                                 ImageSource="{StaticResource IconExport}" 
-                                ToolTipProperties.Text="Exportar Planilha (com filtros aplicados)" 
+                                ToolTipProperties.Text="Exportar em Excel" 
                                 CornerRadius="8"
                                 Padding="10"
                                 Grid.Column="0"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
-                        <Button Text="Baixar Planilha Modelo"
-                                Command="{Binding BaixarModeloCommand}" 
-                                ImageSource="{StaticResource IconDownload}" 
-                                ToolTipProperties.Text="Baixar Planilha Modelo" 
+                        <Button Text="Imprimir"
+                                Command="{Binding ImprimirCommand}" 
+                                ImageSource="{StaticResource IconPrint}" 
+                                ToolTipProperties.Text="Imprimir em HTML" 
                                 CornerRadius="8"
                                 Padding="10"
                                 Grid.Column="1"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        <Button Text="Importar Planilha"
-                                Command="{Binding ImportarCommand}" 
-                                ImageSource="{StaticResource IconImport}" 
-                                ToolTipProperties.Text="Importar Planilha" 
-                                CornerRadius="8"
-                                Padding="10"
-                                Grid.Column="2"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                     </Grid>
@@ -163,17 +154,34 @@
                 </StackLayout>
             </VerticalStackLayout>
         </ScrollView>
-        <!-- Botão flutuante de excluir -->
-        <Button Text="Excluir" 
-            Command="{Binding ExcluirOfertasSelecionadasCommand}" 
-            IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
-            Padding="12"
-            CornerRadius="8"
-            HorizontalOptions="Center"
-            VerticalOptions="End"
-            Margin="0,28"
-            ImageSource="{StaticResource IconTrash}">
-        </Button>
+        
+        <!-- Botões flutuantes de ação em massa (excluir, ativar/inativar, selecionar todos) - Centralizados -->
+        <Grid ColumnSpacing="12" ColumnDefinitions="*,*" Padding="12" VerticalOptions="End" HorizontalOptions="Center" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24">
+            <!-- Botão flutuante de excluir -->
+            <Button Text="Excluir" 
+                Command="{Binding ExcluirOfertasSelecionadasCommand}" 
+                IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                Padding="12"
+                CornerRadius="8"
+                Grid.Column="0"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                ImageSource="{StaticResource IconTrash}">
+            </Button>
+
+            <!-- Botão de selecionar todos (aparece quando há seleção) -->
+            <Button Text="Selecionar todos"
+                Clicked="OnSelecionarTodosClicked"
+                IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                Padding="12"
+                CornerRadius="8"
+                Grid.Column="1"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                ImageSource="{StaticResource IconSelect}">
+            </Button>
+        </Grid>
+
         <!-- Botão flutuante de adicionar oferta -->
         <Button
             Command="{Binding NovaOfertaCommand}"

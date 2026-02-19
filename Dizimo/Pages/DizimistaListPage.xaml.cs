@@ -70,6 +70,29 @@ public partial class DizimistaListPage : ContentPage
         }
     }
 
+    private void OnSelecionarTodosClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is DizimistaListViewModel vm)
+        {
+            var collectionView = (CollectionView)FindByName("DizimistasCollectionView");
+
+            if (vm.DizimistasSelecionados.Count == vm.Dizimistas.Count)
+            {
+                // Desseleciona todos
+                collectionView.SelectedItems.Clear();
+            }
+            else
+            {
+                // Seleciona todos
+                collectionView.SelectedItems.Clear();
+                foreach (var dizimista in vm.Dizimistas)
+                {
+                    collectionView.SelectedItems.Add(dizimista);
+                }
+            }
+        }
+    }
+
     private void OnFiltroCompleted(object sender, EventArgs e)
     {
         if (BindingContext is DizimistaListViewModel vm && vm.AplicarFiltrosCommand.CanExecute(null))

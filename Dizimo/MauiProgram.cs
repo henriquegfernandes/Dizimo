@@ -10,6 +10,7 @@ using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Dashboard;
 using Dizimo.Application.Usuarios.Handlers;
+using Dizimo.Services;
 using System.Globalization;
 
 namespace Dizimo
@@ -82,7 +83,9 @@ namespace Dizimo
             builder.Services.AddScoped<InativarDizimistaHandler>();
             builder.Services.AddScoped<GetUsuarioHandlers>();
             builder.Services.AddScoped<DizimistaExcelService>();
+            builder.Services.AddScoped<DizimistaPdfService>();
             builder.Services.AddScoped<AniversariantesExcelService>();
+            builder.Services.AddScoped<AniversariantesPdfService>();
             builder.Services.AddTransient<DizimistaListViewModel>();
             builder.Services.AddTransient<DizimistaCadastroViewModel>();
             builder.Services.AddTransient<DizimistaDetalhesViewModel>();
@@ -92,6 +95,7 @@ namespace Dizimo
 
             // Registro dos Handlers e ViewModels para Ofertas
             builder.Services.AddScoped<OfertaExcelService>();
+            builder.Services.AddScoped<OfertaPdfService>();
             builder.Services.AddTransient<OfertaListViewModel>();
             builder.Services.AddTransient<OfertaCadastroViewModel>();
             builder.Services.AddTransientWithShellRoute<OfertaListPage, OfertaListViewModel>("ofertas");

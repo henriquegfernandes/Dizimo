@@ -3,14 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             xmlns:fonts="clr-namespace:Fonts"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:local="clr-namespace:Dizimo.Converters"
              x:Class="Dizimo.Pages.OfertaCadastroPage"
              Title="">
     <ContentPage.Resources>
         <ResourceDictionary>
             <local:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:BoolToObjectConverter x:Key="DizimistaBackgroundConverter" 
+                                          TrueObject="#F0F0F0" 
+                                          FalseObject="#FFFFFF" />
+            <toolkit:BoolToObjectConverter x:Key="DizimistaTextColorConverter" 
+                                          TrueObject="#666666" 
+                                          FalseObject="#000000" />
         </ResourceDictionary>
     </ContentPage.Resources>
     <Grid RowDefinitions="Auto,*">
@@ -61,100 +66,123 @@
             
         </Grid>
 
-        <!-- Conteúdo da página -->
-        <ScrollView Grid.Row="1" Padding="16,12">
-            <Grid Padding="0" RowSpacing="12" ColumnSpacing="12">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
+		<!-- Conteúdo da página -->
+		<ScrollView Grid.Row="1" Padding="16,12">
+			<Grid Padding="0" RowSpacing="12" ColumnSpacing="12">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="2*" />
 					<ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
-                </Grid.ColumnDefinitions>
-                
-                <!-- Código do Dizimista com Busca Automática -->
-                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="0" Hint="Código do Dizimista">
+					<ColumnDefinition Width="2*" />
+					<ColumnDefinition Width="2*" />
+					<ColumnDefinition Width="2*" />
+					<ColumnDefinition Width="2*" />
+				</Grid.ColumnDefinitions>
+
+				<!-- Botões de Baixar Modelo e Importar (apenas em modo criação) -->
+				<Grid Grid.Row="0" Grid.ColumnSpan="6" ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,*" IsVisible="{Binding IsEditMode, Converter={StaticResource InvertedBoolConverter}}" Margin="0,0,0,12">
+					<Button Text="Baixar Planilha Modelo"
+							Command="{Binding BaixarModeloCommand}" 
+							ImageSource="{StaticResource IconDownload}" 
+							ToolTipProperties.Text="Baixar Planilha Modelo" 
+							CornerRadius="8"
+							Padding="10"
+							Grid.Column="0"
+							HorizontalOptions="Center"
+							VerticalOptions="Center" />
+					<Button Text="Importar Planilha"
+							Command="{Binding ImportarCommand}" 
+							ImageSource="{StaticResource IconImport}" 
+							ToolTipProperties.Text="Importar Planilha" 
+							CornerRadius="8"
+							Padding="10"
+							Grid.Column="1"
+							HorizontalOptions="Center"
+							VerticalOptions="Center" />
+				</Grid>
+
+				<!-- Código do Dizimista com Busca Automática -->
+				<sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Hint="Código do Dizimista">
                     <Entry Placeholder="Digite o código" 
                            Keyboard="Numeric" 
                            Text="{Binding CodigoDizimista}"
                            Unfocused="OnCodigoDizimistaUnfocused" />
                 </sf:SfTextInputLayout>
-                
-                <!-- Nome do Dizimista (somente leitura) -->
-                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="5" Hint="Dizimista">
+
+                <!-- Nome do Dizimista (somente leitura quando encontrado, editável quando não encontrado) -->
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" Hint="Dizimista">
                     <Entry Text="{Binding NomeDizimista}" 
-                           IsReadOnly="True"
-                           BackgroundColor="#F0F0F0"
-                           TextColor="#666666" />
+                           IsReadOnly="{Binding DizimistaEncontrado}"
+                           BackgroundColor="{Binding DizimistaEncontrado, Converter={StaticResource DizimistaBackgroundConverter}}"
+                           TextColor="{Binding DizimistaEncontrado, Converter={StaticResource DizimistaTextColorConverter}}"
+                           Placeholder="Digite o nome do novo dizimista" />
                 </sf:SfTextInputLayout>
 
                 <!-- Data -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Hint="Data">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Hint="Data">
                     <DatePicker Date="{Binding DataOferta}" Format="dd/MM/yyyy" />
                 </sf:SfTextInputLayout>
 
                 <!-- Valor -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Hint="Valor">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Hint="Valor">
                     <Entry Placeholder="0,00" 
                            Keyboard="Numeric" 
                            Text="{Binding Valor}" />
                 </sf:SfTextInputLayout>
                 
                 <!-- Tipo de Pagamento -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2" Hint="Tipo de Pagamento">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2" Hint="Tipo de Pagamento">
                     <Picker ItemsSource="{Binding TiposPagamentoCollection}" 
                             SelectedItem="{Binding TipoPagamento}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Mês de Referência (único) -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Hint="Mês de Referência" IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Hint="Mês de Referência" IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}">
                     <Picker ItemsSource="{Binding MesesNomesCollection}" 
                             SelectedItem="{Binding MesNomeAtual, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Ano de Referência (único) -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="2" Hint="Ano de Referência" IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="2" Hint="Ano de Referência" IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}">
                     <Picker ItemsSource="{Binding AnosCollection}" SelectedItem="{Binding AnoSelecionado, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Mês de Referência (início) para range -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Hint="Mês Início" IsVisible="{Binding UsarRangoMeses}">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Hint="Mês Início" IsVisible="{Binding UsarRangoMeses}">
                     <Picker ItemsSource="{Binding MesesNomesCollection}" 
                             SelectedItem="{Binding MesNomeAtual, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Ano de Referência (início) para range -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="2" Hint="Ano Início" IsVisible="{Binding UsarRangoMeses}">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="2" Hint="Ano Início" IsVisible="{Binding UsarRangoMeses}">
                     <Picker ItemsSource="{Binding AnosCollection}" SelectedItem="{Binding AnoSelecionado, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Mês de Referência (fim) para range -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Hint="Mês Fim" IsVisible="{Binding UsarRangoMeses}">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2" Hint="Mês Fim" IsVisible="{Binding UsarRangoMeses}">
                     <Picker ItemsSource="{Binding MesesNomesCollection}" 
                             SelectedItem="{Binding MesNomeAtualFim, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Ano de Referência (fim) para range -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="5" Hint="Ano Fim" IsVisible="{Binding UsarRangoMeses}">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="5" Hint="Ano Fim" IsVisible="{Binding UsarRangoMeses}">
                     <Picker ItemsSource="{Binding AnosCollection}" SelectedItem="{Binding AnoSelecionadoFim, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
 
                 <!-- Espaço filler -->
-                <StackLayout Grid.Row="2" Grid.Column="4" IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}" />
+                <StackLayout Grid.Row="3" Grid.Column="4" IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}" />
 
                 <!-- Botão Salvar -->
-                <Button Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" 
+                <Button Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4" 
                         Text="Salvar" 
                         Command="{Binding SalvarCommand}" 
-                        IsEnabled="{Binding DizimistaAtivo}"
                         Margin="0,12,0,0" />
             </Grid>
         </ScrollView>

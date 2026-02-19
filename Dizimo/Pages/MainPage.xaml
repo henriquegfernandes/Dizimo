@@ -140,6 +140,12 @@
                                 FontSize="12"
                                 TextColor="White"
                                 CornerRadius="5" />
+                        <Button Text="Imprimir"
+                                Command="{Binding ImprimirAniversariantesCommand}"
+                                Padding="12,8"
+                                FontSize="12"
+                                TextColor="White"
+                                CornerRadius="5" />
                     </HorizontalStackLayout>
                 </Grid>
 

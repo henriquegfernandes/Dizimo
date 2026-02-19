@@ -50,18 +50,42 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
+
+                <!-- Botões de Baixar Modelo e Importar (apenas em modo criação) -->
+                <Grid Grid.Row="0" Grid.ColumnSpan="3" ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,*" Margin="0,0,0,12">
+                    <Button Text="Baixar Planilha Modelo"
+                            Command="{Binding BaixarModeloCommand}" 
+                            ImageSource="{StaticResource IconDownload}" 
+                            ToolTipProperties.Text="Baixar Planilha Modelo" 
+                            CornerRadius="8"
+                            Padding="10"
+                            Grid.Column="0"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    <Button Text="Importar Planilha"
+                            Command="{Binding ImportarCommand}" 
+                            ImageSource="{StaticResource IconImport}" 
+                            ToolTipProperties.Text="Importar Planilha" 
+                            CornerRadius="8"
+                            Padding="10"
+                            Grid.Column="1"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                </Grid>
+
                 <!-- Nome -->
-                <sf:SfTextInputLayout Grid.Row="0" Grid.ColumnSpan="2" Hint="Nome">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.ColumnSpan="2" Hint="Nome">
                     <Entry Text="{Binding Nome}" SemanticProperties.Description="Name" />
                 </sf:SfTextInputLayout>
                 <!-- Número Cadastro -->
-                <sf:SfTextInputLayout Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="1" Hint="Nº de Cadastro">
+                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="1" Hint="Nº de Cadastro">
                     <Entry Placeholder="Número de Cadastro" Keyboard="Numeric" Text="{Binding NumeroCadastro}">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
@@ -69,11 +93,11 @@
                     </Entry>
                 </sf:SfTextInputLayout>
                 <!-- Data de Nascimento -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="0" Hint="Nascimento">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="0" Hint="Nascimento">
                     <DatePicker Date="{Binding DataNascimento}" />
                 </sf:SfTextInputLayout>
                 <!-- Telefone -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="1" Hint="Telefone">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="1" Hint="Telefone">
                     <Entry Text="{Binding Telefone}" Keyboard="Numeric" MaxLength="15" Placeholder="(00) 0000-0000">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
@@ -81,7 +105,7 @@
                     </Entry>
                 </sf:SfTextInputLayout>
                 <!-- Whatsapp -->
-                <sf:SfTextInputLayout Grid.Row="1" Grid.Column="2" Hint="Whatsapp">
+                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="2" Hint="Whatsapp">
                     <Entry Text="{Binding Whatsapp}" Keyboard="Numeric" MaxLength="15" Placeholder="(00) 00000-0000">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
@@ -89,31 +113,31 @@
                     </Entry>
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Rua -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.ColumnSpan="2" Hint="Rua">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.ColumnSpan="2" Hint="Rua">
                     <Entry Text="{Binding Rua}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Número -->
-                <sf:SfTextInputLayout Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="1" Hint="Número">
+                <sf:SfTextInputLayout Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="1" Hint="Número">
                     <Entry Text="{Binding Numero}" Keyboard="Numeric" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Complemento -->
-                <sf:SfTextInputLayout Grid.Row="3" Grid.ColumnSpan="3" Hint="Complemento">
+                <sf:SfTextInputLayout Grid.Row="4" Grid.ColumnSpan="3" Hint="Complemento">
                     <Entry Text="{Binding Complemento}" Placeholder="(Apto, Sala, etc)" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Bairro -->
-                <sf:SfTextInputLayout Grid.Row="4" Grid.Column="0" Hint="Bairro">
+                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="0" Hint="Bairro">
                     <Entry Text="{Binding Bairro}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: Cidade -->
-                <sf:SfTextInputLayout Grid.Row="4" Grid.Column="1" Hint="Cidade">
+                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="1" Hint="Cidade">
                     <Entry Text="{Binding Cidade}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: UF -->
-                <sf:SfTextInputLayout Grid.Row="4" Grid.Column="2" Hint="UF">
+                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="2" Hint="UF">
                     <Picker ItemsSource="{Binding EstadosBrasileiros}" SelectedItem="{Binding Uf, Mode=TwoWay}" />
                 </sf:SfTextInputLayout>
                 <!-- Endereço: CEP -->
-                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="0" Hint="CEP">
+                <sf:SfTextInputLayout Grid.Row="6" Grid.Column="0" Hint="CEP">
                     <Entry Text="{Binding Cep}" Keyboard="Numeric" MaxLength="9" Placeholder="00000-000">
                         <Entry.Behaviors>
                             <behaviors:NumericValidationBehavior />
@@ -121,16 +145,16 @@
                     </Entry>
                 </sf:SfTextInputLayout>
                 <!-- Data de Cadastro -->
-                <sf:SfTextInputLayout Grid.Row="5" Grid.Column="1" Hint="Cadastro">
+                <sf:SfTextInputLayout Grid.Row="6" Grid.Column="1" Hint="Cadastro">
                     <DatePicker Date="{Binding DataCadastro}" />
                 </sf:SfTextInputLayout>
                 <!-- Ativo -->
-                <StackLayout Grid.Row="5" Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <StackLayout Grid.Row="6" Grid.Column="2" Orientation="Horizontal" Spacing="8">
                     <Label Text="Ativo" VerticalOptions="Center" />
-                    <Switch IsToggled="{Binding Ativo}" />
+                    <Switch IsToggled="{Binding Ativo}" OnColor="{StaticResource Primary}" ThumbColor="#FFFFFF"/>
                 </StackLayout>
                 <!-- Botão Salvar -->
-                <Button Grid.Row="6" Grid.ColumnSpan="3" Text="Salvar" Command="{Binding SalvarCommand}" />
+                <Button Grid.Row="7" Grid.ColumnSpan="3" Text="Salvar" Command="{Binding SalvarCommand}" />
             </Grid>
         </ScrollView>
     </Grid>

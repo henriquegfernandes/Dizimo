@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Application.Dashboard;
 using Dizimo.Domain.Entities;
+using Dizimo.Services;
 using System.Collections.ObjectModel;
 using System.Text;
 using CommunityToolkit.Maui.Storage;
@@ -230,6 +231,63 @@ public partial class MainPageViewModel : ObservableObject
             if (mainPageError != null)
             {
                 await mainPageError.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
+            }
+        }
+    }
+
+    [RelayCommand]
+    public async Task ImprimirAniversariantesAsync()
+    {
+        try
+        {
+            if (Aniversariantes.Count == 0)
+            {
+                var page = GetMainPage();
+                if (page != null)
+                {
+                    await page.DisplayAlertAsync("Aviso", "Nenhum aniversariante para imprimir neste período.", "OK");
+                }
+                return;
+            }
+
+            // Usar a coleção de aniversariantes já carregada e ordenada na página
+            var pdfService = new AniversariantesPdfService(null);
+            var htmlStream = await pdfService.ImprimirAsync(Aniversariantes.ToList());
+
+            // Salvar em arquivo temporário
+            var fileName = VisualizacaoAtual == "Semana"
+                ? $"aniversariantes_semana_{DateTime.Now:yyyyMMdd_HHmmss}.html"
+                : $"aniversariantes_mes_{MesesDisponiveis[MesSelecionado - 1]}_{DateTime.Now:yyyyMMdd_HHmmss}.html";
+
+            var tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+            await File.WriteAllBytesAsync(tempPath, htmlStream.ToArray());
+
+            // Abrir arquivo automaticamente no navegador padrão
+            // O arquivo HTML possui onload="window.print()" que abre o diálogo de impressão automaticamente
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = tempPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                var mainPage = GetMainPage();
+                if (mainPage != null)
+                    await mainPage.DisplayAlertAsync("Aviso", "Não foi possível abrir o navegador. Verifique se possui um navegador padrão configurado.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
+            var mainPageError = GetMainPage();
+            if (mainPageError != null)
+            {
+                await mainPageError.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
             }
         }
     }

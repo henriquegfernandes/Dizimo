@@ -54,10 +54,31 @@ public partial class OfertaListPage : ContentPage
     {
         var viewModel = (OfertaListViewModel)BindingContext;
         viewModel.OfertasSelecionadas.Clear();
-        
+
         foreach (Oferta item in e.CurrentSelection)
         {
             viewModel.OfertasSelecionadas.Add(item);
+        }
+    }
+
+    private void OnSelecionarTodosClicked(object sender, EventArgs e)
+    {
+        var viewModel = (OfertaListViewModel)BindingContext;
+        var collectionView = (CollectionView)FindByName("OfertasCollectionView");
+
+        if (viewModel.OfertasSelecionadas.Count == viewModel.Ofertas.Count)
+        {
+            // Desseleciona todos
+            collectionView.SelectedItems.Clear();
+        }
+        else
+        {
+            // Seleciona todos
+            collectionView.SelectedItems.Clear();
+            foreach (var oferta in viewModel.Ofertas)
+            {
+                collectionView.SelectedItems.Add(oferta);
+            }
         }
     }
 

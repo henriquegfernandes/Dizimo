@@ -4,6 +4,7 @@ using Dizimo.Domain.Entities;
 using Dizimo.Application.Dizimistas.Queries;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Commands;
+using Dizimo.Services;
 using System.Collections.ObjectModel;
 using Dizimo.Domain.Repositories;
 using System.Collections.Generic;
@@ -506,6 +507,85 @@ namespace Dizimo.ViewModels
             }
             await CarregarDizimistasAsync();
             DizimistasSelecionados.Clear();
+        }
+
+        [RelayCommand]
+        public async Task ImprimirAsync()
+        {
+            try
+            {
+                // Carregar TODOS os dizimistas COM OS FILTROS aplicados, mantendo a mesma ordem da página
+                var todosDizimistas = await CarregarTodosDizimistasComFiltrosAsync();
+
+                // Determinar se apenas ativos
+                bool? apenasAtivos = null;
+                if (StatusSelecionado == "Ativos")
+                    apenasAtivos = true;
+                else if (StatusSelecionado == "Inativos")
+                    apenasAtivos = false;
+
+                var pdfService = new DizimistaPdfService(_unitOfWork);
+                var htmlStream = await pdfService.ImprimirAsync(
+                    todosDizimistas,
+                    FiltroNome,
+                    apenasAtivos);
+
+                // Salvar em arquivo temporário
+                var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.html";
+                var tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+                await File.WriteAllBytesAsync(tempPath, htmlStream.ToArray());
+
+                // Abrir arquivo automaticamente no navegador padrão
+                // O arquivo HTML possui onload="window.print()" que abre o diálogo de impressão automaticamente
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = tempPath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                    if (mainPage != null)
+                        await mainPage.DisplayAlertAsync("Aviso", "Não foi possível abrir o navegador. Verifique se possui um navegador padrão configurado.", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
+                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                if (mainPage != null)
+                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
+            }
+        }
+
+        /// <summary>
+        /// Carrega TODOS os dizimistas com os filtros aplicados, mantendo a mesma ordem da paginação
+        /// </summary>
+        private async Task<List<Dizimista>> CarregarTodosDizimistasComFiltrosAsync()
+        {
+            var todosDizimistas = new List<Dizimista>();
+            int pageNumber = 1;
+            int totalPages = 1;
+
+            while (pageNumber <= totalPages)
+            {
+                var result = await _handlers.Handle(new GetAllDizimistasPaginatedQuery(
+                    pageNumber,
+                    _tamanho_pagina,
+                    FiltroNome,
+                    StatusSelecionado));
+
+                todosDizimistas.AddRange(result.Items);
+                totalPages = result.TotalPages;
+                pageNumber++;
+            }
+
+            return todosDizimistas;
         }
     }
 }

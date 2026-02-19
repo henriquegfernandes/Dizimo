@@ -5,6 +5,7 @@ using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
+using Dizimo.Services;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using CommunityToolkit.Maui.Storage;
@@ -515,6 +516,95 @@ public partial class OfertaListViewModel : ObservableObject
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
         }
+    }
+
+    [RelayCommand]
+    public async Task ImprimirAsync()
+    {
+        try
+        {
+            // Carregar TODAS as ofertas COM OS FILTROS aplicados, mantendo a mesma ordem da página
+            var todasOfertas = await CarregarTodasOfertasComFiltrosAsync();
+
+            var pdfService = new OfertaPdfService(_unitOfWork);
+            var htmlStream = await pdfService.ImprimirAsync(
+                todasOfertas,
+                FiltroDataInicio,
+                FiltroDataFim,
+                FiltroTipoPagamento,
+                FiltroNome);
+
+            // Salvar em arquivo temporário
+            var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.html";
+            var tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+            await File.WriteAllBytesAsync(tempPath, htmlStream.ToArray());
+
+            // Abrir arquivo automaticamente no navegador padrão
+            // O arquivo HTML possui onload="window.print()" que abre o diálogo de impressão automaticamente
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = tempPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                var mainPage = GetMainPage();
+                if (mainPage != null)
+                    await mainPage.DisplayAlertAsync("Aviso", "Não foi possível abrir o navegador. Verifique se possui um navegador padrão configurado.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
+            var mainPage = GetMainPage();
+            if (mainPage != null)
+                await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
+        }
+    }
+
+    /// <summary>
+    /// Carrega TODAS as ofertas com os filtros aplicados, mantendo a mesma ordem da paginação
+    /// </summary>
+    private async Task<List<Oferta>> CarregarTodasOfertasComFiltrosAsync()
+    {
+        var todasOfertas = new List<Oferta>();
+        int pageNumber = 1;
+        int totalPages = 1;
+
+        while (pageNumber <= totalPages)
+        {
+            var result = await _getHandlers.Handle(new GetAllOfertasPaginatedQuery(
+                pageNumber,
+                TAMANHO_PAGINA,
+                FiltroDataInicio,
+                FiltroDataFim,
+                FiltroTipoPagamento,
+                FiltroNome));
+
+            // Aplicar filtro de nome client-side se necessário
+            var items = result.Items.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(FiltroNome))
+            {
+                items = items.Where(o =>
+                {
+                    var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId).Result;
+                    return dizimista != null && (
+                        dizimista.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
+                        dizimista.NumeroCadastro.ToString().Contains(FiltroNome));
+                });
+            }
+
+            todasOfertas.AddRange(items);
+            totalPages = result.TotalPages;
+            pageNumber++;
+        }
+
+        return todasOfertas;
     }
 
     private static Page? GetMainPage()

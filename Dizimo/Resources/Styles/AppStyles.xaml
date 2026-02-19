@@ -147,7 +147,7 @@
         Size="{StaticResource IconSize}" />
 
     <FontImageSource x:Key="IconExport"
-        Glyph="&#xE0Ca;"
+        Glyph="&#xe54c;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
         Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
@@ -188,8 +188,20 @@
         Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
 
-    <FontImageSource x:Key="IconSwitch"
+    <FontImageSource x:Key="IconSelect"
         Glyph="&#xf28e;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconPrint"
+        Glyph="&#xf0032;"
+        FontFamily="{x:Static f:FluentUI.FontFamily}"
+        Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
+        Size="{StaticResource IconSize}" />
+
+    <FontImageSource x:Key="IconSwitch"
+        Glyph="&#xf0168;"
         FontFamily="{x:Static f:FluentUI.FontFamily}"
         Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
         Size="{StaticResource IconSize}" />
