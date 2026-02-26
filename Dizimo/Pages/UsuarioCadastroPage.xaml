@@ -4,11 +4,11 @@
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             xmlns:fonts="clr-namespace:Fonts"
+             xmlns:fonts="clr-namespace:Dizimo.Resources.Fonts"
              x:Class="Dizimo.Pages.UsuarioCadastroPage"
              Title="">
     <Grid RowDefinitions="Auto,*">
-        <!-- Barra de navega��o customizada -->
+        <!-- Barra de navegação customizada -->
         <Grid Grid.Row="0" Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
             <!-- Bot�o de voltar -->
             <Button Grid.Column="0" 
@@ -20,7 +20,7 @@
                     HorizontalOptions="Start"
                     VerticalOptions="Center" />
             
-            <!-- T�tulo centralizado -->
+            <!-- Título centralizado -->
             <Label Grid.Column="1" 
                    Text="Cadastro de Usuário"
                    FontSize="20"
@@ -28,7 +28,7 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center" />
             
-            <!-- Botão de excluir à direita (visível apenas em modo edi��o) -->
+            <!-- Botão de excluir à direita (visível apenas em modo edição) -->
             <Button Grid.Column="2"
                     Text="Excluir"
                     ImageSource="{StaticResource IconDelete}"
@@ -40,7 +40,7 @@
                     VerticalOptions="Center" />
         </Grid>
 
-        <!-- Conte�do da p�gina -->
+        <!-- Contedo da página -->
         <ScrollView Grid.Row="1" Padding="16,12">
             <Grid Padding="0" RowSpacing="12" ColumnSpacing="12">
                 <Grid.RowDefinitions>

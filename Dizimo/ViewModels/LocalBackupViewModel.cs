@@ -30,15 +30,15 @@ public partial class LocalBackupViewModel : ObservableObject
     public async Task EscolherPastaAsync()
     {
         var folder = await FolderPicker.Default.PickAsync();
-        if (folder != null)
+        if (folder != null && folder.Folder != null && !string.IsNullOrEmpty(folder.Folder.Path))
         {
-            _backupService.SetBackupFolder(folder.Folder?.Path ?? string.Empty);
-            BackupFolderPath = folder.Folder?.Path;
+            _backupService.SetBackupFolder(folder.Folder.Path);
+            BackupFolderPath = folder.Folder.Path;
             var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.Count > 0
                 ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
                 : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Backup", $"Pasta de backup configurada: {folder.Folder?.Path}", "OK");
+                await mainPage.DisplayAlertAsync("Backup", $"Pasta de backup configurada: {folder.Folder.Path}", "OK");
         }
     }
 
