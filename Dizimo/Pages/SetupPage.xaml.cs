@@ -9,11 +9,9 @@ public partial class SetupPage : ContentPage
     {
         InitializeComponent();
         var app = Microsoft.Maui.Controls.Application.Current as App;
-        var unitOfWork = app?.Services.GetService<IUnitOfWork>();
-        if (unitOfWork is not null)
-        {
-            BindingContext = new SetupViewModel(unitOfWork);
-        }
+        var viewModel = app?.Services.GetService<SetupViewModel>() ??
+            throw new InvalidOperationException("SetupViewModel is not registered in the service provider.");
+        BindingContext = viewModel;
     }
 
     private void OnNomeUsuarioCompleted(object sender, EventArgs e)
