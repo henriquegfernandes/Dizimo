@@ -65,6 +65,7 @@ namespace Dizimo
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             builder.Services.AddSingleton<ModalErrorHandler>();
+            builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddTransient<AppShell>();
 
             // ViewModels
@@ -72,6 +73,7 @@ namespace Dizimo
             builder.Services.AddTransient<MainViewModel>();
             builder.Services.AddTransient<LocalBackupViewModel>();
             builder.Services.AddTransient<LoginViewModel>();
+            builder.Services.AddTransient<SetupViewModel>();
 
             // Dashboard Service
             builder.Services.AddScoped<DashboardService>();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Dizimo.ViewModels;
+using Dizimo.Services;
 using Font = Microsoft.Maui.Font;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -9,22 +10,31 @@ namespace Dizimo
 {
     public partial class AppShell : Shell
     {
+        private readonly ThemeService? _themeService;
+
         public AppShell()
         {
             InitializeComponent();
+            Routing.RegisterRoute("setup", typeof(Dizimo.Pages.SetupPage));
             Routing.RegisterRoute("login", typeof(Dizimo.Pages.LoginPage));
-            var app = Microsoft.Maui.Controls.Application.Current as App;
-            if (app is null)
-                throw new InvalidOperationException("Application.Current não está inicializado ou não é do tipo App.");
+            App? app = Microsoft.Maui.Controls.Application.Current as App ?? throw new InvalidOperationException("Application.Current não está inicializado ou não é do tipo App.");
 
-            // Força modo claro ao iniciar
-            if (Microsoft.Maui.Controls.Application.Current != null)
+            _themeService = app.Services.GetService<ThemeService>();
+
+            // Carrega o tema salvo anteriormente
+            if (_themeService != null)
             {
-                Microsoft.Maui.Controls.Application.Current.UserAppTheme = AppTheme.Light;
+                var savedTheme = ThemeService.GetSavedThemePreference();
+                ThemeService.ApplyTheme(savedTheme);
+                ThemeSegmentedControl.SelectedIndex = ThemeService.GetThemeIndex(savedTheme);
+            }
+            else
+            {
+                // Fallback para tema claro se o serviço não estiver disponível
+                Microsoft.Maui.Controls.Application.Current?.UserAppTheme = AppTheme.Light;
+                ThemeSegmentedControl.SelectedIndex = 0;
             }
 
-            var currentTheme = Microsoft.Maui.Controls.Application.Current?.RequestedTheme ?? AppTheme.Light;
-            ThemeSegmentedControl.SelectedIndex = 0; // Sempre inicia no claro
             var mainVm = app.Services.GetService<MainViewModel>();
             var backupVm = app.Services.GetService<LocalBackupViewModel>();
             if (mainVm is null)
@@ -35,7 +45,7 @@ namespace Dizimo
         }
         public static async Task DisplaySnackbarAsync(string message)
         {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            CancellationTokenSource cancellationTokenSource = new();
 
             var snackbarOptions = new SnackbarOptions
             {
@@ -66,8 +76,14 @@ namespace Dizimo
 
         private void SfSegmentedControl_SelectionChanged(object? sender, Syncfusion.Maui.Toolkit.SegmentedControl.SelectionChangedEventArgs e)
         {
+            var index = e.NewIndex ?? 0;
+            var newTheme = ThemeService.GetThemeFromIndex(index);
+
             if (Microsoft.Maui.Controls.Application.Current?.UserAppTheme != null)
-                Microsoft.Maui.Controls.Application.Current.UserAppTheme = e.NewIndex == 0 ? AppTheme.Light : AppTheme.Dark;
+                Microsoft.Maui.Controls.Application.Current.UserAppTheme = newTheme;
+
+            // Salva a preferência de tema
+            ThemeService.SaveThemePreference(newTheme);
         }
     }
 }

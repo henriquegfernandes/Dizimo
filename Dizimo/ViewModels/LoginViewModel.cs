@@ -67,7 +67,8 @@ public partial class LoginViewModel : ObservableObject
         else
         {
             IsLoginFailed = true;
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 await mainPage.DisplayAlertAsync("Erro", "Login ou senha inválidos.", "OK");

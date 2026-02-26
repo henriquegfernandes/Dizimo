@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Dizimo.Pages.SetupPage"
+             Title="Configuração Inicial"
+             Shell.NavBarIsVisible="False">
+    <StackLayout Padding="16" VerticalOptions="Center" Spacing="10" WidthRequest="500">
+			
+		<Image Source="dizimologo.png" HeightRequest="240" WidthRequest="240" HorizontalOptions="Center" />
+
+        <!-- Título -->
+        <Label 
+            Text="Bem-vindo!" 
+            FontSize="28" 
+            FontAttributes="Bold"
+            HorizontalTextAlignment="Center"
+            TextColor="{DynamicResource Primary}"/>
+
+        <Label 
+            Text="Crie seu primeiro usuário administrador para começar" 
+            FontSize="14"
+            HorizontalTextAlignment="Center"
+            TextColor="{DynamicResource PrimaryText}"
+            Opacity="0.7"/>
+
+        <!-- Nome de Usuário -->
+        <VerticalStackLayout> 
+            <Label 
+                Text="Nome de Usuário" 
+                FontSize="12" 
+                FontAttributes="Bold"/>
+
+            <Entry 
+                Placeholder="Usuário" Text="{Binding NomeUsuario}"
+                Keyboard="Default"
+                Completed="OnNomeUsuarioCompleted"
+                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"/>
+        </VerticalStackLayout>
+
+        <!-- Senha -->
+        <VerticalStackLayout>
+            <Label 
+                Text="Senha" 
+                FontSize="12" 
+                FontAttributes="Bold"/>
+            <Entry 
+                x:Name="SenhaEntry"
+                Placeholder="Digite uma senha"
+                Text="{Binding Senha}"
+                IsPassword="True"
+                Keyboard="Default"
+                Completed="OnSenhaCompleted"
+                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"/>
+            <Label 
+                Text="Mínimo 6 caracteres" 
+                FontSize="11"
+                Opacity="0.6"/>
+        </VerticalStackLayout>
+
+        <!-- Confirmação de Senha -->
+        <VerticalStackLayout>
+            <Label 
+                Text="Confirmar Senha" 
+                FontSize="12" 
+                FontAttributes="Bold"/>
+            <Entry 
+                x:Name="SenhaConfirmacaoEntry"
+                Placeholder="Confirme a senha"
+                Text="{Binding SenhaConfirmacao}"
+                IsPassword="True"
+                Keyboard="Default"
+                Completed="OnSenhaConfirmacaoCompleted"
+                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"/>
+        </VerticalStackLayout>
+
+        <!-- Mensagem de Erro -->
+        <Label 
+            Text="{Binding MensagemErro}"
+            IsVisible="{Binding MensagemErro, Converter={StaticResource NullToBoolConverter}}"
+            TextColor="Red"
+            FontSize="12"
+            HorizontalTextAlignment="Center"
+            Margin="0,8"/>
+
+        <!-- Espaço -->
+        <BoxView HeightRequest="12" Color="Transparent"/>
+
+        <!-- Botão Criar Usuário -->
+        <Button 
+            Text="Criar Usuário"
+            Command="{Binding CriarPrimeiroUsuarioCommand}"
+            IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+            Padding="12"
+            CornerRadius="8"
+            FontSize="14"
+            FontAttributes="Bold"/>
+
+        <!-- Indicador de Carregamento -->
+        <ActivityIndicator 
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            Color="{DynamicResource Primary}"
+            Scale="0.8"/>
+    </StackLayout>
+</ContentPage>

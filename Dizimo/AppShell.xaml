@@ -11,6 +11,13 @@
     FlyoutHeaderBehavior="CollapseOnScroll">
 
     <ShellContent
+        Title="Setup"
+        Icon="login.png"
+        ContentTemplate="{DataTemplate pages:SetupPage}"
+        Route="setup"
+        IsVisible="False"/>
+
+    <ShellContent
         Title="Login"
         Icon="login.png"
         ContentTemplate="{DataTemplate pages:LoginPage}"
