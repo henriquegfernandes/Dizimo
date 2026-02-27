@@ -9,8 +9,7 @@ public partial class UsuarioCadastroPage : ContentPage
         GetUsuarioHandlers getHandlers,
         UpdateUsuarioHandler updateHandler,
         CreateUsuarioHandler createHandler,
-        DeleteUsuarioHandler deleteHandler,
-        SessaoService sessaoService)
+        DeleteUsuarioHandler deleteHandler)
     {
         InitializeComponent();
 
@@ -25,16 +24,15 @@ public partial class UsuarioCadastroPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is UsuarioCadastroViewModel vm)
+        if (BindingContext is UsuarioCadastroViewModel)
         {
-            var sessaoService = new SessaoService();
-
-            if (!sessaoService.IsAdmin)
+            if (!SessaoService.IsAdmin)
             {
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta p·gina.", "OK");
-                await Shell.Current.GoToAsync("//login");
+                    await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta p√°gina.", "OK");
+                await Shell.Current.GoToAsync("login");
             }
         }
     }

@@ -9,7 +9,6 @@ namespace Dizimo.ViewModels;
 public partial class LoginViewModel : ObservableObject
 {
     private readonly GetUsuarioHandlers _getUsuarioHandlers;
-    private readonly SessaoService _sessaoService;
 
     private string _login = string.Empty;
     public string Login
@@ -32,10 +31,9 @@ public partial class LoginViewModel : ObservableObject
         set => SetProperty(ref _isLoginFailed, value);
     }
 
-    public LoginViewModel(GetUsuarioHandlers getUsuarioHandlers, SessaoService sessaoService)
+    public LoginViewModel(GetUsuarioHandlers getUsuarioHandlers)
     {
         _getUsuarioHandlers = getUsuarioHandlers;
-        _sessaoService = sessaoService;
         ResetLoginState();
     }
 
@@ -52,7 +50,7 @@ public partial class LoginViewModel : ObservableObject
         var usuario = await _getUsuarioHandlers.Handle(new GetUsuarioByLoginQuery(Login));
         if (usuario != null && usuario.Ativo && usuario.SenhaHash == SessaoService.HashSenha(Senha))
         {
-            _sessaoService.Login(usuario.Id, usuario.Perfil);
+            SessaoService.Login(usuario.Id, usuario.Perfil);
             // Atualiza o BindingContext do AppShell após login
             if (Shell.Current is AppShell appShell)
             {
@@ -67,7 +65,8 @@ public partial class LoginViewModel : ObservableObject
         else
         {
             IsLoginFailed = true;
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
             {
                 await mainPage.DisplayAlertAsync("Erro", "Login ou senha inválidos.", "OK");

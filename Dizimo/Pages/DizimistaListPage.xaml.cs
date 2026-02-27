@@ -7,7 +7,6 @@ namespace Dizimo.Pages;
 
 public partial class DizimistaListPage : ContentPage
 {
-    private SessaoService? _sessaoService;
     private DizimistaListViewModel? _viewModel;
 
     public DizimistaListPage()
@@ -40,11 +39,10 @@ public partial class DizimistaListPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-        var mainPage = windows != null && windows.Count > 0 ? windows[0].Page : null;
-        _sessaoService = mainPage?.BindingContext as SessaoService;
-        if (_sessaoService != null && !_sessaoService.IsLogado)
+        if (!SessaoService.IsLogado)
         {
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
             await Shell.Current.GoToAsync("//login");

@@ -72,6 +72,7 @@ namespace Dizimo
             builder.Services.AddTransient<MainViewModel>();
             builder.Services.AddTransient<LocalBackupViewModel>();
             builder.Services.AddTransient<LoginViewModel>();
+            builder.Services.AddTransient<SetupViewModel>();
 
             // Dashboard Service
             builder.Services.AddScoped<DashboardService>();
@@ -121,7 +122,10 @@ namespace Dizimo
             builder.Services.AddSingleton<SessaoService>();
 
             // Configuração do serviço de backup
-            builder.Services.AddSingleton(new LocalBackupService(dbPath));
+            builder.Services.AddSingleton(sp => new LocalBackupService(
+                dbPath, 
+                sp
+            ));
             builder.Services.AddSingleton<BackupOnCloseService>();
 
             var app = builder.Build();

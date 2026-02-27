@@ -14,7 +14,7 @@ namespace Dizimo
     public partial class App : Microsoft.Maui.Controls.Application
     {
         public IServiceProvider Services { get; }
-        private BackupOnCloseService? _backupOnCloseService;
+        private readonly BackupOnCloseService? _backupOnCloseService;
 
         public App(IServiceProvider services)
         {
@@ -27,17 +27,16 @@ namespace Dizimo
         {
             var appShell = new AppShell();
             var window = new BackupWindow(appShell, this);
-            
+
             window.Created += async (s, e) =>
             {
-                await EnsureDefaultAdminUserAsync();
-                GoToLoginPage();
+                await NavigateToAppropriatePageAsync();
             };
-            
+
             return window;
         }
 
-        private async Task EnsureDefaultAdminUserAsync()
+        private async Task NavigateToAppropriatePageAsync()
         {
             using var scope = Services.CreateScope();
             var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
@@ -46,31 +45,20 @@ namespace Dizimo
                 var usuarios = await unitOfWork.Usuarios.GetAllAsync();
                 if (!usuarios.Any())
                 {
-                    var admin = new Usuario
-                    {
-                        Id = Guid.NewGuid(),
-                        Nome = "Administrador",
-                        Login = "admin",
-                        SenhaHash = HashSenhaBase64("password"),
-                        Perfil = PerfilUsuario.Admin,
-                        Ativo = true
-                    };
-                    await unitOfWork.Usuarios.AddAsync(admin);
-                    await unitOfWork.SaveChangesAsync();
+                    // Primeira execução - vai para setup
+                    await Shell.Current.GoToAsync("setup");
+                }
+                else
+                {
+                    // Já tem usuários - vai para login
+                    await Shell.Current.GoToAsync("login");
                 }
             }
-        }
-
-        private static string HashSenhaBase64(string senha)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(senha));
-            return Convert.ToBase64String(bytes);
-        }
-
-        private void GoToLoginPage()
-        {
-            Shell.Current.GoToAsync("login");
+            else
+            {
+                // Fallback para login se não conseguir acessar unitOfWork
+                await Shell.Current.GoToAsync("login");
+            }
         }
 
         internal async Task OnWindowClosingAsync()
@@ -79,7 +67,7 @@ namespace Dizimo
             {
                 if (_backupOnCloseService != null)
                 {
-                    var mainPage = this.Windows.FirstOrDefault()?.Page;
+                    var mainPage = Windows.Count > 0 ? Windows[0].Page : null;
                     await _backupOnCloseService.PerformBackupAsync(mainPage);
                 }
             }
@@ -93,7 +81,7 @@ namespace Dizimo
     /// <summary>
     /// Custom Window que intercepta o fechamento para realizar backup automaticamente
     /// </summary>
-    public class BackupWindow : Window
+    public partial class BackupWindow : Window
     {
         private readonly App _app;
         private bool _isClosingHandled = false;
