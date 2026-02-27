@@ -123,7 +123,11 @@ namespace Dizimo
             builder.Services.AddSingleton<SessaoService>();
 
             // Configuração do serviço de backup
-            builder.Services.AddSingleton(new LocalBackupService(dbPath));
+            builder.Services.AddSingleton(sp => new LocalBackupService(
+                dbPath, 
+                sp.GetRequiredService<SessaoService>(),
+                sp
+            ));
             builder.Services.AddSingleton<BackupOnCloseService>();
 
             var app = builder.Build();

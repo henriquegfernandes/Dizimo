@@ -74,7 +74,10 @@ public partial class LocalBackupViewModel : ObservableObject
                 ? Microsoft.Maui.Controls.Application.Current.Windows[0].Page
                 : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Backup", "Restauração realizada com sucesso.", "OK");
+                await mainPage.DisplayAlertAsync("Backup", "Restauração realizada com sucesso. Por favor, faça login novamente.", "OK");
+
+            // Navegar para login
+            await Shell.Current.GoToAsync("login");
         }
         catch (Exception ex)
         {
