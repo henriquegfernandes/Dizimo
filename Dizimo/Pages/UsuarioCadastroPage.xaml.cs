@@ -31,7 +31,7 @@ public partial class UsuarioCadastroPage : ContentPage
                 var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
                 var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta p·gina.", "OK");
+                    await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta p√°gina.", "OK");
                 await Shell.Current.GoToAsync("login");
             }
         }

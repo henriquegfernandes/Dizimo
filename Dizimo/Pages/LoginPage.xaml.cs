@@ -18,8 +18,7 @@ public partial class LoginPage : ContentPage
         {
             // Corrigido: obtendo as dependências do contêiner de serviços
             var getUsuarioHandlers = app?.Services.GetService<GetUsuarioHandlers>();
-            var sessaoService = app?.Services.GetService<SessaoService>();
-            if (getUsuarioHandlers != null && sessaoService != null)
+            if (getUsuarioHandlers != null)
             {
                 BindingContext = new LoginViewModel(getUsuarioHandlers);
             }

@@ -112,7 +112,7 @@ public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
             await _unitOfWork.Usuarios.AddAsync(admin);
             await _unitOfWork.SaveChangesAsync();
 
-            // Navega para login usando rota absoluta para limpar a pilha de navegação
+            // Navega para a página de login
             await Shell.Current.GoToAsync("login");
         }
         catch (Exception ex)
