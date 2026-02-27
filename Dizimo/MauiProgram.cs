@@ -65,7 +65,6 @@ namespace Dizimo
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             builder.Services.AddSingleton<ModalErrorHandler>();
-            builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddTransient<AppShell>();
 
             // ViewModels
@@ -125,7 +124,6 @@ namespace Dizimo
             // Configuração do serviço de backup
             builder.Services.AddSingleton(sp => new LocalBackupService(
                 dbPath, 
-                sp.GetRequiredService<SessaoService>(),
                 sp
             ));
             builder.Services.AddSingleton<BackupOnCloseService>();

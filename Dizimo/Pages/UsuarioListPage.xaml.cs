@@ -6,18 +6,15 @@ namespace Dizimo.Pages;
 
 public partial class UsuarioListPage : ContentPage
 {
-    private readonly SessaoService _sessaoService;
 
     public UsuarioListPage(
         GetUsuarioHandlers getHandlers,
         CreateUsuarioHandler createHandler,
         UpdateUsuarioHandler updateHandler,
         DeleteUsuarioHandler deleteHandler,
-        InativarUsuarioHandler inativarHandler,
-        SessaoService sessaoService)
+        InativarUsuarioHandler inativarHandler)
     {
         InitializeComponent();
-        _sessaoService = sessaoService;
 
         BindingContext = new UsuarioListViewModel(
             getHandlers,
@@ -32,9 +29,10 @@ public partial class UsuarioListPage : ContentPage
     {
         base.OnAppearing();
         
-        if (!_sessaoService.IsAdmin)
+        if (!SessaoService.IsAdmin)
         {
-            var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta página.", "OK");
             await Shell.Current.GoToAsync("//login");
@@ -61,7 +59,7 @@ public partial class UsuarioListPage : ContentPage
         {
             vm.UsuariosSelecionados.Clear();
             
-            foreach (Usuario item in e.CurrentSelection)
+            foreach (Usuario item in e.CurrentSelection.Cast<Usuario>())
             {
                 vm.UsuariosSelecionados.Add(item);
             }

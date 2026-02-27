@@ -76,11 +76,23 @@
         <!-- Mensagem de Erro -->
         <Label 
             Text="{Binding MensagemErro}"
-            IsVisible="{Binding MensagemErro, Converter={StaticResource NullToBoolConverter}}"
             TextColor="Red"
             FontSize="12"
             HorizontalTextAlignment="Center"
-            Margin="0,8"/>
+            Margin="0,8">
+            <Label.Triggers>
+                <DataTrigger TargetType="Label"
+                             Binding="{Binding MensagemErro}"
+                             Value="">
+                    <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label"
+                             Binding="{Binding MensagemErro}"
+                             Value="{x:Null}">
+                    <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
 
         <!-- Espaço -->
         <BoxView HeightRequest="12" Color="Transparent"/>

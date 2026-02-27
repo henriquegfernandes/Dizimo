@@ -4,11 +4,10 @@ using Dizimo.Infrastructure.Persistence;
 
 namespace Dizimo.Services;
 
-public class LocalBackupService(string dbFilePath, SessaoService sessaoService, IServiceProvider serviceProvider)
+public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvider)
 {
     private readonly string _dbFilePath = dbFilePath;
     private string _backupFolderPath = Preferences.Default.Get("BackupFolderPath", FileSystem.Current.AppDataDirectory);
-    private readonly SessaoService _sessaoService = sessaoService;
     private readonly IServiceProvider _serviceProvider = serviceProvider;
 
     public string BackupFolderPath
@@ -131,7 +130,7 @@ public class LocalBackupService(string dbFilePath, SessaoService sessaoService, 
             }
 
             // Fazer logout forçado para que usuário faça login com dados atualizados
-            _sessaoService?.Logout();
+            SessaoService.Logout();
 
             // Restaurar o DbContext após logout
             if (_serviceProvider != null)
@@ -144,7 +143,7 @@ public class LocalBackupService(string dbFilePath, SessaoService sessaoService, 
             // Limpar o cache de preferências relacionadas à sessão se necessário
             await Task.Delay(100);
         }
-        catch (IOException ex)
+        catch (IOException)
         {
             // Se o arquivo está bloqueado, tentar com delay maior
             await Task.Delay(1000);
@@ -171,7 +170,7 @@ public class LocalBackupService(string dbFilePath, SessaoService sessaoService, 
                 File.Delete(shmPath);
 
             // Fazer logout forçado
-            _sessaoService?.Logout();
+            SessaoService.Logout();
 
             // Restaurar o DbContext após logout
             if (_serviceProvider != null)

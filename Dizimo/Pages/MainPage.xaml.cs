@@ -22,7 +22,7 @@ namespace Dizimo.Pages
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            if (!_sessaoService.IsLogado)
+            if (!SessaoService.IsLogado)
             {
                 await DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
                 await Shell.Current.GoToAsync("login");

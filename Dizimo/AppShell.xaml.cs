@@ -1,7 +1,4 @@
-﻿using Microsoft.Maui;
-using Microsoft.Maui.Controls;
-using Dizimo.ViewModels;
-using Dizimo.Services;
+﻿using Dizimo.ViewModels;
 using Font = Microsoft.Maui.Font;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -10,8 +7,6 @@ namespace Dizimo
 {
     public partial class AppShell : Shell
     {
-        private readonly ThemeService? _themeService;
-
         public AppShell()
         {
             InitializeComponent();
@@ -19,21 +14,10 @@ namespace Dizimo
             Routing.RegisterRoute("login", typeof(Dizimo.Pages.LoginPage));
             App? app = Microsoft.Maui.Controls.Application.Current as App ?? throw new InvalidOperationException("Application.Current não está inicializado ou não é do tipo App.");
 
-            _themeService = app.Services.GetService<ThemeService>();
-
             // Carrega o tema salvo anteriormente
-            if (_themeService != null)
-            {
-                var savedTheme = ThemeService.GetSavedThemePreference();
-                ThemeService.ApplyTheme(savedTheme);
-                ThemeSegmentedControl.SelectedIndex = ThemeService.GetThemeIndex(savedTheme);
-            }
-            else
-            {
-                // Fallback para tema claro se o serviço não estiver disponível
-                Microsoft.Maui.Controls.Application.Current?.UserAppTheme = AppTheme.Light;
-                ThemeSegmentedControl.SelectedIndex = 0;
-            }
+            var savedTheme = ThemeService.GetSavedThemePreference();
+            ThemeService.ApplyTheme(savedTheme);
+            ThemeSegmentedControl.SelectedIndex = ThemeService.GetThemeIndex(savedTheme);
 
             var mainVm = app.Services.GetService<MainViewModel>();
             var backupVm = app.Services.GetService<LocalBackupViewModel>();
@@ -79,8 +63,7 @@ namespace Dizimo
             var index = e.NewIndex ?? 0;
             var newTheme = ThemeService.GetThemeFromIndex(index);
 
-            if (Microsoft.Maui.Controls.Application.Current?.UserAppTheme != null)
-                Microsoft.Maui.Controls.Application.Current.UserAppTheme = newTheme;
+            Microsoft.Maui.Controls.Application.Current?.UserAppTheme = newTheme;
 
             // Salva a preferência de tema
             ThemeService.SaveThemePreference(newTheme);

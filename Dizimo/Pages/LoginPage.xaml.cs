@@ -21,7 +21,7 @@ public partial class LoginPage : ContentPage
             var sessaoService = app?.Services.GetService<SessaoService>();
             if (getUsuarioHandlers != null && sessaoService != null)
             {
-                BindingContext = new LoginViewModel(getUsuarioHandlers, sessaoService);
+                BindingContext = new LoginViewModel(getUsuarioHandlers);
             }
             else
             {

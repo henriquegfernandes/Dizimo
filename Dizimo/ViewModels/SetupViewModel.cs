@@ -82,9 +82,17 @@ public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
 
         try
         {
-            // Verifica se já existe um usuário com esse login
+            // Verifica se já existe qualquer usuário cadastrado; se houver, bloqueia o setup e redireciona para login
             var usuariosExistentes = await _unitOfWork.Usuarios.GetAllAsync();
-            if (usuariosExistentes.Any(u => u.Login.Equals(NomeUsuario, StringComparison.OrdinalIgnoreCase)))
+            if (usuariosExistentes.Any())
+            {
+                MensagemErro = "Já existe um usuário cadastrado. Faça login para continuar.";
+                await Shell.Current.GoToAsync("login");
+                return;
+            }
+            // Verifica se já existe um usuário com esse login usando busca direta por login
+            var usuarioComMesmoLogin = await _unitOfWork.Usuarios.GetByLoginAsync(NomeUsuario);
+            if (usuarioComMesmoLogin is not null)
             {
                 MensagemErro = "Já existe um usuário com esse login.";
                 return;
@@ -94,7 +102,7 @@ public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
             var admin = new Usuario
             {
                 Id = Guid.NewGuid(),
-                Nome = NomeUsuario,
+                Nome = "Administrador",
                 Login = NomeUsuario,
                 SenhaHash = HashSenhaBase64(Senha),
                 Perfil = PerfilUsuario.Admin,
@@ -119,7 +127,6 @@ public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
 
     private static string HashSenhaBase64(string senha)
     {
-        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(senha));
-        return Convert.ToBase64String(bytes);
+        return SessaoService.HashSenha(senha);
     }
 }
