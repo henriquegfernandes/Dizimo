@@ -70,7 +70,9 @@ public partial class UsuarioListPage : ContentPage
     {
         if (BindingContext is UsuarioListViewModel vm)
         {
-            var collectionView = (CollectionView)FindByName("UsuariosCollectionView");
+            var collectionView = UsuariosCollectionView;
+            if (collectionView == null)
+                return;
 
             if (vm.UsuariosSelecionados.Count == vm.Usuarios.Count)
             {

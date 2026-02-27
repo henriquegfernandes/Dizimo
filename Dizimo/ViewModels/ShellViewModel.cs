@@ -5,10 +5,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Dizimo.ViewModels;
 
-public partial class ShellViewModel : ObservableObject
+public partial class ShellViewModel : ObservableObject, IDisposable
 {
-    public MainViewModel MainVm { get; }
-    public LocalBackupViewModel BackupVm { get; }
+    private readonly MainViewModel _mainVm;
+    private readonly LocalBackupViewModel _backupVm;
+    private bool _disposed;
+
+    public MainViewModel MainVm => _mainVm;
+    public LocalBackupViewModel BackupVm => _backupVm;
 
     private bool _isAdmin;
     public bool IsAdmin
@@ -33,11 +37,10 @@ public partial class ShellViewModel : ObservableObject
 
     public ShellViewModel(MainViewModel mainVm, LocalBackupViewModel backupVm)
     {
-        MainVm = mainVm;
-        BackupVm = backupVm;
+        _mainVm = mainVm;
+        _backupVm = backupVm;
 
         UpdateValues();
-        MainVm.PropertyChanged += (s, e) => UpdateValues();
     }
 
     private void UpdateValues()
@@ -47,9 +50,18 @@ public partial class ShellViewModel : ObservableObject
         UsuarioPerfil = MainViewModel.UsuarioPerfil;
     }
 
-    public ICommand LogoutCommand => MainVm.LogoutCommand;
-    public ICommand EscolherPastaCommand => BackupVm.EscolherPastaCommand;
-    public ICommand BackupCommand => BackupVm.BackupCommand;
-    public ICommand RestoreCommand => BackupVm.RestoreCommand;
-    public string BackupFolderPath => BackupVm.BackupFolderPath ?? string.Empty;
+    public ICommand LogoutCommand => _mainVm.LogoutCommand;
+    public ICommand EscolherPastaCommand => _backupVm.EscolherPastaCommand;
+    public ICommand BackupCommand => _backupVm.BackupCommand;
+    public ICommand RestoreCommand => _backupVm.RestoreCommand;
+    public string BackupFolderPath => _backupVm.BackupFolderPath ?? string.Empty;
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
+    }
 }

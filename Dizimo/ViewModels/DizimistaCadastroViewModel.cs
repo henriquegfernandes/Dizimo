@@ -471,8 +471,20 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
             if (dizimistas.Count > 0)
             {
+                // Resolver o UnitOfWork antes de qualquer confirmação
+                var unitOfWork = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<IUnitOfWork>();
+                
                 var windows2 = Microsoft.Maui.Controls.Application.Current?.Windows;
                 var mainPage = windows2 is { Count: > 0 } ? windows2[0].Page : null;
+                
+                // Se UnitOfWork não estiver disponível, cancelar importação
+                if (unitOfWork == null)
+                {
+                    if (mainPage != null)
+                        await mainPage.DisplayAlertAsync("Erro", "Serviço de persistência não está disponível. Importação cancelada.", "OK");
+                    return;
+                }
+                
                 if (mainPage != null)
                 {
                     bool confirmar = await mainPage.DisplayAlertAsync(
@@ -482,15 +494,11 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
                     if (confirmar)
                     {
-                        var unitOfWork = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<IUnitOfWork>();
-                        if (unitOfWork != null)
+                        foreach (var dizimista in dizimistas)
                         {
-                            foreach (var dizimista in dizimistas)
-                            {
-                                await unitOfWork.Dizimistas.AddAsync(dizimista);
-                            }
-                            await unitOfWork.SaveChangesAsync();
+                            await unitOfWork.Dizimistas.AddAsync(dizimista);
                         }
+                        await unitOfWork.SaveChangesAsync();
 
                         await mainPage.DisplayAlertAsync("Sucesso",
                             $"{dizimistas.Count} dizimista(s) importado(s) com sucesso!", "OK");

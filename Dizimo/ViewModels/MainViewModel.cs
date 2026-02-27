@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Domain.Repositories;
 
 namespace Dizimo.ViewModels;
 
@@ -30,7 +29,6 @@ public partial class MainViewModel : ObservableObject
         {
             SessaoService.Logout();
 
-            // Limpar o DbContext para garantir que não haja dados em cache
             if (Microsoft.Maui.Controls.Application.Current is App app)
             {
                 var unitOfWork = app.Services.GetService<Dizimo.Domain.Repositories.IUnitOfWork>();
@@ -39,22 +37,46 @@ public partial class MainViewModel : ObservableObject
                     await unitOfWork.ClearDbContextAsync();
                 }
 
-                // Recrear o Shell para descartar todas as páginas em cache
-                var newShell = new AppShell();
-                app.Windows[0].Page = newShell;
+                // Obter a janela de forma segura
+                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
+                if (window != null)
+                {
+                    var newShell = new AppShell();
+                    window.Page = newShell;
 
-                // Navegar para login
-                await Shell.Current.GoToAsync("login");
+                    // Navegar usando o novo Shell para evitar inconsistências
+                    if (newShell.CurrentState?.Location != null)
+                    {
+                        await newShell.GoToAsync("login");
+                    }
+                    else
+                    {
+                        await Shell.Current.GoToAsync("login");
+                    }
+                }
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao fazer logout: {ex.Message}");
+            
             if (Microsoft.Maui.Controls.Application.Current is App app)
             {
-                var newShell = new AppShell();
-                app.Windows[0].Page = newShell;
-                await Shell.Current.GoToAsync("login");
+                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
+                if (window != null)
+                {
+                    var newShell = new AppShell();
+                    window.Page = newShell;
+                    
+                    if (newShell.CurrentState?.Location != null)
+                    {
+                        await newShell.GoToAsync("login");
+                    }
+                    else
+                    {
+                        await Shell.Current.GoToAsync("login");
+                    }
+                }
             }
         }
     }
