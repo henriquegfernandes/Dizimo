@@ -439,7 +439,7 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
     }
 
     [RelayCommand]
-    public async Task ImportarAsync()
+    public static async Task ImportarAsync()
     {
         try
         {

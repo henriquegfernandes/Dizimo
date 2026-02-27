@@ -58,10 +58,33 @@ public partial class UsuarioListPage : ContentPage
         if (BindingContext is UsuarioListViewModel vm)
         {
             vm.UsuariosSelecionados.Clear();
-            
+
             foreach (Usuario item in e.CurrentSelection.Cast<Usuario>())
             {
                 vm.UsuariosSelecionados.Add(item);
+            }
+        }
+    }
+
+    private void OnSelecionarTodosClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is UsuarioListViewModel vm)
+        {
+            var collectionView = (CollectionView)FindByName("UsuariosCollectionView");
+
+            if (vm.UsuariosSelecionados.Count == vm.Usuarios.Count)
+            {
+                // Desseleciona todos
+                collectionView.SelectedItems.Clear();
+            }
+            else
+            {
+                // Seleciona todos
+                collectionView.SelectedItems.Clear();
+                foreach (var usuario in vm.Usuarios)
+                {
+                    collectionView.SelectedItems.Add(usuario);
+                }
             }
         }
     }

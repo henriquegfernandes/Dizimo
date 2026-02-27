@@ -74,8 +74,16 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
-                    <!-- Botões de excluir/inativar -->
+                    <!-- Botões de ação em massa (selecionar todos, excluir) -->
                     <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,8,0,0">
+                        <Button Text="Selecionar todos"
+                                Clicked="OnSelecionarTodosClicked"
+                                IsVisible="{Binding UsuariosSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                                Padding="12"
+                                CornerRadius="8"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ImageSource="{StaticResource IconSelect}"/>
                         <Button Text="Excluir" 
                                 Command="{Binding ExcluirUsuariosSelecionadosCommand}" 
                                 IsVisible="{Binding UsuariosSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
