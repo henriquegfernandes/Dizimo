@@ -52,12 +52,6 @@ public partial class DizimistaListPage : ContentPage
             await _viewModel.CarregarDizimistasAsync();
     }
 
-    private async void OnNovoDizimistaClicked(object sender, EventArgs e)
-    {
-        System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
-        await Shell.Current.GoToAsync("dizimista-cadastro");
-    }
-
     private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (BindingContext is DizimistaListViewModel vm)

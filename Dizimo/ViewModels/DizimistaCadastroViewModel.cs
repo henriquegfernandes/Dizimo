@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Domain.Entities;
+using Dizimo.Domain.Repositories;
 using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Queries;
@@ -481,10 +482,21 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
                     if (confirmar)
                     {
-                        LimparCampos();
-                        // Mensagem de sucesso
+                        var unitOfWork = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<IUnitOfWork>();
+                        if (unitOfWork != null)
+                        {
+                            foreach (var dizimista in dizimistas)
+                            {
+                                await unitOfWork.Dizimistas.AddAsync(dizimista);
+                            }
+                            await unitOfWork.SaveChangesAsync();
+                        }
+
                         await mainPage.DisplayAlertAsync("Sucesso",
                             $"{dizimistas.Count} dizimista(s) importado(s) com sucesso!", "OK");
+
+                        // Navegar de volta para a lista de dizimistas
+                        await Shell.Current.GoToAsync("..", true);
                     }
                 }
             }

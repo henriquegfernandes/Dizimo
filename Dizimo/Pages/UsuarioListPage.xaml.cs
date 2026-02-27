@@ -35,7 +35,7 @@ public partial class UsuarioListPage : ContentPage
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta página.", "OK");
-            await Shell.Current.GoToAsync("//login");
+            await Shell.Current.GoToAsync("login");
             return;
         }
 

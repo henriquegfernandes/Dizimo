@@ -36,11 +36,6 @@ public partial class OfertaListPage : ContentPage
         await viewModel.CarregarOfertasAsync();
     }
 
-    private async void OnNovaOfertaClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("oferta-cadastro");
-    }
-
     private void OnFiltroCompleted(object sender, EventArgs e)
     {
         var viewModel = (OfertaListViewModel)BindingContext;

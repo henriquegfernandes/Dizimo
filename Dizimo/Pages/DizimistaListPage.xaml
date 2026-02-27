@@ -155,7 +155,6 @@
         <!-- Botão flutuante de adicionar dizimista -->
         <Button
             Command="{Binding NovoDizimistaCommand}"
-            Clicked="OnNovoDizimistaClicked"
             IsEnabled="True"
             ImageSource="{StaticResource IconAdd}"
             CornerRadius="28"
