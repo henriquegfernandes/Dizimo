@@ -30,15 +30,11 @@ public partial class OfertaListPage : ContentPage
         {
             await DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
             await Shell.Current.GoToAsync("login");
+            return;
         }
 
         var viewModel = (OfertaListViewModel)BindingContext;
         await viewModel.CarregarOfertasAsync();
-    }
-
-    private async void OnNovaOfertaClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("oferta-cadastro");
     }
 
     private void OnFiltroCompleted(object sender, EventArgs e)

@@ -156,36 +156,34 @@
         </ScrollView>
         
         <!-- Botões flutuantes de ação em massa (excluir, ativar/inativar, selecionar todos) - Centralizados -->
-        <Grid ColumnSpacing="12" ColumnDefinitions="*,*" Padding="12" VerticalOptions="End" HorizontalOptions="Center" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24">
+        <Grid ColumnSpacing="12" ColumnDefinitions="*,*" Padding="12" VerticalOptions="End" HorizontalOptions="Center" IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24">
+            <!-- Botão de selecionar todos (aparece quando há seleção) -->
+            <Button Text="Selecionar todos"
+                 Clicked="OnSelecionarTodosClicked"
+                 IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+                 Padding="12"
+                 CornerRadius="8"
+                 Grid.Column="0"
+                 HorizontalOptions="Center"
+                 VerticalOptions="Center"
+                 ImageSource="{StaticResource IconSelect}">
+            </Button>
             <!-- Botão flutuante de excluir -->
             <Button Text="Excluir" 
                 Command="{Binding ExcluirOfertasSelecionadasCommand}" 
                 IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
                 Padding="12"
                 CornerRadius="8"
-                Grid.Column="0"
-                HorizontalOptions="Center"
-                VerticalOptions="Center"
-                ImageSource="{StaticResource IconTrash}">
-            </Button>
-
-            <!-- Botão de selecionar todos (aparece quando há seleção) -->
-            <Button Text="Selecionar todos"
-                Clicked="OnSelecionarTodosClicked"
-                IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
-                Padding="12"
-                CornerRadius="8"
                 Grid.Column="1"
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                ImageSource="{StaticResource IconSelect}">
+                ImageSource="{StaticResource IconTrash}">
             </Button>
         </Grid>
 
         <!-- Botão flutuante de adicionar oferta -->
         <Button
             Command="{Binding NovaOfertaCommand}"
-            Clicked="OnNovaOfertaClicked"
             IsEnabled="True"
             ImageSource="{StaticResource IconAdd}"
             CornerRadius="28"

@@ -35,7 +35,7 @@ public partial class UsuarioListPage : ContentPage
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta página.", "OK");
-            await Shell.Current.GoToAsync("//login");
+            await Shell.Current.GoToAsync("login");
             return;
         }
 
@@ -58,10 +58,35 @@ public partial class UsuarioListPage : ContentPage
         if (BindingContext is UsuarioListViewModel vm)
         {
             vm.UsuariosSelecionados.Clear();
-            
+
             foreach (Usuario item in e.CurrentSelection.Cast<Usuario>())
             {
                 vm.UsuariosSelecionados.Add(item);
+            }
+        }
+    }
+
+    private void OnSelecionarTodosClicked(object sender, EventArgs e)
+    {
+        if (BindingContext is UsuarioListViewModel vm)
+        {
+            var collectionView = UsuariosCollectionView;
+            if (collectionView == null)
+                return;
+
+            if (vm.UsuariosSelecionados.Count == vm.Usuarios.Count)
+            {
+                // Desseleciona todos
+                collectionView.SelectedItems.Clear();
+            }
+            else
+            {
+                // Seleciona todos
+                collectionView.SelectedItems.Clear();
+                foreach (var usuario in vm.Usuarios)
+                {
+                    collectionView.SelectedItems.Add(usuario);
+                }
             }
         }
     }

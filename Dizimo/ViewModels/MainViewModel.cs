@@ -25,8 +25,60 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     public static async Task LogoutAsync()
     {
-        SessaoService.Logout();
-        await Shell.Current.GoToAsync("login");
+        try
+        {
+            SessaoService.Logout();
+
+            if (Microsoft.Maui.Controls.Application.Current is App app)
+            {
+                var unitOfWork = app.Services.GetService<Dizimo.Domain.Repositories.IUnitOfWork>();
+                if (unitOfWork != null)
+                {
+                    await unitOfWork.ClearDbContextAsync();
+                }
+
+                // Obter a janela de forma segura
+                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
+                if (window != null)
+                {
+                    var newShell = new AppShell();
+                    window.Page = newShell;
+
+                    // Navegar usando o novo Shell para evitar inconsistências
+                    if (newShell.CurrentState?.Location != null)
+                    {
+                        await newShell.GoToAsync("login");
+                    }
+                    else
+                    {
+                        await Shell.Current.GoToAsync("login");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao fazer logout: {ex.Message}");
+            
+            if (Microsoft.Maui.Controls.Application.Current is App app)
+            {
+                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
+                if (window != null)
+                {
+                    var newShell = new AppShell();
+                    window.Page = newShell;
+                    
+                    if (newShell.CurrentState?.Location != null)
+                    {
+                        await newShell.GoToAsync("login");
+                    }
+                    else
+                    {
+                        await Shell.Current.GoToAsync("login");
+                    }
+                }
+            }
+        }
     }
 
     public static bool IsAdmin => SessaoService.IsAdmin;

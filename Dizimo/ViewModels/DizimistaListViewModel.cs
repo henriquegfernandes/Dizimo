@@ -200,14 +200,13 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public static async Task NovoDizimistaCommand()
+        public static async Task NovoDizimistaAsync()
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
             await Shell.Current.GoToAsync("dizimista-cadastro");
         }
 
         [RelayCommand]
-        public static async Task EditarDizimistaCommand(Dizimista dizimista)
+        public static async Task EditarDizimistaAsync(Dizimista dizimista)
         {
             if (dizimista != null)
             {
@@ -220,7 +219,7 @@ namespace Dizimo.ViewModels
         }
 
         [RelayCommand]
-        public static async Task VerDetalhesDizimistaCommand(Dizimista dizimista)
+        public static async Task VerDetalhesDizimistaAsync(Dizimista dizimista)
         {
             if (dizimista != null)
             {

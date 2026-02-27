@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Domain.Entities;
+using Dizimo.Domain.Repositories;
 using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Queries;
@@ -438,7 +439,7 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
     }
 
     [RelayCommand]
-    public async Task ImportarAsync()
+    public static async Task ImportarAsync()
     {
         try
         {
@@ -470,8 +471,20 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
             if (dizimistas.Count > 0)
             {
+                // Resolver o UnitOfWork antes de qualquer confirmação
+                var unitOfWork = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<IUnitOfWork>();
+                
                 var windows2 = Microsoft.Maui.Controls.Application.Current?.Windows;
                 var mainPage = windows2 is { Count: > 0 } ? windows2[0].Page : null;
+                
+                // Se UnitOfWork não estiver disponível, cancelar importação
+                if (unitOfWork == null)
+                {
+                    if (mainPage != null)
+                        await mainPage.DisplayAlertAsync("Erro", "Serviço de persistência não está disponível. Importação cancelada.", "OK");
+                    return;
+                }
+                
                 if (mainPage != null)
                 {
                     bool confirmar = await mainPage.DisplayAlertAsync(
@@ -481,10 +494,17 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
                     if (confirmar)
                     {
-                        LimparCampos();
-                        // Mensagem de sucesso
+                        foreach (var dizimista in dizimistas)
+                        {
+                            await unitOfWork.Dizimistas.AddAsync(dizimista);
+                        }
+                        await unitOfWork.SaveChangesAsync();
+
                         await mainPage.DisplayAlertAsync("Sucesso",
                             $"{dizimistas.Count} dizimista(s) importado(s) com sucesso!", "OK");
+
+                        // Navegar de volta para a lista de dizimistas
+                        await Shell.Current.GoToAsync("..", true);
                     }
                 }
             }

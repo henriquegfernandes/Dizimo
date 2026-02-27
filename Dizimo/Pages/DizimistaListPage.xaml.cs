@@ -45,17 +45,11 @@ public partial class DizimistaListPage : ContentPage
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
-            await Shell.Current.GoToAsync("//login");
+            await Shell.Current.GoToAsync("login");
             return;
         }
         if (_viewModel != null)
             await _viewModel.CarregarDizimistasAsync();
-    }
-
-    private async void OnNovoDizimistaClicked(object sender, EventArgs e)
-    {
-        System.Diagnostics.Debug.WriteLine("[INFO] Comando NovoDizimista executado!");
-        await Shell.Current.GoToAsync("dizimista-cadastro");
     }
 
     private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)

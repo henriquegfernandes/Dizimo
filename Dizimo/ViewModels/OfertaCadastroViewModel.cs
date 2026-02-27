@@ -1,8 +1,4 @@
-using Microsoft.Maui.Controls;
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
@@ -10,7 +6,6 @@ using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Services;
 using CommunityToolkit.Maui.Storage;
 
 namespace Dizimo.ViewModels;
@@ -623,8 +618,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         }
     }
 
-    public static IAsyncRelayCommand BaixarModeloCommand => new AsyncRelayCommand(BaixarModeloAsync);
-
+    [RelayCommand]
     public static async Task BaixarModeloAsync()
     {
         try
@@ -728,7 +722,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                         await mainPage.DisplayAlertAsync("Sucesso", 
                             $"{resultado.OfertasImportadas.Count} oferta(s) importada(s) com sucesso!", "OK");
 
-                        LimparCampos();
+                        // Navegar de volta para a lista de ofertas
+                        await Shell.Current.GoToAsync("///ofertas", true);
                     }
                 }
             }

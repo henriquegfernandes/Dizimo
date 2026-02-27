@@ -8,28 +8,30 @@ namespace Dizimo.Pages
 {
     public partial class MainPage : ContentPage
     {
-        private readonly SessaoService _sessaoService;
-        private readonly IUnitOfWork _unitOfWork;
 
-        public MainPage(SessaoService sessaoService, MainPageViewModel viewModel, IUnitOfWork unitOfWork)
+        public MainPage(MainPageViewModel viewModel)
         {
             InitializeComponent();
-            _sessaoService = sessaoService;
-            _unitOfWork = unitOfWork;
             BindingContext = viewModel;
         }
 
-        protected override async void OnAppearing()
+        protected override async void OnNavigatedTo(NavigatedToEventArgs args)
         {
-            base.OnAppearing();
+            base.OnNavigatedTo(args);
+            
             if (!SessaoService.IsLogado)
             {
-                await DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
-                await Shell.Current.GoToAsync("login");
+                if (Shell.Current != null)
+                {
+                    await Shell.Current.GoToAsync("login");
+                }
+                return;
             }
 
-            var viewModel = (MainPageViewModel)BindingContext;
-            await viewModel.CarregarDadosAsync();
+            if (BindingContext is MainPageViewModel viewModel)
+            {
+                await viewModel.CarregarDadosAsync();
+            }
         }
     }
 }

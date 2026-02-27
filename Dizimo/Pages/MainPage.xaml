@@ -9,8 +9,7 @@
             xmlns:chart="clr-namespace:Syncfusion.Maui.Toolkit.Charts;assembly=Syncfusion.Maui.Toolkit"
             x:Class="Dizimo.Pages.MainPage"
             x:DataType="viewModels:MainPageViewModel"
-            x:Name="DashboardPage"
-            Title="{Binding Titulo}">
+            x:Name="DashboardPage">
 
     <ContentPage.Resources>
         <ResourceDictionary>
