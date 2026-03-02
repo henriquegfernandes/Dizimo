@@ -1,0 +1,47 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-maui-windows",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/Dizimo/Dizimo.csproj",
+                "-c",
+                "Debug",
+                "-f",
+                "net10.0-windows10.0.19041.0"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "clean-maui",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "clean",
+                "${workspaceFolder}/Dizimo/Dizimo.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "rebuild-maui",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/Dizimo/Dizimo.csproj",
+                "-c",
+                "Debug",
+                "--no-incremental"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": "clean-maui"
+        }
+    ]
+}
