@@ -9,6 +9,7 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     private readonly string _dbFilePath = dbFilePath;
     private string _backupFolderPath = Preferences.Default.Get("BackupFolderPath", FileSystem.Current.AppDataDirectory);
     private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private static readonly SemaphoreSlim _logoutLock = new(1, 1);
 
     public string BackupFolderPath
     {
@@ -27,37 +28,137 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
         BackupFolderPath = folderPath;
     }
 
+    /// <summary>
+    /// Executa logout com limpeza segura da UI e contexto do banco de dados.
+    /// </summary>
+    private async Task PerformLogoutWithUICleanupAsync()
+    {
+        await _logoutLock.WaitAsync();
+        try
+        {
+            SessaoService.Logout();
+
+            if (Microsoft.Maui.Controls.Application.Current is not App app)
+                return;
+
+            await ClearDbContextAsync(app);
+            SqliteConnection.ClearAllPools();
+            await Task.Delay(100);
+
+            if (await TryNavigateToLoginAsync(app))
+                return;
+
+            // Fallback: tentar com Shell.Current existente
+            await Shell.Current.GoToAsync("login");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao fazer logout com limpeza de UI: {ex.Message}");
+            await FallbackNavigateToLoginAsync();
+        }
+        finally
+        {
+            _logoutLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Limpa o DbContext atravÃ©s do UnitOfWork.
+    /// </summary>
+    private async Task ClearDbContextAsync(App app)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var unitOfWork = scope.ServiceProvider.GetService<Dizimo.Domain.Repositories.IUnitOfWork>();
+            if (unitOfWork != null)
+            {
+                await unitOfWork.ClearDbContextAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao limpar DbContext: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Tenta navegar para login criando novo Shell.
+    /// </summary>
+    private async Task<bool> TryNavigateToLoginAsync(App app)
+    {
+        try
+        {
+            var window = app.Windows.FirstOrDefault();
+            if (window == null)
+                return false;
+
+            var newShell = new AppShell();
+            window.Page = newShell;
+
+            var navigateLocation = newShell.CurrentState?.Location;
+            if (navigateLocation != null)
+            {
+                await newShell.GoToAsync("login");
+            }
+            else
+            {
+                await Shell.Current.GoToAsync("login");
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao criar novo Shell: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Fallback final para navegaÃ§Ã£o ao login.
+    /// </summary>
+    private async Task FallbackNavigateToLoginAsync()
+    {
+        try
+        {
+            if (Microsoft.Maui.Controls.Application.Current is App app)
+            {
+                var window = app.Windows.FirstOrDefault();
+                if (window != null)
+                {
+                    try
+                    {
+                        var newShell = new AppShell();
+                        window.Page = newShell;
+                    }
+                    catch { /* Ignorar erro de criaÃ§Ã£o */ }
+                }
+            }
+
+            await Shell.Current.GoToAsync("login");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Falha no fallback de navegaÃ§Ã£o: {ex.Message}");
+        }
+    }
+
     public async Task BackupAsync()
     {
         var destPath = Path.Combine(_backupFolderPath, Path.GetFileName(_dbFilePath));
 
         try
         {
-            // Fazer checkpoint para consolidar WAL log no banco principal
-            using (var connection = new SqliteConnection($"Data Source={_dbFilePath}"))
-            {
-                await connection.OpenAsync();
-                using var command = connection.CreateCommand();
-                command.CommandText = "PRAGMA wal_checkpoint(RESTART)";
-                await command.ExecuteScalarAsync();
-            }
-
-            // Aguardar um pouco para garantir que tudo foi sincronizado
+            await ExecuteCheckpointAsync(_dbFilePath, "PRAGMA wal_checkpoint(RESTART)");
             await Task.Delay(100);
 
-            // Copiar apenas o arquivo de banco (dados já consolidados pelo checkpoint)
-            using var sourceStream = new FileStream(_dbFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            using var destinationStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await sourceStream.CopyToAsync(destinationStream);
+            await CopyFileAsync(_dbFilePath, destPath, FileShare.Read);
         }
         catch (IOException)
         {
-            // Se o arquivo está bloqueado, tentar com FileShare.ReadWrite
             await Task.Delay(500);
-
-            using var sourceStream = new FileStream(_dbFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var destinationStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await sourceStream.CopyToAsync(destinationStream);
+            await CopyFileAsync(_dbFilePath, destPath, FileShare.ReadWrite);
         }
     }
 
@@ -66,119 +167,106 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
         var srcPath = Path.Combine(_backupFolderPath, Path.GetFileName(_dbFilePath));
 
         if (!File.Exists(srcPath))
-            throw new FileNotFoundException($"Arquivo de backup não encontrado em: {srcPath}");
+            throw new FileNotFoundException($"Arquivo de backup nÃ£o encontrado em: {srcPath}");
 
         try
         {
-            // Descartar conexões do pool para liberar o arquivo de banco
             SqliteConnection.ClearAllPools();
             await Task.Delay(300);
 
-            // Limpar o pool de conexões SQLite para garantir que todas as conexões sejam fechadas
-            SqliteConnection.ClearAllPools();
+            await ExecuteCheckpointAsync(_dbFilePath, "PRAGMA wal_checkpoint(TRUNCATE)");
             await Task.Delay(200);
 
-            // Fazer checkpoint e truncar o WAL para consolidar dados e fechar logs
-            try
-            {
-                using (var connection = new SqliteConnection($"Data Source={_dbFilePath}"))
-                {
-                    await connection.OpenAsync();
-                    using var command = connection.CreateCommand();
-                    command.CommandText = "PRAGMA wal_checkpoint(TRUNCATE)";
-                    await command.ExecuteScalarAsync();
-                }
-                SqliteConnection.ClearAllPools();
-            }
-            catch
-            {
-                // Ignorar erros durante checkpoint se o banco está corrompido
-            }
+            await CopyFileAsync(srcPath, _dbFilePath, FileShare.Read);
+            CleanupSqliteAuxiliaryFiles();
 
-            await Task.Delay(200);
-
-            // Copiar arquivo de backup
-            using (var sourceStream = new FileStream(srcPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (var destinationStream = new FileStream(_dbFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
-            {
-                await sourceStream.CopyToAsync(destinationStream);
-            }
-
-            // Limpar arquivos WAL e SHM para resetar o estado
-            var walPath = _dbFilePath + "-wal";
-            if (File.Exists(walPath))
-                File.Delete(walPath);
-
-            var shmPath = _dbFilePath + "-shm";
-            if (File.Exists(shmPath))
-                File.Delete(shmPath);
-
-            // Limpar arquivos temporários do SQLite
-            var parentDir = Path.GetDirectoryName(_dbFilePath);
-            var dbFileName = Path.GetFileName(_dbFilePath);
-            if (!string.IsNullOrEmpty(parentDir) && Directory.Exists(parentDir))
-            {
-                // Remover possíveis arquivos de journal
-                var journalFile = Path.Combine(parentDir, dbFileName + "-journal");
-                if (File.Exists(journalFile))
-                    File.Delete(journalFile);
-
-                // Remover possíveis arquivos de backup
-                var backupFile = Path.Combine(parentDir, dbFileName + "-backup");
-                if (File.Exists(backupFile))
-                    File.Delete(backupFile);
-            }
-
-            // Fazer logout forçado para que usuário faça login com dados atualizados
-            SessaoService.Logout();
-
-            // Restaurar o DbContext após logout
-            if (_serviceProvider != null)
-            {
-                using var scope = _serviceProvider.CreateScope();
-                var newContext = scope.ServiceProvider.GetRequiredService<DizimoDbContext>();
-                newContext.Database.Migrate();
-            }
-
-            // Limpar o cache de preferências relacionadas à sessão se necessário
-            await Task.Delay(100);
+            await PerformLogoutWithUICleanupAsync();
+            RestoreDbContext();
         }
         catch (IOException)
         {
-            // Se o arquivo está bloqueado, tentar com delay maior
             await Task.Delay(1000);
-
-            // Limpar múltiplas vezes para garantir que o pool foi esvaziado
-            SqliteConnection.ClearAllPools();
-            await Task.Delay(500);
             SqliteConnection.ClearAllPools();
             await Task.Delay(500);
 
-            using (var sourceStream = new FileStream(srcPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var destinationStream = new FileStream(_dbFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            await CopyFileAsync(srcPath, _dbFilePath, FileShare.ReadWrite);
+            CleanupSqliteAuxiliaryFiles();
+
+            await PerformLogoutWithUICleanupAsync();
+            RestoreDbContext();
+        }
+    }
+
+    /// <summary>
+    /// Executa checkpoint do SQLite de forma segura.
+    /// </summary>
+    private async Task ExecuteCheckpointAsync(string dbPath, string pragmaCommand)
+    {
+        try
+        {
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
+            await connection.OpenAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = pragmaCommand;
+            await command.ExecuteScalarAsync();
+        }
+        catch
+        {
+            // Ignorar erros durante checkpoint
+        }
+    }
+
+    /// <summary>
+    /// Copia arquivo de forma assÃ­ncrona.
+    /// </summary>
+    private async Task CopyFileAsync(string sourcePath, string destinationPath, FileShare shareMode)
+    {
+        using var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, shareMode);
+        using var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await sourceStream.CopyToAsync(destinationStream);
+    }
+
+    /// <summary>
+    /// Remove arquivos auxiliares do SQLite (WAL e SHM).
+    /// </summary>
+    private void CleanupSqliteAuxiliaryFiles()
+    {
+        var auxiliaryFiles = new[] { "-wal", "-shm", "-journal", "-backup" };
+        
+        foreach (var suffix in auxiliaryFiles)
+        {
+            var filePath = _dbFilePath + suffix;
+            if (File.Exists(filePath))
             {
-                await sourceStream.CopyToAsync(destinationStream);
+                try
+                {
+                    File.Delete(filePath);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao deletar {filePath}: {ex.Message}");
+                }
             }
+        }
+    }
 
-            // Limpar arquivos WAL e SHM
-            var walPath = _dbFilePath + "-wal";
-            if (File.Exists(walPath))
-                File.Delete(walPath);
+    /// <summary>
+    /// Restaura o DbContext e executa migraÃ§Ãµes.
+    /// </summary>
+    private void RestoreDbContext()
+    {
+        if (_serviceProvider == null)
+            return;
 
-            var shmPath = _dbFilePath + "-shm";
-            if (File.Exists(shmPath))
-                File.Delete(shmPath);
-
-            // Fazer logout forçado
-            SessaoService.Logout();
-
-            // Restaurar o DbContext após logout
-            if (_serviceProvider != null)
-            {
-                using var scope = _serviceProvider.CreateScope();
-                var newContext = scope.ServiceProvider.GetRequiredService<DizimoDbContext>();
-                newContext.Database.Migrate();
-            }
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var newContext = scope.ServiceProvider.GetRequiredService<DizimoDbContext>();
+            newContext.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao restaurar DbContext: {ex.Message}");
         }
     }
 }
