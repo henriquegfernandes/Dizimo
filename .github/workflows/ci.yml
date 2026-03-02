@@ -11,48 +11,48 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
     
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-    - name: Setup NuGet cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.nuget/packages
-          ~/.nuget/plugins-cache
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
+      - name: Setup NuGet cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.nuget/packages
+            ~/.nuget/plugins-cache
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
-    - name: Install MAUI workload
-      run: dotnet workload restore
+      - name: Install MAUI workload
+        run: dotnet workload restore
 
-    - name: Restore dependencies
-      run: dotnet restore --runtime win-x64
+      - name: Restore dependencies
+        run: dotnet restore --runtime win-x64
 
-    - name: Build library projects
-      run: |
-        dotnet build Dizimo.Domain/Dizimo.Domain.csproj --configuration Release --no-restore
-        dotnet build Dizimo.Application/Dizimo.Application.csproj --configuration Release --no-restore
-        dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj --configuration Release --no-restore
+      - name: Build library projects
+        run: |
+          dotnet build Dizimo.Domain/Dizimo.Domain.csproj --configuration Release --no-restore
+          dotnet build Dizimo.Application/Dizimo.Application.csproj --configuration Release --no-restore
+          dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj --configuration Release --no-restore
 
-    - name: Build test project
-      run: |
-        dotnet build Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-restore
+      - name: Build test project
+        run: |
+          dotnet build Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-restore
 
-    - name: Run tests
-      run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      - name: Run tests
+        run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
     
-    - name: Build MAUI app
-      run: dotnet build Dizimo/Dizimo.csproj --configuration Release --no-restore
+      - name: Build MAUI app
+        run: dotnet build Dizimo/Dizimo.csproj --configuration Release --no-restore
     
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: '**/TestResults/**'
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/**'
