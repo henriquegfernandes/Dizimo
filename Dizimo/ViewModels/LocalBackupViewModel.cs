@@ -75,9 +75,6 @@ public partial class LocalBackupViewModel : ObservableObject
                 : null;
             if (mainPage != null)
                 await mainPage.DisplayAlertAsync("Backup", "Restauração realizada com sucesso. Por favor, faça login novamente.", "OK");
-
-            // Navegar para login
-            await Shell.Current.GoToAsync("login");
         }
         catch (Exception ex)
         {
