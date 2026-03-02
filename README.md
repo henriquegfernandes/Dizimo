@@ -23,7 +23,7 @@ Dizimo é uma aplicação desktop Windows criada com .NET MAUI e Clean Architect
 - [Dizimo.Application](Dizimo.Application/) com CQRS, comandos/queries, handlers e serviços de aplicação.
 - [Dizimo.Domain](Dizimo.Domain/) contendo entidades, value objects, enums e contratos de repositório.
 - [Dizimo.Infrastructure](Dizimo.Infrastructure/) cuidando da persistência SQLite, backup, repository e Unit of Work.
-- [Dizimo.Tests](Dizimo.Tests/) e [Dizimo.Tests.Domain](Dizimo.Tests.Domain/) rodando testes unitários com xUnit e Moq.
+- [Dizimo.Tests](Dizimo.Tests/) rodando testes unitários com xUnit e Moq (17 testes: 15 de domínio, 2 de infraestrutura).
 - Integração contínua via [.github/workflows](.github/workflows/) para restaurar, buildar, testar e publicar artefatos automaticamente.
 
 ## Estrutura do repositório
@@ -31,7 +31,9 @@ Dizimo é uma aplicação desktop Windows criada com .NET MAUI e Clean Architect
 - Dizimo.Application/ – camada de aplicação com comandos, DTOs, mapeamentos e serviços.
 - Dizimo.Domain/ – entidades de negócio, validações e contratos.
 - Dizimo.Infrastructure/ – implementação de persistência, backup e repositórios.
-- Dizimo.Tests/ e Dizimo.Tests.Domain/ – suites de testes unitários e de domínio.
+- Dizimo.Tests/ – suite unificada de testes unitários (Domain e Infrastructure).
+  - Domain/ – testes de entidades e regras de negócio (15 testes).
+  - Infrastructure/ – testes de serviços de infraestrutura como Sessão (2 testes).
 - [publish-release.ps1](publish-release.ps1) – script que compila, empacota, cria tags e gera o instalador.
 - [PUBLISHING-GUIDE.md](PUBLISHING-GUIDE.md) – passo a passo para gerar releases manuais e resolver problemas comuns.
 
@@ -57,15 +59,17 @@ Dizimo é uma aplicação desktop Windows criada com .NET MAUI e Clean Architect
 6. O SQLite local e a pasta de backup são configuráveis pela interface.
 
 ## Testes
-- Testes da aplicação:
+- Execute todos os testes unitários:
   ```powershell
   dotnet test Dizimo.Tests/Dizimo.Tests.csproj
   ```
-- Testes do domínio:
-  ```powershell
-  dotnet test Dizimo.Tests.Domain/Dizimo.Tests.Domain.csproj
-  ```
-- Os projetos usam xUnit e Moq para validar handlers, serviços e entidades.
+  Isso executará os 17 testes unificados (15 de domínio, 2 de infraestrutura).
+
+- Organize seus testes por escopo em pastas:
+  - `Dizimo.Tests/Domain/` – testes de entidades e regras de negócio.
+  - `Dizimo.Tests/Infrastructure/` – testes de serviços de infraestrutura.
+
+- Os testes usam **xUnit** para assertions e **Moq** para mocking de dependências.
 
 ## Backup e sincronização
 Configure a pasta de backup pela tela de configuração dentro do aplicativo ([Dizimo/Pages/BackupConfigPage.xaml](Dizimo/Pages/BackupConfigPage.xaml)). Os backups podem ser executados automaticamente ou sob demanda e a pasta configurada pode ser sincronizada com ferramentas como OneDrive ou Google Drive.
