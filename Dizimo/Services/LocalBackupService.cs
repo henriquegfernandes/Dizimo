@@ -31,7 +31,7 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     /// <summary>
     /// Executa logout com limpeza segura da UI e contexto do banco de dados.
     /// </summary>
-    private async Task PerformLogoutWithUICleanupAsync()
+    private static async Task PerformLogoutWithUICleanupAsync()
     {
         await _logoutLock.WaitAsync();
         try
@@ -65,7 +65,7 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     /// <summary>
     /// Limpa o DbContext através do UnitOfWork.
     /// </summary>
-    private async Task ClearDbContextAsync(App app)
+    private static async Task ClearDbContextAsync(App app)
     {
         try
         {
@@ -85,11 +85,11 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     /// <summary>
     /// Tenta navegar para login criando novo Shell.
     /// </summary>
-    private async Task<bool> TryNavigateToLoginAsync(App app)
+    private static async Task<bool> TryNavigateToLoginAsync(App app)
     {
         try
         {
-            var window = app.Windows.FirstOrDefault();
+            var window = app.Windows.Count > 0 ? app.Windows[0] : null;
             if (window == null)
                 return false;
 
@@ -118,13 +118,13 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     /// <summary>
     /// Fallback final para navegação ao login.
     /// </summary>
-    private async Task FallbackNavigateToLoginAsync()
+    private static async Task FallbackNavigateToLoginAsync()
     {
         try
         {
             if (Microsoft.Maui.Controls.Application.Current is App app)
             {
-                var window = app.Windows.FirstOrDefault();
+                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
                 if (window != null)
                 {
                     try
@@ -200,7 +200,7 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     /// <summary>
     /// Executa checkpoint do SQLite de forma segura.
     /// </summary>
-    private async Task ExecuteCheckpointAsync(string dbPath, string pragmaCommand)
+    private static async Task ExecuteCheckpointAsync(string dbPath, string pragmaCommand)
     {
         try
         {
@@ -219,7 +219,7 @@ public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvi
     /// <summary>
     /// Copia arquivo de forma assíncrona.
     /// </summary>
-    private async Task CopyFileAsync(string sourcePath, string destinationPath, FileShare shareMode)
+    private static async Task CopyFileAsync(string sourcePath, string destinationPath, FileShare shareMode)
     {
         using var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, shareMode);
         using var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
