@@ -5,6 +5,7 @@
              xmlns:local="clr-namespace:Dizimo.Converters"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
              xmlns:fonts="clr-namespace:Dizimo.Resources.Fonts"
+             xmlns:domain="clr-namespace:Dizimo.Domain.Entities;assembly=Dizimo.Domain"
              x:Class="Dizimo.Pages.OfertaListPage"
              x:DataType="vm:OfertaListViewModel">
     <ContentPage.Resources>
@@ -102,7 +103,7 @@
                                     SelectionChanged="OnSelectionChanged"
                                     Margin="0,0,0,8">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="domain:Oferta">
                                 <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,2*,1*" Padding="8">
                                     <Label Text="" Grid.Column="0" />
                                     <Label Text="{Binding Data, StringFormat='{0:dd/MM/yyyy}'}" Grid.Column="1" HorizontalTextAlignment="Center" />
