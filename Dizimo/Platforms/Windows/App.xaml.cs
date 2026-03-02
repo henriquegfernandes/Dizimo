@@ -1,4 +1,5 @@
 ﻿using Microsoft.UI.Xaml;
+using System.Diagnostics;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -16,7 +17,15 @@ namespace Dizimo.WinUI
         /// </summary>
         public App()
         {
-            this.InitializeComponent();
+            try
+            {
+                this.InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Erro na inicialização: {ex.Message}");
+                throw;
+            }
         }
 
         protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
