@@ -8,6 +8,7 @@
              xmlns:fonts="clr-namespace:Dizimo.Resources.Fonts"
              xmlns:behaviors="clr-namespace:Dizimo.Behaviors"
              x:Class="Dizimo.Pages.DizimistaCadastroPage"
+             x:DataType="vm:DizimistaCadastroViewModel"
              Title="">
     <Grid RowDefinitions="Auto,*">
         <!-- Barra de navegação customizada -->
