@@ -19,12 +19,12 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Setup NuGet cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.nuget/packages
             ~/.nuget/plugins-cache
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
@@ -32,7 +32,7 @@ jobs:
         run: dotnet workload restore
 
       - name: Restore dependencies
-        run: dotnet restore --runtime win-x64
+        run: dotnet restore
 
       - name: Build library projects
         run: |
