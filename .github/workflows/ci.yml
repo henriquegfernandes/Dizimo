@@ -18,6 +18,16 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
+    - name: Setup NuGet cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.nuget/packages
+          ~/.nuget/plugins-cache
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Install MAUI workload
       run: dotnet workload restore
 
@@ -31,7 +41,8 @@ jobs:
         dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj --configuration Release --no-restore
 
     - name: Build test project
-      run: dotnet build Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-restore
+      run: |
+        dotnet build Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-restore
 
     - name: Run tests
       run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
