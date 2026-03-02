@@ -3,7 +3,6 @@
             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
             xmlns:viewModels="clr-namespace:Dizimo.ViewModels"
             xmlns:domain="clr-namespace:Dizimo.Domain.Entities;assembly=Dizimo.Domain"
-            xmlns:app="clr-namespace:Dizimo.Application.Dashboard;assembly=Dizimo.Application"
             xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
             xmlns:converters="clr-namespace:Dizimo.Converters"
             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
@@ -49,13 +48,13 @@
                             Radius="{OnIdiom 0.8, Phone=0.6}"
                             InnerRadius="0.5">
                             <chart:DoughnutSeries.TooltipTemplate>
-                                <DataTemplate x:DataType="app:DashboardService+DizimistaPeriodoOfertaData">
+                                <DataTemplate x:DataType="chart:TooltipInfo">
                                     <VerticalStackLayout Padding="10" Spacing="4">
-                                        <Label Text="{Binding Periodo, StringFormat='Período: {0}'}"
+                                        <Label Text="{Binding Item.Periodo, StringFormat='Período: {0}'}"
                                             FontSize="12"
                                             FontAttributes="Bold"
                                             TextColor="White" />
-                                        <Label Text="{Binding Quantidade, StringFormat='Quantidade: {0}'}"
+                                        <Label Text="{Binding Item.Quantidade, StringFormat='Quantidade: {0}'}"
                                             FontSize="11"
                                             TextColor="White" />
                                     </VerticalStackLayout>
