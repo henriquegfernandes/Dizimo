@@ -8,8 +8,6 @@
     xmlns:vm="clr-namespace:Dizimo.ViewModels"
     x:DataType="vm:ShellViewModel"
     Shell.FlyoutBehavior="Flyout"
-    Title="Dizimo"
-    ForegroundColor="#FF0000"
     FlyoutHeaderBehavior="CollapseOnScroll">
 
     <ShellContent
