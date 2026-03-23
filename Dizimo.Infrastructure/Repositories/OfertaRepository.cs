@@ -27,6 +27,37 @@ public class OfertaRepository : IOfertaRepository
     }
     public async Task<IEnumerable<Oferta>> GetAllAsync() => await _context.Ofertas.ToListAsync();
 
+    /// <summary>
+    /// Aplica filtro case-insensitive por nome ou número de cadastro do dizimista.
+    /// Trata NumeroCadastro com tentativa de parse numérico para melhor performance.
+    /// </summary>
+    private IQueryable<Oferta> ApplyNomeFilter(IQueryable<Oferta> query, string? filtroNome)
+    {
+        if (string.IsNullOrWhiteSpace(filtroNome))
+            return query;
+
+        // Tenta fazer parse do filtro como número para comparação numérica
+        bool isNumericFilter = int.TryParse(filtroNome, out int numeroCadastro);
+
+        query = query.Join(
+            _context.Dizimistas,
+            oferta => oferta.DizimistaId,
+            dizimista => dizimista.Id,
+            (oferta, dizimista) => new { oferta, dizimista }
+        )
+        .Where(x =>
+            // Filtro por nome (case-insensitive usando LIKE com NOCASE)
+            EF.Functions.Like(x.dizimista.Nome, $"%{filtroNome}%", "NOCASE") ||
+            // Se for número, tenta comparação numérica exata; caso contrário, tenta Like para partial match
+            (isNumericFilter 
+                ? x.dizimista.NumeroCadastro == numeroCadastro
+                : EF.Functions.Like(x.dizimista.NumeroCadastro.ToString(), $"%{filtroNome}%", "NOCASE"))
+        )
+        .Select(x => x.oferta);
+
+        return query;
+    }
+
     public async Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
         var query = _context.Ofertas.AsQueryable();
@@ -45,19 +76,8 @@ public class OfertaRepository : IOfertaRepository
                 query = query.Where(o => o.TipoPagamento == tipo);
         }
 
-        // Aplicar filtro de nome/código do dizimista no SQL com join
-        if (!string.IsNullOrWhiteSpace(filtroNome))
-        {
-            query = query.Join(
-                _context.Dizimistas,
-                oferta => oferta.DizimistaId,
-                dizimista => dizimista.Id,
-                (oferta, dizimista) => new { oferta, dizimista }
-            )
-            .Where(x => x.dizimista.Nome.Contains(filtroNome) || 
-                        x.dizimista.NumeroCadastro.ToString().Contains(filtroNome))
-            .Select(x => x.oferta);
-        }
+        // Aplicar filtro de nome/código do dizimista
+        query = ApplyNomeFilter(query, filtroNome);
 
         return await query.SumAsync(o => o.Valor);
     }
@@ -83,19 +103,8 @@ public class OfertaRepository : IOfertaRepository
                 query = query.Where(o => o.TipoPagamento == tipo);
         }
 
-        // Aplicar filtro de nome/código do dizimista no SQL com join
-        if (!string.IsNullOrWhiteSpace(filtroNome))
-        {
-            query = query.Join(
-                _context.Dizimistas,
-                oferta => oferta.DizimistaId,
-                dizimista => dizimista.Id,
-                (oferta, dizimista) => new { oferta, dizimista }
-            )
-            .Where(x => x.dizimista.Nome.Contains(filtroNome) || 
-                        x.dizimista.NumeroCadastro.ToString().Contains(filtroNome))
-            .Select(x => x.oferta);
-        }
+        // Aplicar filtro de nome/código do dizimista
+        query = ApplyNomeFilter(query, filtroNome);
 
         var totalCount = await query.CountAsync();
         var items = await query

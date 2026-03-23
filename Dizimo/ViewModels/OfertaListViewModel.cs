@@ -44,14 +44,7 @@ public partial class OfertaListViewModel : ObservableObject
     public string FiltroNome
     {
         get => _filtroNome;
-        set
-        {
-            if (SetProperty(ref _filtroNome, value))
-            {
-                ResetarPaginacao();
-                _ = CarregarOfertasAsync();
-            }
-        }
+        set => SetProperty(ref _filtroNome, value);
     }
 
     private DateTime? _filtroDataInicio = DateTime.Today;

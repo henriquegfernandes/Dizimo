@@ -38,7 +38,8 @@
                         <Entry Placeholder="Buscar por nome ou código do dizimista" 
                                Text="{Binding FiltroNome}" 
                                Grid.Column="3"
-                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" />
+                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
+                               Completed="OnFiltroCompleted" />
                         <!-- Picker para tipo de pagamento -->
                         <Picker Grid.Column="4"
                                 ItemsSource="{Binding TiposPagamento}"

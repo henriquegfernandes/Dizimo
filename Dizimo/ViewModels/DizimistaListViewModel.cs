@@ -52,14 +52,7 @@ namespace Dizimo.ViewModels
         public string FiltroNome
         {
             get => _filtroNome;
-            set
-            {
-                if (SetProperty(ref _filtroNome, value))
-                {
-                    ResetarPaginacao();
-                    _ = CarregarDizimistasAsync();
-                }
-            }
+            set => SetProperty(ref _filtroNome, value);
         }
 
         private int _paginaAtual = 1;

@@ -28,7 +28,8 @@
                         <Entry Placeholder="Buscar por nome ou número" 
                                Text="{Binding FiltroNome}" 
                                Grid.Column="1"
-                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" />
+                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
+                               Completed="OnFiltroCompleted" />
                         <Button Grid.Column="2"
                                 Command="{Binding AplicarFiltrosCommand}" 
                                 Padding="12"
