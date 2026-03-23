@@ -87,7 +87,7 @@
                 Size="{StaticResource IconSize}" />
 
     <FontImageSource x:Key="IconClean"
-            Glyph="{x:Static f:FluentUI.delete_24_regular}"
+            Glyph="{x:Static f:FluentUI.eraser_24_regular}"
             FontFamily="{x:Static f:FluentUI.FontFamily}"
             Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource LightOnDarkBackground}}"
             Size="{StaticResource size240}" />
