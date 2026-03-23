@@ -38,6 +38,9 @@ public class OfertaRepository : IOfertaRepository
 
         // Tenta fazer parse do filtro como número para comparação numérica
         bool isNumericFilter = int.TryParse(filtroNome, out int numeroCadastro);
+        
+        // Converte para minúsculas para comparação case-insensitive
+        var filtroMinusculo = filtroNome.ToLower();
 
         query = query.Join(
             _context.Dizimistas,
@@ -46,12 +49,12 @@ public class OfertaRepository : IOfertaRepository
             (oferta, dizimista) => new { oferta, dizimista }
         )
         .Where(x =>
-            // Filtro por nome (case-insensitive usando LIKE com NOCASE)
-            EF.Functions.Like(x.dizimista.Nome, $"%{filtroNome}%", "NOCASE") ||
-            // Se for número, tenta comparação numérica exata; caso contrário, tenta Like para partial match
+            // Filtro por nome (case-insensitive)
+            x.dizimista.Nome.ToLower().Contains(filtroMinusculo) ||
+            // Se for número, tenta comparação numérica exata; caso contrário, tenta partial match
             (isNumericFilter 
                 ? x.dizimista.NumeroCadastro == numeroCadastro
-                : EF.Functions.Like(x.dizimista.NumeroCadastro.ToString(), $"%{filtroNome}%", "NOCASE"))
+                : x.dizimista.NumeroCadastro.ToString().ToLower().Contains(filtroMinusculo))
         )
         .Select(x => x.oferta);
 
