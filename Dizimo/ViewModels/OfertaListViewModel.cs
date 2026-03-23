@@ -198,24 +198,11 @@ public partial class OfertaListViewModel : ObservableObject
                 FiltroDataFim,
                 FiltroTipoPagamento,
                 FiltroNome));
-            
-            // Aplicar filtro de nome client-side se necessário
-            var items = result.Items.AsEnumerable();
-            if (!string.IsNullOrWhiteSpace(FiltroNome))
-            {
-                items = items.Where(o =>
-                {
-                    var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId).Result;
-                    return dizimista != null && (
-                        dizimista.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
-                        dizimista.NumeroCadastro.ToString().Contains(FiltroNome));
-                });
-            }
 
             _totalPaginas = result.TotalPages;
             TotalOfertas = result.TotalCount;
 
-            foreach (var oferta in items)
+            foreach (var oferta in result.Items)
             {
                 Ofertas.Add(oferta);
             }
@@ -237,7 +224,8 @@ public partial class OfertaListViewModel : ObservableObject
         ValorTotal = await _unitOfWork.Ofertas.GetTotalValorAsync(
             FiltroDataInicio,
             FiltroDataFim,
-            FiltroTipoPagamento != "Todos" ? FiltroTipoPagamento : null);
+            FiltroTipoPagamento != "Todos" ? FiltroTipoPagamento : null,
+            FiltroNome);
         OnPropertyChanged(nameof(TextoResultados));
     }
 
