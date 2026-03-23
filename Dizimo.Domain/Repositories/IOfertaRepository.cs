@@ -13,8 +13,8 @@ public interface IOfertaRepository
     Task<IEnumerable<Oferta>> GetByDateAsync(DateTime date);
     Task<IEnumerable<Oferta>> SearchAsync(DateTime? date, Guid? dizimistaId);
     Task<IEnumerable<Oferta>> GetAllAsync();
-    Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null);
-    Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null);
+    Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null);
+    Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null);
     Task AddAsync(Oferta oferta);
     Task UpdateAsync(Oferta oferta);
     Task DeleteAsync(Guid id);

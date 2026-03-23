@@ -23,5 +23,6 @@ public class GetOfertaHandlers
             query.PageSize,
             query.DataInicio,
             query.DataFim,
-            query.TipoPagamento);
+            query.TipoPagamento,
+            query.FiltroNome);
 }

@@ -27,7 +27,7 @@ public class OfertaRepository : IOfertaRepository
     }
     public async Task<IEnumerable<Oferta>> GetAllAsync() => await _context.Ofertas.ToListAsync();
 
-    public async Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null)
+    public async Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
         var query = _context.Ofertas.AsQueryable();
 
@@ -45,10 +45,24 @@ public class OfertaRepository : IOfertaRepository
                 query = query.Where(o => o.TipoPagamento == tipo);
         }
 
+        // Aplicar filtro de nome/código do dizimista no SQL com join
+        if (!string.IsNullOrWhiteSpace(filtroNome))
+        {
+            query = query.Join(
+                _context.Dizimistas,
+                oferta => oferta.DizimistaId,
+                dizimista => dizimista.Id,
+                (oferta, dizimista) => new { oferta, dizimista }
+            )
+            .Where(x => x.dizimista.Nome.Contains(filtroNome) || 
+                        x.dizimista.NumeroCadastro.ToString().Contains(filtroNome))
+            .Select(x => x.oferta);
+        }
+
         return await query.SumAsync(o => o.Valor);
     }
 
-    public async Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null)
+    public async Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 20;
@@ -67,6 +81,20 @@ public class OfertaRepository : IOfertaRepository
         {
             if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
                 query = query.Where(o => o.TipoPagamento == tipo);
+        }
+
+        // Aplicar filtro de nome/código do dizimista no SQL com join
+        if (!string.IsNullOrWhiteSpace(filtroNome))
+        {
+            query = query.Join(
+                _context.Dizimistas,
+                oferta => oferta.DizimistaId,
+                dizimista => dizimista.Id,
+                (oferta, dizimista) => new { oferta, dizimista }
+            )
+            .Where(x => x.dizimista.Nome.Contains(filtroNome) || 
+                        x.dizimista.NumeroCadastro.ToString().Contains(filtroNome))
+            .Select(x => x.oferta);
         }
 
         var totalCount = await query.CountAsync();
