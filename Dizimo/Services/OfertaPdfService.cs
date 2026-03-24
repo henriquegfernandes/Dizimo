@@ -36,7 +36,8 @@ public class OfertaPdfService(IUnitOfWork unitOfWork)
         // Filtro de tipo de pagamento
         if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
         {
-            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+            var tipoPagamentoNormalizado = tipoPagamento.Replace("Cartão", "Cartao");
+            if (Enum.TryParse<TipoPagamento>(tipoPagamentoNormalizado, out var tipo))
                 ofertasFiltradas = ofertasFiltradas.Where(o => o.TipoPagamento == tipo);
         }
 

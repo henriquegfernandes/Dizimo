@@ -75,7 +75,8 @@ public class OfertaRepository : IOfertaRepository
         // Aplicar filtro de tipo de pagamento no SQL
         if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
         {
-            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+            var tipoPagamentoNormalizado = tipoPagamento.Replace("Cartão", "Cartao");
+            if (Enum.TryParse<TipoPagamento>(tipoPagamentoNormalizado, out var tipo))
                 query = query.Where(o => o.TipoPagamento == tipo);
         }
 
@@ -102,7 +103,8 @@ public class OfertaRepository : IOfertaRepository
         // Aplicar filtro de tipo de pagamento no SQL
         if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
         {
-            if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
+            var tipoPagamentoNormalizado = tipoPagamento.Replace("Cartão", "Cartao");
+            if (Enum.TryParse<TipoPagamento>(tipoPagamentoNormalizado, out var tipo))
                 query = query.Where(o => o.TipoPagamento == tipo);
         }
 

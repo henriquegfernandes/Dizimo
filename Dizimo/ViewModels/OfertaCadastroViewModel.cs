@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+Ôªøusing System.Collections.ObjectModel;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
@@ -27,7 +27,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
     private readonly string[] _mesesArray =
     [
-        "Janeiro", "Fevereiro", "MarÁo", "Abril", "Maio", "Junho",
+        "Janeiro", "Fevereiro", "Mar√ßo", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
@@ -44,7 +44,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         
         var meses = new ObservableCollection<string>
         {
-            "Janeiro", "Fevereiro", "MarÁo", "Abril", "Maio", "Junho",
+            "Janeiro", "Fevereiro", "Mar√ßo", "Abril", "Maio", "Junho",
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
         };
         MesesNomesCollection = meses;
@@ -59,7 +59,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         {
             "PIX",
             "Dinheiro",
-            "Cart„o"
+            "Cart√£o"
         };
         TiposPagamentoCollection = tiposPagamento;
     }
@@ -225,7 +225,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             if (dizimista != null)
             {
-                // Verificar se o dizimista est· ativo
+                // Verificar se o dizimista est√° ativo
                 if (!dizimista.Ativo)
                 {
                     NomeDizimista = "Dizimista inativo";
@@ -235,7 +235,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                     var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
                     var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                     if (mainPage != null)
-                        await mainPage.DisplayAlertAsync("Aviso", $"O dizimista com cÛdigo {CodigoDizimista} est· inativo. N„o È possÌvel criar ofertas para dizimistas inativos.", "OK");
+                        await mainPage.DisplayAlertAsync("Aviso", $"O dizimista com c√≥digo {CodigoDizimista} est√° inativo. N√£o √© poss√≠vel criar ofertas para dizimistas inativos.", "OK");
                     return;
                 }
 
@@ -246,7 +246,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             }
             else
             {
-                // Dizimista n„o encontrado - mostrar opÁ„o de criar novo
+                // Dizimista n√£o encontrado - mostrar op√ß√£o de criar novo
                 NomeDizimista = string.Empty;
                 DizimistaEncontrado = false;
                 DizimistaAtivo = true; // Permitir prosseguir
@@ -257,16 +257,16 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 if (mainPage != null)
                 {
                     bool criarNovo = await mainPage.DisplayAlertAsync(
-                        "Dizimista N„o Encontrado", 
-                        $"Nenhum dizimista encontrado com o cÛdigo {CodigoDizimista}.\n\n" +
-                        $"Se vocÍ prosseguir com o cadastro, um novo dizimista ser· criado com este cÛdigo. " +
-                        $"N„o esqueÁa de inserir o nome do dizimista no campo abaixo.", 
+                        "Dizimista N√£o Encontrado", 
+                        $"Nenhum dizimista encontrado com o c√≥digo {CodigoDizimista}.\n\n" +
+                        $"Se voc√™ prosseguir com o cadastro, um novo dizimista ser√° criado com este c√≥digo. " +
+                        $"N√£o esque√ßa de inserir o nome do dizimista no campo abaixo.", 
                         "Criar Novo", 
                         "Cancelar");
 
                     if (!criarNovo)
                     {
-                        // Limpar os campos se o usu·rio cancelar
+                        // Limpar os campos se o usu√°rio cancelar
                         CodigoDizimista = 0;
                         NomeDizimista = string.Empty;
                         DizimistaEncontrado = false;
@@ -312,7 +312,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             DataOferta = oferta.Data;
             MesRef = oferta.MesReferencia;
             AnoRef = oferta.AnoReferencia;
-            TipoPagamento = oferta.TipoPagamento.ToString().Replace("Cartao", "Cart„o");
+            TipoPagamento = oferta.TipoPagamento.ToString().Replace("Cartao", "Cart√£o");
             IsEditMode = true;
             UsarRangoMeses = false;
 
@@ -322,6 +322,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 CodigoDizimista = dizimista.NumeroCadastro;
                 NomeDizimista = dizimista.Nome;
                 DizimistaEncontrado = true;
+                DizimistaAtivo = dizimista.Ativo;
             }
         }
     }
@@ -349,13 +350,13 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
     public async Task SalvarAsync()
     {
-        // ValidaÁıes iniciais
+        // Valida√ß√µes iniciais
         if (CodigoDizimista <= 0)
         {
             var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("ValidaÁ„o", "Por favor, insira um cÛdigo de dizimista.", "OK");
+                await mainPage.DisplayAlertAsync("Valida√ß√£o", "Por favor, insira um c√≥digo de dizimista.", "OK");
             return;
         }
 
@@ -364,7 +365,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("ValidaÁ„o", "O dizimista selecionado est· inativo. N„o È possÌvel criar ofertas para dizimistas inativos.", "OK");
+                await mainPage.DisplayAlertAsync("Valida√ß√£o", "O dizimista selecionado est√° inativo. N√£o √© poss√≠vel criar ofertas para dizimistas inativos.", "OK");
             return;
         }
 
@@ -373,11 +374,11 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("ValidaÁ„o", "O valor da oferta deve ser maior que zero.", "OK");
+                await mainPage.DisplayAlertAsync("Valida√ß√£o", "O valor da oferta deve ser maior que zero.", "OK");
             return;
         }
 
-        // ValidaÁ„o para range de meses
+        // Valida√ß√£o para range de meses
         if (UsarRangoMeses)
         {
             int mesInicio = MesRef;
@@ -385,7 +386,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             int anoInicio = AnoRef;
             int anoFim = AnoRefFim;
 
-            // Criar datas para comparaÁ„o
+            // Criar datas para compara√ß√£o
             var dataInicio = new DateTime(anoInicio, mesInicio, 1);
             var dataFim = new DateTime(anoFim, mesFim, 1);
 
@@ -394,12 +395,12 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
                 var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("ValidaÁ„o", "A data final deve ser maior ou igual ‡ data de inÌcio. Por favor, verifique o perÌodo selecionado.", "OK");
+                    await mainPage.DisplayAlertAsync("Valida√ß√£o", "A data final deve ser maior ou igual √† data de in√≠cio. Por favor, verifique o per√≠odo selecionado.", "OK");
                 return;
             }
         }
 
-        // Se o dizimista n„o foi encontrado, criar um novo
+        // Se o dizimista n√£o foi encontrado, criar um novo
         if (DizimistaIdProp == Guid.Empty && !DizimistaEncontrado)
         {
             if (string.IsNullOrWhiteSpace(NomeDizimista))
@@ -407,7 +408,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
                 var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
                 if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("ValidaÁ„o", "Por favor, insira o nome do dizimista.", "OK");
+                    await mainPage.DisplayAlertAsync("Valida√ß√£o", "Por favor, insira o nome do dizimista.", "OK");
                 return;
             }
 
@@ -439,7 +440,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 {
                     await mainPage.DisplayAlertAsync(
                         "Sucesso", 
-                        $"Novo dizimista '{NomeDizimista}' (cÛdigo {CodigoDizimista}) foi cadastrado com sucesso.", 
+                        $"Novo dizimista '{NomeDizimista}' (c√≥digo {CodigoDizimista}) foi cadastrado com sucesso.", 
                         "OK");
                 }
             }
@@ -458,13 +459,13 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
             var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
             if (mainPage != null)
-                await mainPage.DisplayAlertAsync("ValidaÁ„o", "Dizimista inv·lido. Por favor, verifique o cÛdigo.", "OK");
+                await mainPage.DisplayAlertAsync("Valida√ß√£o", "Dizimista inv√°lido. Por favor, verifique o c√≥digo.", "OK");
             return;
         }
 
         try
         {
-            var tipoPagamentoSelecionado = TipoPagamento.Replace("Cart„o", "Cartao");
+            var tipoPagamentoSelecionado = TipoPagamento.Replace("Cart√£o", "Cartao");
             TipoPagamento tipoPagamento = (TipoPagamento)Enum.Parse<TipoPagamento>(tipoPagamentoSelecionado);
 
             if (IsEditMode)
@@ -507,7 +508,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                     // Dividir valor igualmente entre os meses
                     decimal valorPorMes = qtdMeses > 0 ? Valor / qtdMeses : Valor;
 
-                    // Criar ofertas para cada mÍs no range
+                    // Criar ofertas para cada m√™s no range
                     mesTemp = mesInicio;
                     anoTemp = anoInicio;
                     while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
@@ -534,7 +535,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 }
                 else
                 {
-                    // Oferta ˙nica
+                    // Oferta √∫nica
                     var novaOferta = new Oferta
                     {
                         Id = Guid.NewGuid(),
@@ -550,29 +551,43 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 }
             }
 
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
+            // Ap√≥s salvar, mostrar alerta apenas ao criar nova oferta
+            if (!IsEditMode)
             {
-                var resultado = await mainPage.DisplayAlertAsync(
-                    "Sucesso",
-                    "Oferta(s) salva(s) com sucesso! Deseja cadastrar outra oferta?",
-                    "Sim",
-                    "N„o");
-
-                if (resultado)
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
+                if (mainPage != null)
                 {
-                    // Limpar o formul·rio para novo cadastro
-                    LimparCampos();
+                    var resultado = await mainPage.DisplayAlertAsync(
+                        "Sucesso",
+                        "Oferta(s) salva(s) com sucesso! Deseja cadastrar outra oferta?",
+                        "Sim",
+                        "N√£o");
+
+                    if (resultado)
+                    {
+                        // Limpar o formul√°rio para novo cadastro
+                        LimparCampos();
+                    }
+                    else
+                    {
+                        // Ir para a lista de ofertas
+                        await Shell.Current.GoToAsync("///ofertas", true);
+                    }
                 }
                 else
                 {
-                    // Ir para a lista de ofertas
                     await Shell.Current.GoToAsync("///ofertas", true);
                 }
             }
             else
             {
+                // Em modo edi√ß√£o, voltar direto para a lista
+                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
+                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
+                if (mainPage != null)
+                    await mainPage.DisplayAlertAsync("Sucesso", "Oferta atualizada com sucesso!", "OK");
+                
                 await Shell.Current.GoToAsync("///ofertas", true);
             }
         }
@@ -596,9 +611,9 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             if (mainPage != null)
             {
                 bool confirm = await mainPage.DisplayAlertAsync(
-                    "ConfirmaÁ„o",
+                    "Confirma√ß√£o",
                     $"Deseja excluir a oferta de valor {Valor:C} em {DataOferta:dd/MM/yyyy}?",
-                    "Sim", "N„o");
+                    "Sim", "N√£o");
 
                 if (confirm)
                 {
@@ -606,7 +621,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                     {
                         await _unitOfWork.Ofertas.DeleteAsync(Id);
                         await _unitOfWork.SaveChangesAsync();
-                        await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluÌda com sucesso.", "OK");
+                        await mainPage.DisplayAlertAsync("Sucesso", "Oferta exclu√≠da com sucesso.", "OK");
                         await Shell.Current.GoToAsync("///ofertas", true);
                     }
                     catch (Exception ex)
@@ -623,7 +638,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     {
         try
         {
-            var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>()?? throw new InvalidOperationException("OfertaExcelService n„o est· registrado no contÍiner de serviÁos.");
+            var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>()?? throw new InvalidOperationException("OfertaExcelService n√£o est√° registrado no cont√™iner de servi√ßos.");
 
             var templateStream = OfertaExcelService.GerarModelo();
             var fileName = $"oferta_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -656,7 +671,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
             if (mainPageSuccess != null)
                 await mainPageSuccess.DisplayAlertAsync("Sucesso", 
-                    $"Planilha modelo baixada com sucesso!\n\nLocalizaÁ„o: {filePath}", "OK");
+                    $"Planilha modelo baixada com sucesso!\n\nLocaliza√ß√£o: {filePath}", "OK");
 #endif
         }
         catch (Exception ex)
@@ -690,7 +705,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 var windowsNull = Microsoft.Maui.Controls.Application.Current?.Windows;
                 var mainPageNull = windowsNull is { Count: > 0 } ? windowsNull[0].Page : null;
                 if (mainPageNull != null)
-                    await mainPageNull.DisplayAlertAsync("Erro", "ServiÁo de Excel n„o est· disponÌvel.", "OK");
+                    await mainPageNull.DisplayAlertAsync("Erro", "Servi√ßo de Excel n√£o est√° dispon√≠vel.", "OK");
                 return;
             }
 
@@ -707,9 +722,9 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 if (mainPage != null)
                 {
                     bool confirmar = await mainPage.DisplayAlertAsync(
-                        "Confirmar ImportaÁ„o",
+                        "Confirmar Importa√ß√£o",
                         $"{resultado.OfertasImportadas.Count} oferta(s) encontrada(s). Deseja importar?",
-                        "Sim", "N„o");
+                        "Sim", "N√£o");
 
                     if (confirmar)
                     {

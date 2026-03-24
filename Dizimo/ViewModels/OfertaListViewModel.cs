@@ -113,7 +113,7 @@ public partial class OfertaListViewModel : ObservableObject
         get => $"{Ofertas.Count} de {TotalOfertas} resultados";
     }
 
-    public List<string> TiposPagamento { get; } = [ "Todos", "PIX", "Dinheiro", "Cartao" ];
+    public List<string> TiposPagamento { get; } = [ "Todos", "PIX", "Dinheiro", "Cartão" ];
 
     private string _filtroTipoPagamento = "Todos";
     public string FiltroTipoPagamento
