@@ -1,174 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:local="clr-namespace:Dizimo.Converters"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             xmlns:fonts="clr-namespace:Dizimo.Resources.Fonts"
+             xmlns:behaviors="clr-namespace:Dizimo.Behaviors"
              xmlns:domain="clr-namespace:Dizimo.Domain.Entities;assembly=Dizimo.Domain"
              x:Class="Dizimo.Pages.DizimistaListPage"
              x:DataType="vm:DizimistaListViewModel">
-    <ContentPage.Resources>
+    <UserControl.Resources>
         <ResourceDictionary>
-            <local:NullToBoolConverter x:Key="NullToBoolConverter" />
+            <local:NullOrEmptyToBoolConverter x:Key="NullOrEmptyToBoolConverter" />
             <local:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
-            <local:AtivoToStatusConverter x:Key="AtivoToStatusConverter" />
+            <local:BoolToTextConverter x:Key="BoolToTextConverter" />
+            <local:DatePtBrConverter x:Key="DatePtBrConverter" />
+            <local:DizimistaIsSelectedConverter x:Key="DizimistaIsSelectedConverter" />
         </ResourceDictionary>
-    </ContentPage.Resources>
-    <Grid>
-        <ScrollView>
-            <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
-                <StackLayout Padding="16" Spacing="12">
+    </UserControl.Resources>
+    <Grid HorizontalAlignment="Stretch" 
+          VerticalAlignment="Stretch">
+        <ScrollViewer Padding="0,0,0,40">
+            <StackPanel Spacing="16" Margin="16">
+                <StackPanel Margin="16" Spacing="12">
+                    <TextBlock Text="Gerenciamento de Dizimistas" 
+                               FontSize="24" 
+                               FontWeight="Bold" 
+                               Foreground="{DynamicResource BrushPrimary}" />
                     <!-- Filtro unificado -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,*,Auto,Auto">
-                        <Picker ItemsSource="{Binding StatusOptions}" 
+                    <Grid ColumnSpacing="16" ColumnDefinitions="Auto,*,Auto,Auto">
+                        <ComboBox ItemsSource="{Binding StatusOptions}" 
                                 SelectedItem="{Binding StatusSelecionado}"
-                                Grid.Column="0"
-                                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"/>
-                        <Entry Placeholder="Buscar por nome ou número" 
+                                VerticalAlignment="Center"
+                                Grid.Column="0"/>
+                        <TextBox PlaceholderText="Buscar por nome ou número" 
                                Text="{Binding FiltroNome}" 
-                               Grid.Column="1"
-                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
-                               Completed="OnFiltroCompleted" />
+                               VerticalAlignment="Center"
+                               KeyDown="OnFiltroKeyDown"
+                               LostFocus="OnFiltroLostFocus"
+                               Grid.Column="1"/>
                         <Button Grid.Column="2"
-                                Command="{Binding AplicarFiltrosCommand}" 
+                                Command="{Binding AplicarFiltrosCommand}"
+                                Classes="Secondary"
+                                Content="Filtrar"
                                 Padding="12"
-                                VerticalOptions="Center"
-                                HorizontalOptions="Center"
-                                ImageSource="{StaticResource IconSearch}"
-                                ToolTipProperties.Text="Filtrar"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
                                 CornerRadius="6" />
-                        <Button Grid.Column="3"
-                                Command="{Binding LimparFiltrosCommand}" 
+                         <Button Grid.Column="3"
+                                Command="{Binding LimparFiltrosCommand}"
+                                Classes="Secondary"
+                                Content="Limpar"
                                 Padding="12"
-                                VerticalOptions="Center"
-                                HorizontalOptions="Center"
-                                ImageSource="{StaticResource IconClean}"
-                                ToolTipProperties.Text="Limpar Filtros"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
                                 CornerRadius="6" />
                     </Grid>
                     <!-- Linha de botões de exportação/impressão -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,*">
-                        <Button Text="Exportar"
-                                Command="{Binding ExportarCommand}" 
-                                ImageSource="{StaticResource IconExport}" 
-                                ToolTipProperties.Text="Exportar em Excel" 
-                                CornerRadius="8"
-                                Padding="10"
-                                Grid.Column="0"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        <Button Text="Imprimir"
-                                Command="{Binding ImprimirCommand}" 
-                                ImageSource="{StaticResource IconPrint}" 
-                                ToolTipProperties.Text="Imprimir em HTML"
-                                CornerRadius="8"
-                                Padding="10"
-                                Grid.Column="1"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
+                    <Grid ColumnSpacing="16" ColumnDefinitions="*,*">
+                        <Button Classes="Primary"
+                               Content="Exportar"
+                               Command="{Binding ExportarCommand}" 
+                               CornerRadius="8"
+                               Padding="10"
+                               Grid.Column="0"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                        <Button Classes="Primary"
+                               Content="Imprimir"
+                               Command="{Binding ImprimirCommand}" 
+                               CornerRadius="8"
+                               Padding="10"
+                               Grid.Column="1"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
                     </Grid>
                     <!-- Linha de título da lista -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,2*,3*,2*,1*,1*" Padding="8">
-                        <Label Text="" Grid.Column="0" />
-                        <Label Text="Nº Cadastro" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Nome" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Nascimento" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Status" Grid.Column="4" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="" Grid.Column="5" />
+                    <Grid ColumnSpacing="16" ColumnDefinitions="0.5*,1*,3*,2*,2*,Auto,Auto">
+                        <TextBlock Text="" Grid.Column="0" />
+                        <TextBlock Text="Nº Cadastro" Grid.Column="1" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Nome" Grid.Column="2" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Nascimento" Grid.Column="3" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Status" Grid.Column="4" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="         " Grid.Column="5" />
+                        <TextBlock Text="         " Grid.Column="6" />
                     </Grid>
-                    <!-- Lista paginada com infinite scroll e animação -->
-                    <CollectionView x:Name="DizimistasCollectionView"
-                                    ItemsSource="{Binding Dizimistas}"
-                                    RemainingItemsThreshold="5"
-                                    RemainingItemsThresholdReachedCommand="{Binding CarregarMaisDizimistasCommand}"
-                                    SelectionMode="Multiple"
-                                    SelectionChanged="OnSelectionChanged"
-                                    Margin="0,0,0,8">
-                        <CollectionView.ItemTemplate>
+                    <!-- Lista com ItemsControl -->
+                    <ItemsControl x:Name="DizimistasCollectionView"
+                                 ItemsSource="{Binding Dizimistas}"
+                                 Margin="0,0,0,8">
+                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="domain:Dizimista">
-                                <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="1*,2*,3*,2*,1*,1*" Padding="8">
-                                    <Label Text="{Binding NumeroCadastro}" Grid.Column="1" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding Nome}" Grid.Column="2" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding DataNascimento, StringFormat='{0:dd/MM/yyyy}'}" Grid.Column="3" HorizontalTextAlignment="Center" />
-                                    <Label Grid.Column="4" Text="{Binding Ativo, Converter={StaticResource AtivoToStatusConverter}}" HorizontalTextAlignment="Center" />
+                                <Grid ColumnSpacing="16" ColumnDefinitions="0.5*,1*,3*,2*,2*,Auto,Auto" Margin="0,8">
+                                    <!-- Checkbox para seleção -->
+                                    <CheckBox Grid.Column="0"
+                                             behaviors:CheckBoxSelectionBehavior.Item="{Binding}"
+                                             behaviors:CheckBoxSelectionBehavior.SelectedItems="{Binding $parent[ItemsControl].DataContext.DizimistasSelecionados}"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding NumeroCadastro}" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Nome}" Grid.Column="2" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding DataNascimento, Converter={StaticResource DatePtBrConverter}}" Grid.Column="3" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding Ativo, Converter={StaticResource BoolToTextConverter}}" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <!-- Botão de visualizar com ícone de olho -->
                                     <Button Grid.Column="5"
-                                            Clicked="OnVerDetalhesDizimistaClicked"
-                                            CommandParameter="{Binding .}"
-                                            ImageSource="{StaticResource IconEye}"
-                                            Padding="0"
+                                           Command="{Binding $parent[ItemsControl].DataContext.VerDetalhesDizimistaCommand}"
+                                           CommandParameter="{Binding}"
+                                           Padding="8,4"
+                                           CornerRadius="6"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           ToolTip.Tip="Visualizar"
+                                           Classes="Primary">
+                                        <TextBlock Text="👁" FontSize="14" Foreground="White" />
+                                    </Button>
+                                    <!-- Botão de editar com ícone de lápis -->
+                                    <Button Grid.Column="6"
+                                            Command="{Binding $parent[ItemsControl].DataContext.EditarDizimistaCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="8,4"
                                             CornerRadius="6"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center"/>
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Editar"
+                                            Classes="Primary">
+                                        <TextBlock Text="✏️" FontSize="14" Foreground="White" />
+                                    </Button>
                                 </Grid>
                             </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <!-- Linha de resultados -->
-                    <Label Text="{Binding TextoResultados}" 
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center"
-                           FontAttributes="Bold"
-                           Margin="0,8" />
-
+                    <TextBlock Text="{Binding TextoResultados}" 
+                             HorizontalAlignment="Center"
+                             TextAlignment="Center"
+                             FontWeight="Bold"
+                             Margin="0,8" />
                     <!-- Botão Carregar Mais -->
-                    <Button Text="Carregar Mais" 
-                            Command="{Binding CarregarMaisDizimistasCommand}"
-                            IsVisible="{Binding TemProxima}"
-                            Margin="0,12,0,8"
-                            Padding="12"
-                            HorizontalOptions="Center" />
-
-                </StackLayout>
-            </VerticalStackLayout>
-        </ScrollView>
-
+                    <Button Classes="Primary"
+                           Content="Carregar Mais" 
+                           Command="{Binding CarregarMaisDizimistasCommand}"
+                           IsVisible="{Binding TemProxima}"
+                           Margin="0,12,0,8"
+                           Padding="12"
+                           HorizontalAlignment="Center" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
         <!-- Botões flutuantes de ação em massa (excluir, ativar/inativar, selecionar todos) - Centralizados -->
-        <Grid ColumnSpacing="12" ColumnDefinitions="*,*,*" Padding="12" VerticalOptions="End" HorizontalOptions="Center" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24">
-            <Button Text="Selecionar todos"
-                    Clicked="OnSelecionarTodosClicked"
-                    Padding="12"
-                    CornerRadius="8"
-                    Grid.Column="0"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    ImageSource="{StaticResource IconSelect}"/>
-
-            <Button Text="Excluir" 
-                    Command="{Binding ExcluirDizimistasSelecionadosCommand}" 
-                    Padding="12"
-                    CornerRadius="8"
-                    Grid.Column="1"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    ImageSource="{StaticResource IconDelete}"/>
-
-            <Button Text="Ativar/Inativar" 
-                    Command="{Binding InativarDizimistasSelecionadosCommand}" 
-                    Padding="12"
-                    CornerRadius="8"
-                    Grid.Column="2"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    ImageSource="{StaticResource IconSwitch}"/>
+        <Grid ColumnSpacing="12" ColumnDefinitions="*,*,*" VerticalAlignment="Bottom" HorizontalAlignment="Center" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}, Mode=OneWay}" Margin="0,0,0,24">
+            <Button Content="{Binding TextoBotaoSelecao}"
+                   Classes="Secondary"
+                   Command="{Binding SelecionarTodosCommand}"
+                   Padding="12"
+                   CornerRadius="8"
+                   Grid.Column="0"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+            <Button Content="Excluir" 
+                   Classes="Primary"
+                   Command="{Binding ExcluirDizimistasSelecionadosCommand}" 
+                   Padding="12"
+                   CornerRadius="8"
+                   Grid.Column="1"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+            <Button Content="Ativar/Inativar" 
+                   Classes="Primary"
+                   Command="{Binding InativarDizimistasSelecionadosCommand}" 
+                   Padding="12"
+                   CornerRadius="8"
+                   Grid.Column="2"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
         </Grid>
-
         <!-- Botão flutuante de adicionar dizimista -->
-        <Button
+        <Button Classes="Floating"
             Command="{Binding NovoDizimistaCommand}"
             IsEnabled="True"
-            ImageSource="{StaticResource IconAdd}"
-            CornerRadius="28"
-            Padding="0"
-            HeightRequest="56"
-            WidthRequest="56"
-            VerticalOptions="End"
-            HorizontalOptions="End"
-            Margin="24"
-            BackgroundColor="{DynamicResource Primary}"
-            TextColor="White"
-            FontSize="28"
-            SemanticProperties.Description="Adicionar dizimista" />
+            Content="+"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Margin="24" />
     </Grid>
-</ContentPage>
+</UserControl>

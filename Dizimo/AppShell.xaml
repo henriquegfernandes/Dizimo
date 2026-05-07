@@ -1,90 +1,200 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="Dizimo.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:sf="clr-namespace:Syncfusion.Maui.Toolkit.SegmentedControl;assembly=Syncfusion.Maui.Toolkit"
-    xmlns:pages="clr-namespace:Dizimo.Pages"
-    xmlns:vm="clr-namespace:Dizimo.ViewModels"
-    x:DataType="vm:ShellViewModel"
-    Shell.FlyoutBehavior="Flyout"
-    FlyoutHeaderBehavior="CollapseOnScroll">
-
-    <ShellContent
-        Title="Setup"
-        Icon="login.png"
-        ContentTemplate="{DataTemplate pages:SetupPage}"
-        Route="setup"
-        IsVisible="False"/>
-
-    <ShellContent
-        Title="Login"
-        Icon="login.png"
-        ContentTemplate="{DataTemplate pages:LoginPage}"
-        Route="login"
-        IsVisible="False"/>
-
-    <ShellContent
-        Title="Dashboard"
-        Icon="{StaticResource IconDashboard}"
-        ContentTemplate="{DataTemplate pages:MainPage}"
-        Route="main" />
-
-    <ShellContent
-        Title="Dizimistas"
-        Icon="{StaticResource IconPerson}"
-        ContentTemplate="{DataTemplate pages:DizimistaListPage}"
-        Route="dizimistas" />
-
-    <ShellContent
-        Title="Ofertas"
-        Icon="{StaticResource IconMoney}"
-        ContentTemplate="{DataTemplate pages:OfertaListPage}"
-        Route="ofertas" />
-
-    <ShellContent
-        Title="Usuários"
-        Icon="{StaticResource IconUsers}"
-        ContentTemplate="{DataTemplate pages:UsuarioListPage}"
-        Route="usuarios"
-        IsVisible="{Binding IsAdmin}" />
-
-    <ShellContent
-        Title="Configuração de Backup"
-        Icon="{StaticResource IconConfig}"
-        ContentTemplate="{DataTemplate pages:BackupConfigPage}"
-        Route="backupconfig"
-        IsVisible="{Binding IsAdmin}" />
-
-    <Shell.FlyoutHeader>
-        <StackLayout Padding="15" Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
-            <Image Source="avatar.png" HeightRequest="32" WidthRequest="32" VerticalOptions="Center" />
-            <StackLayout Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
-                <Label Text="Usuário: " FontAttributes="Bold" />
-                <Label Text="{Binding UsuarioNome}" />
-                <Label Text="{Binding UsuarioPerfil}" FontSize="12" TextColor="Gray" />
-            </StackLayout>
-        </StackLayout>
-    </Shell.FlyoutHeader>
-
-    <Shell.FlyoutFooter>
-        <VerticalStackLayout Padding="15" Spacing="10">
-            <Grid>
-                <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center" Spacing="15">
-                    <Button Text="Logout" Command="{Binding LogoutCommand}" />
-                    <sf:SfSegmentedControl x:Name="ThemeSegmentedControl" 
-                        VerticalOptions="Center" HorizontalOptions="Center" SelectionChanged="SfSegmentedControl_SelectionChanged"
-                        SegmentWidth="40" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}">
-                        <sf:SfSegmentedControl.ItemsSource>
-                            <x:Array Type="{x:Type sf:SfSegmentItem}">
-                                <sf:SfSegmentItem ImageSource="{StaticResource IconLight}" SemanticProperties.Description="Light mode" SelectedSegmentBackground="#FF0000"/>
-                                <sf:SfSegmentItem ImageSource="{StaticResource IconDark}" SemanticProperties.Description="Dark mode" SelectedSegmentBackground="#FF0000"/>
-                            </x:Array>
-                        </sf:SfSegmentedControl.ItemsSource>
-                    </sf:SfSegmentedControl>
-                </StackLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:converters="clr-namespace:Dizimo.Converters"
+            x:Class="Dizimo.AppShell">
+    <UserControl.Resources>
+        <converters:ViewModelToViewConverter x:Key="ViewModelToViewConverter" />
+        <converters:BoolToWidthConverter x:Key="BoolToWidthConverter" />
+    </UserControl.Resources>
+    <Grid RowDefinitions="60,*" ColumnDefinitions="*">
+        <!-- Header -->
+        <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource BrushPrimary}" Padding="16">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <!-- Menu Button -->
+                <Button Grid.Column="0"
+                        Classes="Primary"
+                        Command="{Binding ToggleMenuCommand}"
+                        FontSize="22"
+                        Background="Transparent"
+                        BorderThickness="1"
+                        BorderBrush="{DynamicResource BrushSecondary}"
+                        Padding="0"
+                        Height="36"
+                        Width="36"
+                        ToolTip.Tip="Alternar Menu">
+                    <TextBlock Foreground="{DynamicResource BrushSecondary}"
+                               FontSize="22"
+                               TextAlignment="Center"
+                               VerticalAlignment="Center" 
+                               Padding="0,0,0,2">
+                        ☰ 
+                    </TextBlock>
+                </Button>
+                
+                <!-- App Title -->
+                <TextBlock Grid.Column="1"
+                          Text="Dizimo" 
+                          FontSize="20" 
+                          FontWeight="Bold" 
+                          Foreground="{DynamicResource BrushSecondary}"
+                          VerticalAlignment="Center"
+                          Margin="12,0,0,0" />
+                
+                <!-- Spacer -->
+                <Rectangle Grid.Column="2" Fill="Transparent" />
+                
+                <!-- User Info -->
+                <StackPanel Grid.Column="3" 
+                           Spacing="2"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding UsuarioNome}" 
+                              FontSize="13" 
+                              FontWeight="SemiBold"
+                              Foreground="{DynamicResource BrushSecondary}"
+                              TextAlignment="Right" />
+                    <TextBlock Text="{Binding UsuarioPerfil}" 
+                              FontSize="11" 
+                              Foreground="{DynamicResource BrushSecondary}"
+                              TextAlignment="Right"
+                              Opacity="0.85" />
+                </StackPanel>
             </Grid>
-        </VerticalStackLayout>
-    </Shell.FlyoutFooter>
-
-</Shell>
+        </Border>
+        
+        <!-- Sidebar + Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+            <!-- Sidebar Navigation -->
+            <Border Grid.Column="0" 
+                   Background="{DynamicResource BrushBackgroundSecondary}"
+                   BorderBrush="{DynamicResource BrushBorder}"
+                   BorderThickness="0,0,1,0"
+                   Width="{Binding IsMenuExpanded, Converter={StaticResource BoolToWidthConverter}, FallbackValue=260}"
+                   IsVisible="{Binding IsMenuExpanded}">
+                <Grid RowDefinitions="*,Auto">
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                         <StackPanel Spacing="0" Margin="0">
+                              <!-- Dashboard -->
+                               <Button Content="📊   Dashboard" 
+                                      Classes="NavButton"
+                                      Command="{Binding NavigateToDashboardCommand}" 
+                                      Padding="16,14"
+                                     BorderThickness="0" 
+                                     Background="Transparent" 
+                                     Foreground="{DynamicResource BrushTextPrimary}" 
+                                     HorizontalAlignment="Stretch" 
+                                     HorizontalContentAlignment="Left"
+                                     FontSize="18" 
+                                     CornerRadius="0" />
+                             
+                             <Rectangle Height="1" Fill="{DynamicResource BrushDivider}" />
+                             
+                              <!-- Dizimistas -->
+                              <Button Content="👤   Dizimistas" 
+                                     Classes="NavButton"
+                                     Command="{Binding NavigateToDizimistasCommand}" 
+                                     Padding="16,14" 
+                                     BorderThickness="0" 
+                                     Background="Transparent" 
+                                     Foreground="{DynamicResource BrushTextPrimary}" 
+                                     HorizontalAlignment="Stretch" 
+                                     HorizontalContentAlignment="Left"
+                                     FontSize="18" 
+                                     CornerRadius="0" />
+                             
+                             <Rectangle Height="1" Fill="{DynamicResource BrushDivider}" />
+                             
+                              <!-- Ofertas -->
+                              <Button Content="💰   Ofertas" 
+                                     Classes="NavButton"
+                                     Command="{Binding NavigateToOfertasCommand}" 
+                                     Padding="16,14" 
+                                     BorderThickness="0" 
+                                     Background="Transparent" 
+                                     Foreground="{DynamicResource BrushTextPrimary}" 
+                                     HorizontalAlignment="Stretch" 
+                                     HorizontalContentAlignment="Left"
+                                     FontSize="18" 
+                                     CornerRadius="0" />
+                             
+                             <Rectangle Height="1" Fill="{DynamicResource BrushDivider}" IsVisible="{Binding IsAdmin}" />
+                             
+                              <!-- Usuarios (Admin Only) -->
+                              <Button Content="👥   Usuários" 
+                                     Classes="NavButton"
+                                     Command="{Binding NavigateToUsuariosCommand}" 
+                                     Padding="16,14" 
+                                     BorderThickness="0" 
+                                     Background="Transparent" 
+                                     Foreground="{DynamicResource BrushTextPrimary}" 
+                                     HorizontalAlignment="Stretch" 
+                                     HorizontalContentAlignment="Left"
+                                     IsVisible="{Binding IsAdmin}"
+                                     FontSize="18" 
+                                     CornerRadius="0" />
+                             
+                             <Rectangle Height="1" Fill="{DynamicResource BrushDivider}" IsVisible="{Binding IsAdmin}" />
+                             
+                              <!-- Configurações (Admin Only) -->
+                              <Button Content="🔧   Configurações"
+                                     Classes="NavButton"
+                                     Command="{Binding NavigateToBackupCommand}" 
+                                     Padding="16,14" 
+                                     BorderThickness="0" 
+                                     Background="Transparent" 
+                                     Foreground="{DynamicResource BrushTextPrimary}" 
+                                     HorizontalAlignment="Stretch" 
+                                     HorizontalContentAlignment="Left"
+                                     IsVisible="{Binding IsAdmin}"
+                                     FontSize="18"
+                                     CornerRadius="0">
+                              </Button>
+                         </StackPanel>
+                    </ScrollViewer>
+                    
+                    <!-- Footer: Theme + Logout -->
+                    <Border Grid.Row="1" 
+                           BorderBrush="{DynamicResource BrushBorder}" 
+                           BorderThickness="0,1,0,0"
+                           Padding="16">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
+                            <!-- Logout Button -->
+                            <Button Grid.Column="0"
+                                   Content="Logout" 
+                                   Classes="Primary"
+                                   Command="{Binding LogoutCommand}" 
+                                   Padding="10,8" 
+                                   HorizontalAlignment="Stretch" 
+                                   HorizontalContentAlignment="Center" 
+                                   FontSize="12" 
+                                   CornerRadius="4" />
+                            
+                            <!-- Theme Toggle Button -->
+                             <Button Grid.Column="1"
+                                    Classes="Primary"
+                                    Command="{Binding ToggleThemeCommand}"
+                                    Padding="12,8"
+                                    CornerRadius="4"
+                                    Margin="12,0,0,0"
+                                    ToolTip.Tip="Alternar tema">
+                                 <TextBlock Text="{Binding IsDarkTheme, Converter={StaticResource BoolToThemeIconConverter}}"
+                                           FontSize="16"
+                                           Foreground="{DynamicResource BrushSecondary}"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                             </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+            
+            <!-- Main Content -->
+            <Panel Grid.Column="1" Background="{DynamicResource BrushBackgroundPrimary}">
+                <ContentControl Content="{Binding CurrentPage, Converter={StaticResource ViewModelToViewConverter}}" 
+                               HorizontalAlignment="Stretch" 
+                               VerticalAlignment="Stretch" />
+            </Panel>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,29 +1,28 @@
-using Microsoft.Maui.Controls;
+using Avalonia.Controls;
+using Avalonia.Input;
 
 namespace Dizimo.Behaviors;
 
-public class WhatsAppFormattingBehavior : Behavior<Entry>
+public class WhatsAppFormattingBehavior
 {
-    protected override void OnAttachedTo(Entry entry)
+    public static void Attach(TextBox textBox)
     {
-        entry.TextChanged += OnEntryTextChanged;
-        base.OnAttachedTo(entry);
+        textBox.KeyDown += OnKeyDown;
     }
 
-    protected override void OnDetachingFrom(Entry entry)
+    public static void Detach(TextBox textBox)
     {
-        entry.TextChanged -= OnEntryTextChanged;
-        base.OnDetachingFrom(entry);
+        textBox.KeyDown -= OnKeyDown;
     }
 
-    private void OnEntryTextChanged(object? sender, TextChangedEventArgs e)
+    private static void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (sender is not Entry entry) return;
+        if (sender is not TextBox textBox) return;
 
-        // Remove caracteres não numéricos
-        var cleanedText = new string(e.NewTextValue.Where(char.IsDigit).ToArray());
+        // Remove caracteres nÃ£o numÃ©ricos
+        var cleanedText = new string((textBox.Text ?? "").Where(char.IsDigit).ToArray());
 
-        // Limitar a 11 dígitos
+        // Limitar a 11 dÃ­gitos
         cleanedText = cleanedText.Length > 11 ? cleanedText.Substring(0, 11) : cleanedText;
 
         // Formatar: (99) 99999-9999
@@ -45,9 +44,12 @@ public class WhatsAppFormattingBehavior : Behavior<Entry>
             }
         }
 
-        if (entry.Text != formattedText)
+        if (textBox.Text != formattedText)
         {
-            entry.Text = formattedText;
+            textBox.Text = formattedText;
         }
     }
 }
+
+
+

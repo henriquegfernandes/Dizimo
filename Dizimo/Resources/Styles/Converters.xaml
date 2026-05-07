@@ -1,10 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<ResourceDictionary 
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:converters="clr-namespace:Dizimo.Converters">
-
-    <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
-    <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-
+<?xml version="1.0" encoding="UTF-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:conv="clr-namespace:Dizimo.Converters">
+    <!-- Avalonia UI Resource Dictionary -->
+    <!-- Converters -->
+    <conv:DizimistaIdToNomeConverter x:Key="DizimistaIdToNomeConverter" />
 </ResourceDictionary>

@@ -1,17 +1,10 @@
-using Dizimo.ViewModels;
-
+using Avalonia.Markup.Xaml;
 namespace Dizimo.Pages;
-
-public partial class DizimistaCadastroPage : ContentPage
+public class DizimistaCadastroPage : UserControl
 {
-    public DizimistaCadastroPage(DizimistaCadastroViewModel viewModel)
+    public DizimistaCadastroPage()
     {
-        InitializeComponent();
-        BindingContext = viewModel;
-    }
-
-    private async void OnBackButtonClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("///dizimistas", true);
+        AvaloniaXamlLoader.Load(this);
+        System.Diagnostics.Debug.WriteLine("[INFO] DizimistaCadastroPage inicializado");
     }
 }

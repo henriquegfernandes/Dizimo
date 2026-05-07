@@ -1,85 +1,61 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Dizimo.Services;
 
 namespace Dizimo.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    public static string UsuarioNome => SessaoService.UsuarioId != null ? GetUsuarioNome() : "Não logado";
-    public static string UsuarioPerfil => SessaoService.Perfil?.ToString() ?? "";
+    private readonly IAuthenticationService _authenticationService;
 
-    private static string GetUsuarioNome()
+    public static string UsuarioNomeStatic => SessaoService.UsuarioNome ?? "Não logado";
+    public static string UsuarioPerfilStatic => SessaoService.Perfil?.ToString() ?? "";
+    public static bool IsAdminStatic => SessaoService.IsAdmin;
+
+    private string _usuarioNome = string.Empty;
+    public string UsuarioNome
     {
-        var app = Microsoft.Maui.Controls.Application.Current as App;
-        if (app?.Services == null)
-            return "Usuário";
+        get => SessaoService.UsuarioNome ?? "Não logado";
+    }
 
-        var repo = app.Services.GetService<Dizimo.Domain.Repositories.IUsuarioRepository>();
-        if (repo == null || SessaoService.UsuarioId == null)
-            return "Usuário";
+    private string _usuarioPerfil = string.Empty;
+    public string UsuarioPerfil
+    {
+        get => SessaoService.Perfil?.ToString() ?? "";
+    }
 
-        var usuario = repo.GetByIdAsync(SessaoService.UsuarioId.Value).Result;
-        return usuario?.Nome ?? "Usuário";
+    public bool IsAdmin
+    {
+        get => SessaoService.IsAdmin;
+    }
+
+    public MainViewModel(IAuthenticationService authenticationService)
+    {
+        _authenticationService = authenticationService;
+    }
+
+    /// <summary>
+    /// Define o callback a ser executado após logout bem-sucedido (DEPRECATED - usar IAuthenticationService)
+    /// </summary>
+    public void SetOnLogout(Func<Task> onLogout)
+    {
+        // Este método mantém compatibilidade com código legado
+        // A configuração real é feita via IAuthenticationService no AppRootViewModel
+        System.Diagnostics.Debug.WriteLine("[AUTH] SetOnLogout (deprecated) chamado - use IAuthenticationService.SetOnLogoutComplete");
     }
 
     [RelayCommand]
-    public static async Task LogoutAsync()
+    public async Task LogoutAsync()
     {
         try
         {
-            SessaoService.Logout();
-
-            if (Microsoft.Maui.Controls.Application.Current is App app)
-            {
-                var unitOfWork = app.Services.GetService<Dizimo.Domain.Repositories.IUnitOfWork>();
-                if (unitOfWork != null)
-                {
-                    await unitOfWork.ClearDbContextAsync();
-                }
-
-                // Obter a janela de forma segura
-                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
-                if (window != null)
-                {
-                    var newShell = new AppShell();
-                    window.Page = newShell;
-
-                    // Navegar usando o novo Shell para evitar inconsistências
-                    if (newShell.CurrentState?.Location != null)
-                    {
-                        await newShell.GoToAsync("login");
-                    }
-                    else
-                    {
-                        await Shell.Current.GoToAsync("login");
-                    }
-                }
-            }
+            System.Diagnostics.Debug.WriteLine("[AUTH] Logout iniciado");
+            // Usa o IAuthenticationService para realizar logout
+            await _authenticationService.PerformLogoutAsync();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao fazer logout: {ex.Message}");
-            
-            if (Microsoft.Maui.Controls.Application.Current is App app)
-            {
-                var window = app.Windows.Count > 0 ? app.Windows[0] : null;
-                if (window != null)
-                {
-                    var newShell = new AppShell();
-                    window.Page = newShell;
-                    
-                    if (newShell.CurrentState?.Location != null)
-                    {
-                        await newShell.GoToAsync("login");
-                    }
-                    else
-                    {
-                        await Shell.Current.GoToAsync("login");
-                    }
-                }
-            }
         }
     }
-
-    public static bool IsAdmin => SessaoService.IsAdmin;
 }

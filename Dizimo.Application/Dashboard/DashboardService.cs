@@ -33,8 +33,8 @@ public class DashboardService
     }
 
     /// <summary>
-    /// Retorna estatísticas de dizimistas agrupados por período da última oferta
-    /// Verde: últimos 2 meses
+    /// Retorna estatÃ­sticas de dizimistas agrupados por perÃ­odo da Ãºltima oferta
+    /// Verde: Ãšltimos 2 meses
     /// Amarelo: 2 a 6 meses
     /// Laranja: 6 meses a 1 ano
     /// Vermelho: mais de 1 ano
@@ -50,10 +50,10 @@ public class DashboardService
         var hoje = DateTime.Today;
         var dados = new List<DizimistaPeriodoOfertaData>();
 
-        // Agrupar dizimistas por período da última oferta
+        // Agrupar dizimistas por perÃ­odo da Ãºltima oferta
         var dizimistasPorPeriodo = new Dictionary<string, int>
         {
-            { "Últimos 2 meses", 0 },
+            { "Ãšltimos 2 meses", 0 },
             { "2-6 meses", 0 },
             { "6-12 meses", 0 },
             { "Mais de 1 ano", 0 }
@@ -77,7 +77,7 @@ public class DashboardService
             var mesesDesdeOferta = diasDesdeOferta / 30.0;
 
             if (mesesDesdeOferta <= 2)
-                dizimistasPorPeriodo["Últimos 2 meses"]++;
+                dizimistasPorPeriodo["Ãšltimos 2 meses"]++;
             else if (mesesDesdeOferta <= 6)
                 dizimistasPorPeriodo["2-6 meses"]++;
             else if (mesesDesdeOferta <= 12)
@@ -87,7 +87,7 @@ public class DashboardService
         }
 
         // Mapear para cores
-        dados.Add(new("Últimos 2 meses", dizimistasPorPeriodo["Últimos 2 meses"], "#22C55E")); // Verde
+        dados.Add(new("Ãšltimos 2 meses", dizimistasPorPeriodo["Ãšltimos 2 meses"], "#22C55E")); // Verde
         dados.Add(new("2-6 meses", dizimistasPorPeriodo["2-6 meses"], "#FBBF24")); // Amarelo
         dados.Add(new("6-12 meses", dizimistasPorPeriodo["6-12 meses"], "#F97316")); // Laranja
         dados.Add(new("Mais de 1 ano", dizimistasPorPeriodo["Mais de 1 ano"], "#EF4444")); // Vermelho
@@ -97,14 +97,14 @@ public class DashboardService
 
     /// <summary>
     /// Retorna dizimistas aniversariantes da semana atual
-    /// Considera dizimistas que completam aniversário do sábado passado até o final da semana atual
+    /// Considera dizimistas que completam aniversÃ¡rio do sÃ¡bado passado atÃ© o final da semana atual
     /// </summary>
     public async Task<List<Dizimista>> GetAniversariantesSemanasAsync()
     {
         var dizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
         var hoje = DateTime.Today;
 
-        // Descobrir o sábado passado
+        // Descobrir o sÃ¡bado passado
         var diasDesdeSegunda = (int)hoje.DayOfWeek - 1;
         if (diasDesdeSegunda < 0) diasDesdeSegunda += 7;
         
@@ -128,7 +128,7 @@ public class DashboardService
     }
 
     /// <summary>
-    /// Retorna dizimistas aniversariantes do mês atual
+    /// Retorna dizimistas aniversariantes do mÃªs atual
     /// </summary>
     public async Task<List<Dizimista>> GetAniversariantesMesAsync(int? month)
     {

@@ -6,9 +6,7 @@ using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
 using Dizimo.Services;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage;
-using CommunityToolkit.Maui.Storage;
+using Dizimo.Application.Reporting.Services;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,20 +16,15 @@ using Dizimo.Domain.Models;
 
 namespace Dizimo.ViewModels;
 
-public partial class OfertaListViewModel : ObservableObject
+public partial class OfertaListViewModel : ObservableObject, INavigationAware
 {
     private readonly GetOfertaHandlers _getHandlers;
     private readonly DeleteOfertaHandler _deleteHandler;
     private readonly OfertaExcelService _excelService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INavigationService _navigationService;
+    private readonly IFilterCacheService _filterCacheService;
 
-    private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
-    {
-        { DevicePlatform.WinUI, new[] { ".xlsx" } },
-        { DevicePlatform.macOS, new[] { ".xlsx" } },
-        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
-        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-    });
 
     private ObservableCollection<Oferta> _ofertas = [];
     public ObservableCollection<Oferta> Ofertas
@@ -44,10 +37,17 @@ public partial class OfertaListViewModel : ObservableObject
     public string FiltroNome
     {
         get => _filtroNome;
-        set => SetProperty(ref _filtroNome, value);
+        set
+        {
+            if (SetProperty(ref _filtroNome, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
+        }
     }
 
-    private DateTime? _filtroDataInicio = DateTime.Today;
+    private DateTime? _filtroDataInicio = null;
     public DateTime? FiltroDataInicio
     {
         get => _filtroDataInicio;
@@ -61,7 +61,7 @@ public partial class OfertaListViewModel : ObservableObject
         }
     }
 
-    private DateTime? _filtroDataFim = DateTime.Today;
+    private DateTime? _filtroDataFim = null;
     public DateTime? FiltroDataFim
     {
         get => _filtroDataFim;
@@ -140,26 +140,50 @@ public partial class OfertaListViewModel : ObservableObject
             _ofertasSelecionadas?.CollectionChanged += OfertasSelecionadas_CollectionChanged;
             OnPropertyChanged(nameof(OfertasSelecionadas));
             OnPropertyChanged(nameof(OfertasSelecionadas.Count));
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
         }
+    }
+
+    public string TextoBotaoSelecao
+    {
+        get => OfertasSelecionadas.Count == Ofertas.Count ? "Limpar Seleção" : "Selecionar Todos";
+    }
+
+    public bool PodeSelecionar
+    {
+        get => Ofertas.Count > 0;
     }
 
     private void OfertasSelecionadas_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(OfertasSelecionadas));
         OnPropertyChanged(nameof(OfertasSelecionadas.Count));
+        OnPropertyChanged(nameof(TextoBotaoSelecao));
     }
 
     public OfertaListViewModel(
         GetOfertaHandlers getHandlers,
         DeleteOfertaHandler deleteHandler,
         OfertaExcelService excelService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        INavigationService navigationService,
+        IFilterCacheService filterCacheService)
     {
         _getHandlers = getHandlers ?? throw new ArgumentNullException(nameof(getHandlers));
         _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
         _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _filterCacheService = filterCacheService ?? throw new ArgumentNullException(nameof(filterCacheService));
         Ofertas = [];
+        
+        // Conectar o handler de CollectionChanged ao inicializar
+        // Isso garante que toda vez que um checkbox for marcado/desmarcado, 
+        // o TextoBotaoSelecao será reavaliado
+        OfertasSelecionadas = [];
+        
+        // NÃO inicializar os filtros aqui - deixar para OnNavigatedTo
+        // para que o cache possa ser restaurado corretamente
     }
 
     private void ResetarPaginacao()
@@ -167,6 +191,9 @@ public partial class OfertaListViewModel : ObservableObject
         _paginaAtual = 1;
         TemProxima = false;
         Ofertas.Clear();
+        OfertasSelecionadas.Clear();
+        OnPropertyChanged(nameof(PodeSelecionar));
+        OnPropertyChanged(nameof(TextoBotaoSelecao));
     }
 
     [RelayCommand]
@@ -208,6 +235,8 @@ public partial class OfertaListViewModel : ObservableObject
             }
 
             OnPropertyChanged(nameof(TextoResultados));
+            OnPropertyChanged(nameof(PodeSelecionar));
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
             _paginaAtual++;
             TemProxima = _paginaAtual <= _totalPaginas;
             await AtualizarValorTotal();
@@ -248,51 +277,53 @@ public partial class OfertaListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public static async Task NovaOfertaAsync()
+    public async Task NovaOfertaAsync()
     {
-        await Shell.Current.GoToAsync("oferta-cadastro");
-    }
-
-    [RelayCommand]
-    public static async Task EditarOfertaAsync(Oferta oferta)
-    {
-        if (oferta != null)
+        try
         {
-            var navigationParameter = new Dictionary<string, object>
-            {
-                { "id", oferta.Id.ToString() }
-            };
-            await Shell.Current.GoToAsync("oferta-cadastro", navigationParameter);
+            _navigationService.Navigate("oferta-cadastro");
+            System.Diagnostics.Debug.WriteLine("[NAV] Navegado para Nova Oferta");
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao navegar para nova oferta: {ex.Message}");
         }
     }
+
+     [RelayCommand]
+     public async Task EditarOfertaAsync(Oferta oferta)
+     {
+         try
+         {
+             if (oferta != null)
+             {
+                 var parameters = new NavigationParameters();
+                 parameters.Add("id", oferta.Id);
+                 _navigationService.Navigate("oferta-cadastro", parameters);
+                 System.Diagnostics.Debug.WriteLine($"[NAV] Editando oferta: {oferta.Id}");
+             }
+         }
+         catch (Exception ex)
+         {
+             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao editar oferta: {ex.Message}");
+         }
+         await Task.CompletedTask;
+     }
 
     [RelayCommand]
     public async Task ExcluirOfertaAsync(Oferta oferta)
     {
         if (oferta == null) return;
 
-        var mainPage = GetMainPage();
-        if (mainPage == null) return;
-
-        bool confirm = await mainPage.DisplayAlertAsync(
-            "Confirmação",
-            $"Deseja excluir a oferta de valor {oferta.Valor:C} em {oferta.Data:dd/MM/yyyy}?",
-            "Sim",
-            "Não"
-        );
-
-        if (confirm)
+        try
         {
-            try
-            {
-                await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
-                await CarregarOfertasAsync();
-                await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluída com sucesso.", "OK");
-            }
-            catch (Exception ex)
-            {
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
-            }
+            await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
+            await CarregarOfertasAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao excluir: {ex.Message}");
         }
     }
 
@@ -300,12 +331,7 @@ public partial class OfertaListViewModel : ObservableObject
     public async Task ExcluirOfertasSelecionadasAsync()
     {
         if (OfertasSelecionadas.Count == 0) return;
-        var mainPage = GetMainPage();
-        if (mainPage != null)
-        {
-            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {OfertasSelecionadas.Count} oferta(s)?", "Sim", "Não");
-            if (!confirm) return;
-        }
+        
         foreach (var oferta in OfertasSelecionadas.ToList())
         {
             await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
@@ -315,11 +341,28 @@ public partial class OfertaListViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void SelecionarTodos()
+    {
+        if (OfertasSelecionadas.Count == Ofertas.Count)
+        {
+            OfertasSelecionadas.Clear();
+        }
+        else
+        {
+            OfertasSelecionadas.Clear();
+            foreach (var oferta in Ofertas)
+            {
+                OfertasSelecionadas.Add(oferta);
+            }
+        }
+        OnPropertyChanged(nameof(TextoBotaoSelecao));
+    }
+
+    [RelayCommand]
     public async Task ExportarAsync()
     {
         try
         {
-            // Trazer TODAS as ofertas do banco COM OS FILTROS aplicados
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
             var excelStream = await _excelService.ExportarAsync(
                 [..todasOfertas],
@@ -329,37 +372,55 @@ public partial class OfertaListViewModel : ObservableObject
                 FiltroNome);
             var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
-#if WINDOWS
-            var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
-
-            if (result.IsSuccessful)
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
             {
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
-                
-                // Abrir arquivo automaticamente
                 try
                 {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    var storageProvider = desktop.MainWindow.StorageProvider;
+                    if (storageProvider != null)
                     {
-                        FileName = result.FilePath,
-                        UseShellExecute = true
-                    });
+                        var file = await storageProvider.SaveFilePickerAsync(new()
+                        {
+                            Title = "Salvar Planilha de Ofertas",
+                            DefaultExtension = "xlsx",
+                            FileTypeChoices = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                            SuggestedFileName = fileName
+                        });
+
+                        if (file != null)
+                        {
+                            await using var fileStream = await file.OpenWriteAsync();
+                            await fileStream.WriteAsync(excelStream.ToArray());
+                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {file.Path}");
+                            
+                            try
+                            {
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                {
+                                    FileName = file.Path.ToString(),
+                                    UseShellExecute = true
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                            }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
+                        }
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao usar file picker: {ex.Message}");
                 }
-                
-                var mainPage = GetMainPage();
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Exportação", $"Planilha de ofertas exportada com sucesso!", "OK");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"[INFO] Exportação cancelada pelo usuário");
             }
 
-#else
+            // Fallback: salvar em Downloads (apenas se file picker não estiver disponível)
+            System.Diagnostics.Debug.WriteLine("[INFO] Usando fallback: salvando em Downloads");
             var downloadsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "Downloads");
@@ -370,7 +431,8 @@ public partial class OfertaListViewModel : ObservableObject
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
-            // Abrir arquivo automaticamente
+            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
+
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -383,18 +445,10 @@ public partial class OfertaListViewModel : ObservableObject
             {
                 System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
             }
-
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Exportação", $"Planilha de ofertas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
-#endif
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
         }
     }
 
@@ -408,21 +462,6 @@ public partial class OfertaListViewModel : ObservableObject
             var excelStream = OfertaExcelService.GerarModelo();
             var fileName = "ofertas_modelo.xlsx";
 
-#if WINDOWS
-            var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
-
-            if (result.IsSuccessful)
-            {
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {result.FilePath}");
-                var mainPage = GetMainPage();
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Modelo Baixado", $"Planilha modelo baixada com sucesso!", "OK");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
-            }
-#else
             var downloadsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "Downloads");
@@ -433,17 +472,11 @@ public partial class OfertaListViewModel : ObservableObject
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Modelo Baixado", $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
-#endif
+            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
         }
     }
 
@@ -452,59 +485,14 @@ public partial class OfertaListViewModel : ObservableObject
     {
         try
         {
-            var mainPage = GetMainPage();
+            System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
             
-            var result = await FilePicker.PickAsync(new PickOptions
-            {
-                PickerTitle = "Selecione um arquivo Excel",
-                FileTypes = ExcelFileType
-            });
-
-            if (result == null)
-            {
-                System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
-                return;
-            }
-
-            var excelBytes = await File.ReadAllBytesAsync(result.FullPath);
-            var importResult = await _excelService.ImportarAsync(excelBytes);
-            
-            foreach (var o in importResult.OfertasImportadas)
-            {
-                await _unitOfWork.Ofertas.AddAsync(o);
-            }
-            await _unitOfWork.SaveChangesAsync();
-            await CarregarOfertasAsync();
-            
-            var mensagem = $"Importação concluída!\n\n";
-            mensagem += $"? Ofertas importadas: {importResult.OfertasImportadas.Count}\n";
-            
-            if (importResult.Erros.Count > 0)
-            {
-                mensagem += $"\n? Ofertas não importadas: {importResult.Erros.Count}\n\n";
-                mensagem += "Erros:\n";
-                
-                var errosExibir = importResult.Erros.Take(10).ToList();
-                foreach (var erro in errosExibir)
-                {
-                    mensagem += $"• {erro}\n";
-                }
-                
-                if (importResult.Erros.Count > 10)
-                {
-                    mensagem += $"\n... e mais {importResult.Erros.Count - 10} erro(s)";
-                }
-            }
-            
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Resultado da Importação", mensagem, "OK");
+            // This will need to be called from the View or through a service
+            // that has access to the window context
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
         }
     }
 
@@ -531,7 +519,6 @@ public partial class OfertaListViewModel : ObservableObject
             await File.WriteAllBytesAsync(tempPath, htmlStream.ToArray());
 
             // Abrir arquivo automaticamente no navegador padrão
-            // O arquivo HTML possui onload="window.print()" que abre o diálogo de impressão automaticamente
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -543,17 +530,11 @@ public partial class OfertaListViewModel : ObservableObject
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
-                var mainPage = GetMainPage();
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Aviso", "Não foi possível abrir o navegador. Verifique se possui um navegador padrão configurado.", "OK");
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
-            var mainPage = GetMainPage();
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
         }
     }
 
@@ -597,9 +578,71 @@ public partial class OfertaListViewModel : ObservableObject
         return todasOfertas;
     }
 
-    private static Page? GetMainPage()
+    /// <summary>
+    /// Implementação de INavigationAware - Recarrega ofertas quando volta para esta página
+    /// Restaura os filtros do cache se não houver parâmetro clearCache
+    /// </summary>
+    public void OnNavigatedTo(NavigationParameters parameters)
     {
-        var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-        return windows is { Count: > 0 } ? windows[0].Page : null;
+        // Se foi passado clearCache=true, limpar o cache e usar filtros padrão
+        if (parameters != null && parameters.TryGetValue("clearCache", out var clearCacheObj) && 
+            clearCacheObj is bool clearCache && clearCache)
+        {
+            _filterCacheService.ClearOfertaListFilters();
+            System.Diagnostics.Debug.WriteLine("[Navigation] Cache de filtros foi limpo");
+            
+            // Usar filtros padrão
+            var hoje = DateTime.Today;
+            _filtroDataInicio = hoje;
+            _filtroDataFim = hoje;
+            _filtroNome = string.Empty;
+            _filtroTipoPagamento = "Todos";
+        }
+        else
+        {
+            // Tentar restaurar os filtros do cache
+            var cachedFilters = _filterCacheService.GetOfertaListFilters();
+            if (cachedFilters.HasValue)
+            {
+                var (dataInicio, dataFim, nome, tipoPagamento) = cachedFilters.Value;
+                
+                System.Diagnostics.Debug.WriteLine("[Navigation] Restaurando filtros do cache");
+                
+                // Restaurar os filtros
+                _filtroDataInicio = dataInicio;
+                _filtroDataFim = dataFim;
+                _filtroNome = nome;
+                _filtroTipoPagamento = tipoPagamento;
+            }
+            else
+            {
+                // Se não houver cache, usar filtros padrão
+                System.Diagnostics.Debug.WriteLine("[Navigation] Sem cache, usando filtros padrão");
+                var hoje = DateTime.Today;
+                _filtroDataInicio = hoje;
+                _filtroDataFim = hoje;
+                _filtroNome = string.Empty;
+                _filtroTipoPagamento = "Todos";
+            }
+        }
+        
+        // Notificar que as propriedades mudaram
+        OnPropertyChanged(nameof(FiltroDataInicio));
+        OnPropertyChanged(nameof(FiltroDataFim));
+        OnPropertyChanged(nameof(FiltroNome));
+        OnPropertyChanged(nameof(FiltroTipoPagamento));
+        
+        // Agora carregar os dados com os filtros restaurados/padrão
+        _ = CarregarOfertasAsync();
+    }
+
+    /// <summary>
+    /// Implementação de INavigationAware - Salva o estado ao sair da página
+    /// </summary>
+    public void OnNavigatedFrom()
+    {
+        // Salvar os filtros atuais no cache
+        _filterCacheService.SaveOfertaListFilters(FiltroDataInicio, FiltroDataFim, FiltroNome, FiltroTipoPagamento);
+        System.Diagnostics.Debug.WriteLine("[Navigation] Filtros salvos no cache");
     }
 }

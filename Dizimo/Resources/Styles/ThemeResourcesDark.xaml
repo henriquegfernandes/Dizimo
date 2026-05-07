@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ========================================
+         TEMA ESCURO - RECURSOS DE APLICAÇÃO
+         ======================================== -->
+    
+    <!-- BRUSHES - TEMA ESCURO -->
+    <SolidColorBrush x:Key="BrushBackgroundPrimary">#121212</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushBackgroundSecondary">#1E1E1E</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushBackgroundTertiary">#2C2C2C</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="BrushTextPrimary">#FFFFFF</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushTextSecondary">#B3B3B3</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushTextTertiary">#808080</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="BrushBorder">#383838</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushDivider">#2C2C2C</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorPrimary}" />
+    <SolidColorBrush x:Key="BrushSecondary" Color="{StaticResource ColorSecondary}" />
+    
+</ResourceDictionary>
+

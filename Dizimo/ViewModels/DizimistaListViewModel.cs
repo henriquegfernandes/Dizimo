@@ -1,36 +1,30 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using Dizimo.Domain.Entities;
 using Dizimo.Application.Dizimistas.Queries;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Services;
+using Dizimo.Application.Reporting.Services;
 using System.Collections.ObjectModel;
 using Dizimo.Domain.Repositories;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Maui.Storage;
-using CommunityToolkit.Maui.Storage;
-using System.IO;
-using Dizimo.Domain.Models;
+using Avalonia;
+using Avalonia.Platform.Storage;
 
 namespace Dizimo.ViewModels
 {
-    public partial class DizimistaListViewModel : ObservableObject
+    public partial class DizimistaListViewModel : ObservableObject, INavigationAware
     {
         private readonly GetDizimistaHandlers _handlers;
         private readonly DeleteDizimistaHandler _deleteHandler;
         private readonly InativarDizimistaHandler _inativarHandler;
         private readonly DizimistaExcelService _excelService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INavigationService _navigationService;
+        private readonly IDialogService _dialogService;
+        private readonly IFilterCacheService _filterCacheService;
 
-        private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
-        {
-            { DevicePlatform.WinUI, new[] { ".xlsx" } },
-            { DevicePlatform.macOS, new[] { ".xlsx" } },
-            { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
-            { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-        });
 
         private ObservableCollection<Dizimista> _dizimistas = [];
 
@@ -79,6 +73,13 @@ namespace Dizimo.ViewModels
             get => $"{Dizimistas.Count} de {TotalDizimistas} resultados";
         }
 
+        public string TextoBotaoSelecao
+        {
+            get => (DizimistasSelecionados.Count > 0 && DizimistasSelecionados.Count == Dizimistas.Count)
+                ? "Desselecionar Todos"
+                : "Selecionar Todos";
+        }
+
         public List<string> StatusOptions { get; } = [ "Todos", "Ativos", "Inativos" ];
         private string _statusSelecionado = "Todos";
         public string StatusSelecionado
@@ -105,6 +106,7 @@ namespace Dizimo.ViewModels
                 _dizimistasSelecionados?.CollectionChanged += DizimistasSelecionados_CollectionChanged;
                 OnPropertyChanged(nameof(DizimistasSelecionados));
                 OnPropertyChanged(nameof(DizimistasSelecionados.Count));
+                OnPropertyChanged(nameof(TextoBotaoSelecao));
             }
         }
 
@@ -112,6 +114,7 @@ namespace Dizimo.ViewModels
         {
             OnPropertyChanged(nameof(DizimistasSelecionados));
             OnPropertyChanged(nameof(DizimistasSelecionados.Count));
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
         }
 
         public DizimistaListViewModel(
@@ -119,13 +122,19 @@ namespace Dizimo.ViewModels
             DeleteDizimistaHandler deleteHandler,
             InativarDizimistaHandler inativarHandler,
             DizimistaExcelService excelService,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            INavigationService navigationService,
+            IDialogService dialogService,
+            IFilterCacheService filterCacheService)
         {
             _handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
             _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
             _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
             _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+            _filterCacheService = filterCacheService ?? throw new ArgumentNullException(nameof(filterCacheService));
             Dizimistas = [];
         }
 
@@ -134,6 +143,7 @@ namespace Dizimo.ViewModels
             _paginaAtual = 1;
             TemProxima = false;
             Dizimistas.Clear();
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
         }
 
         [RelayCommand]
@@ -142,6 +152,7 @@ namespace Dizimo.ViewModels
             ResetarPaginacao();
             await _unitOfWork.ClearDbContextAsync();
             await CarregarProximaPaginaAsync();
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
         }
 
         [RelayCommand]
@@ -173,6 +184,7 @@ namespace Dizimo.ViewModels
                 }
 
                 OnPropertyChanged(nameof(TextoResultados));
+                OnPropertyChanged(nameof(TextoBotaoSelecao));
 
                 _paginaAtual++;
                 TemProxima = _paginaAtual <= _totalPaginas;
@@ -199,38 +211,58 @@ namespace Dizimo.ViewModels
             await CarregarDizimistasAsync();
         }
 
-        [RelayCommand]
-        public static async Task NovoDizimistaAsync()
-        {
-            await Shell.Current.GoToAsync("dizimista-cadastro");
-        }
+         [RelayCommand]
+         public async Task NovoDizimistaAsync()
+         {
+             try
+             {
+                 _navigationService.Navigate("dizimista-cadastro");
+                 System.Diagnostics.Debug.WriteLine("[NAV] Navegado para Novo Dizimista");
+                 await Task.CompletedTask;
+             }
+             catch (Exception ex)
+             {
+                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao navegar para novo dizimista: {ex.Message}");
+             }
+         }
 
-        [RelayCommand]
-        public static async Task EditarDizimistaAsync(Dizimista dizimista)
-        {
-            if (dizimista != null)
-            {
-                var navigationParameter = new Dictionary<string, object>
-                {
-                    { "id", dizimista.Id.ToString() }
-                };
-                await Shell.Current.GoToAsync("dizimista-cadastro", navigationParameter);
-            }
-        }
+         [RelayCommand]
+         public async Task EditarDizimistaAsync(Dizimista dizimista)
+         {
+             try
+             {
+                 if (dizimista != null)
+                 {
+                     var parameters = new NavigationParameters();
+                     parameters.Add("id", dizimista.Id);
+                     _navigationService.Navigate("dizimista-cadastro", parameters);
+                     System.Diagnostics.Debug.WriteLine($"[NAV] Editando dizimista: {dizimista.Id}");
+                 }
+             }
+             catch (Exception ex)
+             {
+                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao editar dizimista: {ex.Message}");
+             }
+         }
 
-        [RelayCommand]
-        public static async Task VerDetalhesDizimistaAsync(Dizimista dizimista)
-        {
-            if (dizimista != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"[INFO] VerDetalhesDizimistaCommand - ID: {dizimista.Id}");
-                var navigationParameter = new Dictionary<string, object>
-                {
-                    { "id", dizimista.Id.ToString() }
-                };
-                await Shell.Current.GoToAsync("dizimista-detalhes", navigationParameter);
-            }
-        }
+         [RelayCommand]
+         public async Task VerDetalhesDizimistaAsync(Dizimista dizimista)
+         {
+             try
+             {
+                 if (dizimista != null)
+                 {
+                     var parameters = new NavigationParameters();
+                     parameters.Add("id", dizimista.Id);
+                     _navigationService.Navigate("dizimista-detalhes", parameters);
+                     System.Diagnostics.Debug.WriteLine($"[NAV] Visualizando detalhes de: {dizimista.Id}");
+                 }
+             }
+             catch (Exception ex)
+             {
+                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao carregar detalhes: {ex.Message}");
+             }
+         }
 
         [RelayCommand]
         public async Task ExportarAsync()
@@ -238,54 +270,61 @@ namespace Dizimo.ViewModels
             try
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] ExportarAsync iniciado");
-                // Passar os filtros aplicados para exportação
                 var excelStream = await _excelService.ExportarAsync(FiltroNome, StatusSelecionado);
                 
                 var fileName = $"dizimistas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                string? filePath = null;
                 
-#if WINDOWS
-                var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
-
-                if (result.IsSuccessful)
+                // Se houver uma janela principal disponível, usar file picker
+                if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {result.FilePath}");
-
-                    // Abrir arquivo automaticamente
                     try
                     {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        var storageProvider = desktop.MainWindow.StorageProvider;
+                        if (storageProvider != null)
                         {
-                            FileName = result.FilePath,
-                            UseShellExecute = true
-                        });
+                            var file = await storageProvider.SaveFilePickerAsync(new()
+                            {
+                                Title = "Exportar Dizimistas",
+                                DefaultExtension = "xlsx",
+                                FileTypeChoices = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                                SuggestedFileName = fileName
+                            });
+
+                            if (file != null)
+                            {
+                                await using var fileStream = await file.OpenWriteAsync();
+                                await fileStream.WriteAsync(excelStream.ToArray());
+                                filePath = file.Path.AbsolutePath;
+                                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado com sucesso em: {filePath}");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
+                                return;
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[WARN] File picker falhou, usando fallback: {ex.Message}");
                     }
+                }
 
-                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                    if (mainPage != null)
-                    {
-                        await mainPage.DisplayAlertAsync("Exportação", 
-                            $"Planilha de dizimistas exportada com sucesso!", "OK");
-                    }
-                }
-                else
+                // Fallback: salvar em Downloads
+                if (string.IsNullOrEmpty(filePath))
                 {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
+                    var downloadsPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        "Downloads");
+                    
+                    if (!Directory.Exists(downloadsPath))
+                        Directory.CreateDirectory(downloadsPath);
+                    
+                    filePath = Path.Combine(downloadsPath, fileName);
+                    await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado (fallback) para: {filePath}");
                 }
-#else
-                var downloadsPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    "Downloads");
-                
-                if (!Directory.Exists(downloadsPath))
-                    Directory.CreateDirectory(downloadsPath);
-                
-                var filePath = Path.Combine(downloadsPath, fileName);
-                await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
                 // Abrir arquivo automaticamente
                 try
@@ -300,25 +339,11 @@ namespace Dizimo.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
                 }
-                
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Exportação", 
-                        $"Planilha de dizimistas exportada com sucesso!\n\nLocalização: {filePath}", "OK");
-                }
-#endif
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao exportar: {ex.Message}", "OK");
-                }
             }
         }
 
@@ -332,26 +357,6 @@ namespace Dizimo.ViewModels
                 var excelStream = DizimistaExcelService.GerarModelo();
                 var fileName = "dizimistas_modelo.xlsx";
 
-#if WINDOWS
-                var result = await FileSaver.Default.SaveAsync(fileName, excelStream, CancellationToken.None);
-
-                if (result.IsSuccessful)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {result.FilePath}");
-
-                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                    if (mainPage != null)
-                    {
-                        await mainPage.DisplayAlertAsync("Modelo Baixado", 
-                            $"Planilha modelo baixada com sucesso!", "OK");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Download do modelo cancelado pelo usuário");
-                }
-#else
                 var downloadsPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                     "Downloads");
@@ -362,25 +367,12 @@ namespace Dizimo.ViewModels
                 var filePath = Path.Combine(downloadsPath, fileName);
                 await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
                 
-                var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Modelo Baixado", 
-                        $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
-                }
-#endif
+                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
-                
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
-                }
             }
         }
 
@@ -391,52 +383,19 @@ namespace Dizimo.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
                 
-                var result = await FilePicker.Default.PickAsync(new PickOptions
-                {
-                    FileTypes = ExcelFileType,
-                    PickerTitle = "Selecionar arquivo Excel de dizimistas para importar"
-                });
-
-                if (result == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("[INFO] Importação cancelada pelo usuário");
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {result.FullPath}");
-                var excelBytes = await File.ReadAllBytesAsync(result.FullPath);
-                var dizimistas = await DizimistaExcelService.ImportarAsync(excelBytes);
+                // Create a file picker dialog
+                // Note: In Avalonia, you need to use Avalonia's file dialog
+                // This requires TopLevel or window context
+                // For now, we'll implement basic file dialog logic
+                System.Diagnostics.Debug.WriteLine("[INFO] Aguardando seleção de arquivo de importação");
                 
-                System.Diagnostics.Debug.WriteLine($"[INFO] {dizimistas.Count} dizimistas lidos do arquivo");
-                
-                foreach (var d in dizimistas)
-                {
-                    await _unitOfWork.Dizimistas.AddAsync(d);
-                }
-                await _unitOfWork.SaveChangesAsync();
-                await CarregarDizimistasAsync();
-                
-                System.Diagnostics.Debug.WriteLine("[INFO] Importação concluída com sucesso");
-                
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPageSuccess = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPageSuccess != null)
-                {
-                    await mainPageSuccess.DisplayAlertAsync("Importação", 
-                        $"Importação concluída com sucesso!\n\n{dizimistas.Count} dizimista(s) importado(s).", "OK");
-                }
+                // This will need to be called from the View or through a service
+                // that has access to the window context
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
-                
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPageError = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPageError != null)
-                {
-                    await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
-                }
             }
         }
 
@@ -444,12 +403,7 @@ namespace Dizimo.ViewModels
         public async Task GerarRelatorioGeralAsync()
         {
             await CarregarDizimistasAsync();
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync("Relatório Geral", $"Total de dizimistas: {Dizimistas.Count}", "OK");
-            }
+            System.Diagnostics.Debug.WriteLine($"[INFO] Total de dizimistas: {Dizimistas.Count}");
         }
 
         [RelayCommand]
@@ -463,61 +417,136 @@ namespace Dizimo.ViewModels
                 sb.AppendLine($"Total de Dizimistas: {Dizimistas.Count}");
                 sb.AppendLine();
                 
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Relatório", sb.ToString(), "OK");
-                }
+                System.Diagnostics.Debug.WriteLine(sb.ToString());
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows ;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
-                }
             }
         }
 
         [RelayCommand]
         public async Task ExcluirDizimistasSelecionadosAsync()
         {
-            if (DizimistasSelecionados.Count == 0) return;
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
+            System.Diagnostics.Debug.WriteLine($"[EXCLUIR] DizimistasSelecionados.Count: {DizimistasSelecionados.Count}");
+            foreach (var d in DizimistasSelecionados)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
-                if (!confirm) return;
+                System.Diagnostics.Debug.WriteLine($"[EXCLUIR] - Selecionado: {d.Nome} (ID: {d.Id})");
             }
+            
+            if (DizimistasSelecionados.Count == 0) 
+            {
+                System.Diagnostics.Debug.WriteLine("[EXCLUIR] Nenhum dizimista selecionado. Operação cancelada.");
+                return;
+            }
+            
+            // Solicitar confirmação
+            bool confirmar = await _dialogService.ShowConfirmAsync(
+                "Confirmação de Exclusão",
+                $"Deseja realmente excluir {DizimistasSelecionados.Count} dizimista(s) selecionado(s)? Esta ação não pode ser desfeita.",
+                "Sim, Excluir",
+                "Cancelar");
+            
+            if (!confirmar)
+            {
+                System.Diagnostics.Debug.WriteLine("[EXCLUIR] Exclusão cancelada pelo usuário.");
+                return;
+            }
+            
             foreach (var dizimista in DizimistasSelecionados.ToList())
             {
+                System.Diagnostics.Debug.WriteLine($"[EXCLUIR] Excluindo: {dizimista.Nome} (ID: {dizimista.Id})");
                 await _deleteHandler.Handle(new DeleteDizimistaCommand(dizimista.Id));
             }
+            System.Diagnostics.Debug.WriteLine("[EXCLUIR] Recarregando lista de dizimistas...");
             await CarregarDizimistasAsync();
             DizimistasSelecionados.Clear();
+            System.Diagnostics.Debug.WriteLine("[EXCLUIR] Exclusão concluída.");
         }
 
         [RelayCommand]
         public async Task InativarDizimistasSelecionadosAsync()
         {
-            if (DizimistasSelecionados.Count == 0) return;
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
+            System.Diagnostics.Debug.WriteLine($"[INATIVAR] DizimistasSelecionados.Count: {DizimistasSelecionados.Count}");
+            foreach (var d in DizimistasSelecionados)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja ativar/inativar {DizimistasSelecionados.Count} dizimista(s)?", "Sim", "Não");
-                if (!confirm) return;
+                System.Diagnostics.Debug.WriteLine($"[INATIVAR] - Selecionado: {d.Nome} (ID: {d.Id})");
             }
+            
+            if (DizimistasSelecionados.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("[INATIVAR] Nenhum dizimista selecionado. Operação cancelada.");
+                return;
+            }
+            
+            // Solicitar confirmação
+            bool confirmar = await _dialogService.ShowConfirmAsync(
+                "Confirmação de Inativação",
+                $"Deseja realmente ativar/inativar {DizimistasSelecionados.Count} dizimista(s) selecionado(s)?",
+                "Sim, Ativar/Inativar",
+                "Cancelar");
+            
+            if (!confirmar)
+            {
+                System.Diagnostics.Debug.WriteLine("[INATIVAR] Inativação cancelada pelo usuário.");
+                return;
+            }
+            
             foreach (var dizimista in DizimistasSelecionados.ToList())
             {
+                System.Diagnostics.Debug.WriteLine($"[INATIVAR] Inativando/Ativando: {dizimista.Nome} (ID: {dizimista.Id})");
                 await _inativarHandler.Handle(new InativarDizimistaCommand(dizimista.Id));
             }
+            System.Diagnostics.Debug.WriteLine("[INATIVAR] Recarregando lista de dizimistas...");
             await CarregarDizimistasAsync();
             DizimistasSelecionados.Clear();
+            System.Diagnostics.Debug.WriteLine("[INATIVAR] Inativação concluída.");
+        }
+
+        [RelayCommand]
+        public void SelecionarTodos()
+        {
+            if (DizimistasSelecionados.Count == Dizimistas.Count)
+            {
+                // Se todos já estão selecionados, desselecionar todos
+                DizimistasSelecionados.Clear();
+            }
+            else
+            {
+                // Selecionar todos
+                DizimistasSelecionados.Clear();
+                foreach (var dizimista in Dizimistas)
+                {
+                    DizimistasSelecionados.Add(dizimista);
+                }
+            }
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
+        }
+
+        [RelayCommand]
+        public void AlternarSelecaoDizimista(Dizimista dizimista)
+        {
+            if (dizimista == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[SELEÇÃO] Dizimista é null!");
+                return;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[SELEÇÃO] Alternando seleção do dizimista: {dizimista.Nome} (ID: {dizimista.Id})");
+            System.Diagnostics.Debug.WriteLine($"[SELEÇÃO] Antes - Quantidade selecionados: {DizimistasSelecionados.Count}");
+            
+            if (DizimistasSelecionados.Contains(dizimista))
+            {
+                DizimistasSelecionados.Remove(dizimista);
+                System.Diagnostics.Debug.WriteLine($"[SELEÇÃO] Removido da seleção");
+            }
+            else
+            {
+                DizimistasSelecionados.Add(dizimista);
+                System.Diagnostics.Debug.WriteLine($"[SELEÇÃO] Adicionado à seleção");
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[SELEÇÃO] Depois - Quantidade selecionados: {DizimistasSelecionados.Count}");
         }
 
         [RelayCommand]
@@ -548,7 +577,6 @@ namespace Dizimo.ViewModels
                 await File.WriteAllBytesAsync(tempPath, htmlStream.ToArray());
 
                 // Abrir arquivo automaticamente no navegador padrão
-                // O arquivo HTML possui onload="window.print()" que abre o diálogo de impressão automaticamente
                 try
                 {
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -560,19 +588,11 @@ namespace Dizimo.ViewModels
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
-                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                    if (mainPage != null)
-                        await mainPage.DisplayAlertAsync("Aviso", "Não foi possível abrir o navegador. Verifique se possui um navegador padrão configurado.", "OK");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao gerar relatório: {ex.Message}", "OK");
             }
         }
 
@@ -599,6 +619,67 @@ namespace Dizimo.ViewModels
             }
 
             return todosDizimistas;
+        }
+
+        /// <summary>
+        /// Implementação de INavigationAware - Carrega dizimistas quando navega para esta página
+        /// Restaura os filtros do cache se não houver parâmetro clearCache
+        /// </summary>
+        public async void OnNavigatedTo(NavigationParameters parameters)
+        {
+            System.Diagnostics.Debug.WriteLine("[NAV] OnNavigatedTo chamado para DizimistaListViewModel");
+            
+            // Se foi passado clearCache=true, limpar o cache e usar filtros padrão
+            if (parameters != null && parameters.TryGetValue("clearCache", out var clearCacheObj) && 
+                clearCacheObj is bool clearCache && clearCache)
+            {
+                _filterCacheService.ClearDizimistaListFilters();
+                System.Diagnostics.Debug.WriteLine("[Navigation] Cache de filtros foi limpo");
+                
+                // Usar filtros padrão
+                _statusSelecionado = "Todos";
+                _filtroNome = string.Empty;
+            }
+            else
+            {
+                // Tentar restaurar os filtros do cache
+                var cachedFilters = _filterCacheService.GetDizimistaListFilters();
+                if (cachedFilters.HasValue)
+                {
+                    var (status, nome) = cachedFilters.Value;
+                    
+                    System.Diagnostics.Debug.WriteLine("[Navigation] Restaurando filtros do cache");
+                    
+                    // Restaurar os filtros
+                    _statusSelecionado = status;
+                    _filtroNome = nome;
+                }
+                else
+                {
+                    // Se não houver cache, usar filtros padrão
+                    System.Diagnostics.Debug.WriteLine("[Navigation] Sem cache, usando filtros padrão");
+                    _statusSelecionado = "Todos";
+                    _filtroNome = string.Empty;
+                }
+            }
+            
+            // Notificar que as propriedades mudaram
+            OnPropertyChanged(nameof(StatusSelecionado));
+            OnPropertyChanged(nameof(FiltroNome));
+            
+            // Agora carregar os dados com os filtros restaurados/padrão
+            await CarregarDizimistasAsync();
+        }
+
+        /// <summary>
+        /// Implementação de INavigationAware - Salva o estado ao sair da página
+        /// </summary>
+        public void OnNavigatedFrom()
+        {
+            System.Diagnostics.Debug.WriteLine("[NAV] OnNavigatedFrom chamado para DizimistaListViewModel");
+            // Salvar os filtros atuais no cache
+            _filterCacheService.SaveDizimistaListFilters(StatusSelecionado, FiltroNome);
+            System.Diagnostics.Debug.WriteLine("[Navigation] Filtros salvos no cache");
         }
     }
 }

@@ -1,109 +1,43 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
 using Dizimo.ViewModels;
-using Dizimo.Application.Dizimistas.Handlers;
-using Dizimo.Domain.Repositories;
-using Dizimo.Domain.Entities;
 
 namespace Dizimo.Pages;
 
-public partial class DizimistaListPage : ContentPage
+public partial class DizimistaListPage : UserControl
 {
-    private DizimistaListViewModel? _viewModel;
-
     public DizimistaListPage()
     {
-        InitializeComponent();
+        AvaloniaXamlLoader.Load(this);
+        System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage inicializado");
     }
-
-    protected override void OnBindingContextChanged()
+    
+    /// <summary>
+    /// Aplica filtro ao pressionar Enter no campo de texto
+    /// </summary>
+    private void OnFiltroKeyDown(object? sender, KeyEventArgs e)
     {
-        base.OnBindingContextChanged();
-        if (BindingContext is DizimistaListViewModel vm)
+        if (e.Key == Key.Return)
         {
-            _viewModel = vm;
-            System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext é DizimistaListViewModel.");
-        }
-        else
-        {
-            var handlers = (App.Current as App)?.Services.GetService<GetDizimistaHandlers>() ?? throw new InvalidOperationException("GetDizimistaHandlers não está registrado no contêiner de serviços.");
-            var deleteHandler = (App.Current as App)?.Services.GetService<DeleteDizimistaHandler>() ?? throw new InvalidOperationException("DeleteDizimistaHandler não está registrado no contêiner de serviços.");
-            var inativarHandler = (App.Current as App)?.Services.GetService<InativarDizimistaHandler>() ?? throw new InvalidOperationException("InativarDizimistaHandler não está registrado no contêiner de serviços.");
-            var excelService = (App.Current as App)?.Services.GetService<DizimistaExcelService>() ?? throw new InvalidOperationException("DizimistaExcelService não está registrado no contêiner de serviços.");
-            var unitOfWork = (App.Current as App)?.Services.GetService<IUnitOfWork>() ?? throw new InvalidOperationException("IUnitOfWork não está registrado no contêiner de serviços.");
-            var viewModel = new DizimistaListViewModel(handlers, deleteHandler, inativarHandler, excelService, unitOfWork);
-            BindingContext = viewModel;
-            _viewModel = viewModel;
-            System.Diagnostics.Debug.WriteLine("[INFO] DizimistaListPage BindingContext inicializado no OnBindingContextChanged.");
-        }
-    }
-
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-        if (!SessaoService.IsLogado)
-        {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
-            await Shell.Current.GoToAsync("login");
-            return;
-        }
-        if (_viewModel != null)
-            await _viewModel.CarregarDizimistasAsync();
-    }
-
-    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (BindingContext is DizimistaListViewModel vm)
-        {
-            vm.DizimistasSelecionados.Clear();
-            foreach (var item in e.CurrentSelection.OfType<Dizimista>())
-                vm.DizimistasSelecionados.Add(item);
-        }
-    }
-
-    private void OnSelecionarTodosClicked(object sender, EventArgs e)
-    {
-        if (BindingContext is DizimistaListViewModel vm)
-        {
-            var collectionView = (CollectionView)FindByName("DizimistasCollectionView");
-
-            if (vm.DizimistasSelecionados.Count == vm.Dizimistas.Count)
+            var dataContext = this.DataContext as DizimistaListViewModel;
+            if (dataContext?.AplicarFiltrosCommand.CanExecute(null) == true)
             {
-                // Desseleciona todos
-                collectionView.SelectedItems.Clear();
-            }
-            else
-            {
-                // Seleciona todos
-                collectionView.SelectedItems.Clear();
-                foreach (var dizimista in vm.Dizimistas)
-                {
-                    collectionView.SelectedItems.Add(dizimista);
-                }
+                dataContext.AplicarFiltrosCommand.Execute(null);
             }
         }
     }
-
-    private void OnFiltroCompleted(object sender, EventArgs e)
+    
+    /// <summary>
+    /// Aplica filtro ao tirar foco do campo de texto
+    /// </summary>
+    private void OnFiltroLostFocus(object? sender, RoutedEventArgs e)
     {
-        if (BindingContext is DizimistaListViewModel vm && vm.AplicarFiltrosCommand.CanExecute(null))
-            vm.AplicarFiltrosCommand.Execute(null);
-    }
-
-    private async void OnVerDetalhesDizimistaClicked(object sender, EventArgs e)
-    {
-        if (sender is Button button && button.BindingContext is Dizimista dizimista)
+        var dataContext = this.DataContext as DizimistaListViewModel;
+        if (dataContext?.AplicarFiltrosCommand.CanExecute(null) == true)
         {
-            System.Diagnostics.Debug.WriteLine($"[INFO] Ver detalhes do dizimista: {dizimista.Nome} (ID: {dizimista.Id})");
-            
-            var navigationParameter = new Dictionary<string, object>
-            {
-                { "id", dizimista.Id.ToString() }
-            };
-            
-            System.Diagnostics.Debug.WriteLine($"[INFO] Navegando para dizimista-detalhes com ID: {dizimista.Id}");
-            await Shell.Current.GoToAsync("dizimista-detalhes", navigationParameter);
+            dataContext.AplicarFiltrosCommand.Execute(null);
         }
     }
 }

@@ -1,52 +1,81 @@
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+using Avalonia.Input;
 using Dizimo.ViewModels;
-using Dizimo.Application.Usuarios.Handlers;
 
 namespace Dizimo.Pages;
 
-public partial class LoginPage : ContentPage
+/// <summary>
+/// PÃ¡gina de login - Otimizada para Avalonia UI
+/// </summary>
+public partial class LoginPage : UserControl
 {
     public LoginPage()
     {
-        InitializeComponent();
-        var app = Microsoft.Maui.Controls.Application.Current as App;
-        var vm = app?.Services.GetService<LoginViewModel>();
-        if (vm is not null)
+        AvaloniaXamlLoader.Load(this);
+        System.Diagnostics.Debug.WriteLine("[INFO] LoginPage inicializado");
+    }
+
+    /// <summary>
+    /// Handler para tratar Enter no login - move foco para senha
+    /// </summary>
+    public void OnLoginKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Return)
         {
-            BindingContext = vm;
+            FindSenhaTextBox(this);
+            e.Handled = true;
         }
-        else
+    }
+
+    /// <summary>
+    /// Handler para tratar Enter na senha - executa comando de login
+    /// </summary>
+    public void OnSenhaKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Return && DataContext is LoginViewModel vm)
         {
-            // Corrigido: obtendo as dependências do contêiner de serviços
-            var getUsuarioHandlers = app?.Services.GetService<GetUsuarioHandlers>();
-            if (getUsuarioHandlers != null)
+            if (vm.LoginCommand.CanExecute(null))
             {
-                BindingContext = new LoginViewModel(getUsuarioHandlers);
-            }
-            else
-            {
-                // Opcional: tratamento de erro ou fallback
-                BindingContext = null;
+                vm.LoginCommand.Execute(null);
+                e.Handled = true;
             }
         }
     }
 
-    protected override void OnAppearing()
+    /// <summary>
+    /// Reset do estado de login quando o DataContext muda
+    /// </summary>
+    protected override void OnDataContextChanged(System.EventArgs e)
     {
-        base.OnAppearing();
-        if (BindingContext is LoginViewModel vm)
+        base.OnDataContextChanged(e);
+        
+        if (DataContext is LoginViewModel vm)
+        {
             vm.ResetLoginState();
+        }
     }
 
-    private void OnLoginEntryCompleted(object sender, EventArgs e)
+    /// <summary>
+    /// Procura pelo TextBox de senha na hierarquia
+    /// </summary>
+    private void FindSenhaTextBox(Control parent)
     {
-        SenhaEntry.Focus();
-    }
-
-    private void OnSenhaEntryCompleted(object sender, EventArgs e)
-    {
-        if (BindingContext is LoginViewModel vm && vm.LoginCommand.CanExecute(null))
+        if (parent is TextBox textBox && textBox.Name == "SenhaTextBox")
         {
-            vm.LoginCommand.Execute(null);
+            textBox.Focus();
+            return;
+        }
+
+        if (parent is Panel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                if (child is Control control)
+                {
+                    FindSenhaTextBox(control);
+                }
+            }
         }
     }
 }

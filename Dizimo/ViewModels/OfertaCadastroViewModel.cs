@@ -1,29 +1,34 @@
-﻿using System.Collections.ObjectModel;
+﻿using Dizimo.Data;
+using Dizimo.Models;
+using Dizimo.Services;
+using Dizimo.Utilities;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
+using System.Windows.Input;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
+using Dizimo.Application.Reporting.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Maui.Storage;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
+using System.IO;
 
 namespace Dizimo.ViewModels;
 
-public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributable
+public partial class OfertaCadastroViewModel : ObservableObject, INavigationAware
 {
     private readonly CreateOfertaHandler _createHandler;
     private readonly UpdateOfertaHandler _updateHandler;
     private readonly GetOfertaHandlers _getHandler;
     private readonly IUnitOfWork _unitOfWork;
-
-    private static readonly FilePickerFileType ExcelFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
-    {
-        { DevicePlatform.WinUI, new[] { ".xlsx" } },
-        { DevicePlatform.macOS, new[] { ".xlsx" } },
-        { DevicePlatform.iOS, new[] { "com.microsoft.excel.xlsx" } },
-        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } },
-    });
+    private readonly INavigationService _navigationService;
+    private readonly IDialogService _dialogService;
 
     private readonly string[] _mesesArray =
     [
@@ -35,12 +40,16 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         CreateOfertaHandler createHandler,
         UpdateOfertaHandler updateHandler,
         GetOfertaHandlers getHandler,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        INavigationService navigationService,
+        IDialogService dialogService)
     {
         _createHandler = createHandler ?? throw new ArgumentNullException(nameof(createHandler));
         _updateHandler = updateHandler ?? throw new ArgumentNullException(nameof(updateHandler));
         _getHandler = getHandler ?? throw new ArgumentNullException(nameof(getHandler));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         
         var meses = new ObservableCollection<string>
         {
@@ -83,8 +92,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     private decimal _valor;
     public decimal Valor { get => _valor; set => SetProperty(ref _valor, value); }
 
-    private DateTime _data = DateTime.Today;
-    public DateTime DataOferta { get => _data; set => SetProperty(ref _data, value); }
+    private DateTime? _data = DateTime.Today;
+    public DateTime? DataOferta { get => _data; set => SetProperty(ref _data, value); }
 
     private string _tipoPagamento = "PIX";
     public string TipoPagamento { get => _tipoPagamento; set => SetProperty(ref _tipoPagamento, value); }
@@ -205,16 +214,19 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
     private bool _dizimistaAtivo;
     public bool DizimistaAtivo { get => _dizimistaAtivo; set => SetProperty(ref _dizimistaAtivo, value); }
 
-    public IAsyncRelayCommand BuscarDizimistaCommand => new AsyncRelayCommand(BuscarDizimistaAsync);
+    private bool _nomeDizimistaEditable;
+    /// <summary>
+    /// Controla se o campo de nome do dizimista pode ser editado
+    /// Fica habilitado quando o dizimista não é encontrado e o usuário opta por criar um novo
+    /// </summary>
+    public bool NomeDizimistaEditable { get => _nomeDizimistaEditable; set => SetProperty(ref _nomeDizimistaEditable, value); }
 
+    [RelayCommand]
     public async Task BuscarDizimistaAsync()
     {
         if (CodigoDizimista <= 0)
         {
-            NomeDizimista = string.Empty;
-            DizimistaEncontrado = false;
-            DizimistaAtivo = false;
-            DizimistaIdProp = Guid.Empty;
+            ResetarDizimista();
             return;
         }
 
@@ -225,17 +237,10 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             if (dizimista != null)
             {
-                // Verificar se o dizimista está ativo
                 if (!dizimista.Ativo)
                 {
-                    NomeDizimista = "Dizimista inativo";
-                    DizimistaEncontrado = false;
-                    DizimistaAtivo = false;
-                    DizimistaIdProp = Guid.Empty;
-                    var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                    var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                    if (mainPage != null)
-                        await mainPage.DisplayAlertAsync("Aviso", $"O dizimista com código {CodigoDizimista} está inativo. Não é possível criar ofertas para dizimistas inativos.", "OK");
+                    await _dialogService.ShowInfoAsync("Dizimista Inativo", $"O dizimista com código {CodigoDizimista} está inativo.");
+                    ResetarDizimista();
                     return;
                 }
 
@@ -243,62 +248,46 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 DizimistaIdProp = dizimista.Id;
                 DizimistaEncontrado = true;
                 DizimistaAtivo = true;
+                NomeDizimistaEditable = false;
             }
             else
             {
-                // Dizimista não encontrado - mostrar opção de criar novo
-                NomeDizimista = string.Empty;
-                DizimistaEncontrado = false;
-                DizimistaAtivo = true; // Permitir prosseguir
-                DizimistaIdProp = Guid.Empty;
+                var confirmar = await _dialogService.ShowConfirmAsync(
+                    "Dizimista Não Encontrado",
+                    $"Não existe um dizimista com o código {CodigoDizimista}.\n\nDeseja criar um novo dizimista com esse código?",
+                    "Sim, Criar",
+                    "Não");
 
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
+                if (confirmar)
                 {
-                    bool criarNovo = await mainPage.DisplayAlertAsync(
-                        "Dizimista Não Encontrado", 
-                        $"Nenhum dizimista encontrado com o código {CodigoDizimista}.\n\n" +
-                        $"Se você prosseguir com o cadastro, um novo dizimista será criado com este código. " +
-                        $"Não esqueça de inserir o nome do dizimista no campo abaixo.", 
-                        "Criar Novo", 
-                        "Cancelar");
-
-                    if (!criarNovo)
-                    {
-                        // Limpar os campos se o usuário cancelar
-                        CodigoDizimista = 0;
-                        NomeDizimista = string.Empty;
-                        DizimistaEncontrado = false;
-                        DizimistaAtivo = false;
-                        DizimistaIdProp = Guid.Empty;
-                    }
+                    NomeDizimista = string.Empty;
+                    DizimistaIdProp = Guid.Empty;
+                    DizimistaEncontrado = false;
+                    DizimistaAtivo = true;
+                    NomeDizimistaEditable = true;
+                }
+                else
+                {
+                    ResetarDizimista();
                 }
             }
         }
         catch (Exception ex)
         {
-            NomeDizimista = "Erro ao buscar";
-            DizimistaEncontrado = false;
-            DizimistaAtivo = false;
-            DizimistaIdProp = Guid.Empty;
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao buscar dizimista: {ex.Message}", "OK");
+            await _dialogService.ShowErrorAsync($"Erro ao buscar dizimista: {ex.Message}");
+            ResetarDizimista();
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao buscar dizimista: {ex.Message}");
         }
     }
 
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    private void ResetarDizimista()
     {
-        if (query.TryGetValue("id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var ofertaId))
-        {
-            CarregarOfertaAsync(ofertaId).GetAwaiter().GetResult();
-        }
-        else
-        {
-            LimparCampos();
-        }
+        NomeDizimista = string.Empty;
+        CodigoDizimista = 0;
+        DizimistaIdProp = Guid.Empty;
+        DizimistaEncontrado = false;
+        DizimistaAtivo = false;
+        NomeDizimistaEditable = false;
     }
 
     private async Task CarregarOfertaAsync(Guid ofertaId)
@@ -343,78 +332,44 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
         IsEditMode = false;
         DizimistaEncontrado = false;
         DizimistaAtivo = false;
+        NomeDizimistaEditable = false;
         UsarRangoMeses = false;
     }
 
-    public IAsyncRelayCommand SalvarCommand => new AsyncRelayCommand(SalvarAsync);
-
+    [RelayCommand]
     public async Task SalvarAsync()
     {
         // Validações iniciais
-        if (CodigoDizimista <= 0)
+        if (CodigoDizimista <= 0 || !DizimistaAtivo || Valor <= 0)
         {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Validação", "Por favor, insira um código de dizimista.", "OK");
-            return;
-        }
-
-        if (!DizimistaAtivo)
-        {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Validação", "O dizimista selecionado está inativo. Não é possível criar ofertas para dizimistas inativos.", "OK");
-            return;
-        }
-
-        if (Valor <= 0)
-        {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Validação", "O valor da oferta deve ser maior que zero.", "OK");
+            System.Diagnostics.Debug.WriteLine("[ERRO] Validação: dados inválidos");
             return;
         }
 
         // Validação para range de meses
         if (UsarRangoMeses)
         {
-            int mesInicio = MesRef;
-            int mesFim = MesRefFim;
-            int anoInicio = AnoRef;
-            int anoFim = AnoRefFim;
-
-            // Criar datas para comparação
-            var dataInicio = new DateTime(anoInicio, mesInicio, 1);
-            var dataFim = new DateTime(anoFim, mesFim, 1);
+            var dataInicio = new DateTime(AnoRef, MesRef, 1);
+            var dataFim = new DateTime(AnoRefFim, MesRefFim, 1);
 
             if (dataFim < dataInicio)
             {
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Validação", "A data final deve ser maior ou igual à data de início. Por favor, verifique o período selecionado.", "OK");
+                System.Diagnostics.Debug.WriteLine("[ERRO] Período de datas inválido");
                 return;
             }
         }
 
-        // Se o dizimista não foi encontrado, criar um novo
+        // Criar novo dizimista se necessário
         if (DizimistaIdProp == Guid.Empty && !DizimistaEncontrado)
         {
             if (string.IsNullOrWhiteSpace(NomeDizimista))
             {
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Validação", "Por favor, insira o nome do dizimista.", "OK");
+                System.Diagnostics.Debug.WriteLine("[ERRO] Nome do dizimista não preenchido");
                 return;
             }
 
             try
             {
-                // Criar novo dizimista
                 var novoDizimista = new Dizimista
                 {
                     Id = Guid.NewGuid(),
@@ -433,33 +388,17 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
                 DizimistaIdProp = novoDizimista.Id;
                 DizimistaEncontrado = true;
-
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                {
-                    await mainPage.DisplayAlertAsync(
-                        "Sucesso", 
-                        $"Novo dizimista '{NomeDizimista}' (código {CodigoDizimista}) foi cadastrado com sucesso.", 
-                        "OK");
-                }
             }
             catch (Exception ex)
             {
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Erro", $"Erro ao criar novo dizimista: {ex.Message}", "OK");
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao criar novo dizimista: {ex.Message}");
                 return;
             }
         }
 
         if (!DizimistaEncontrado || DizimistaIdProp == Guid.Empty)
         {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Validação", "Dizimista inválido. Por favor, verifique o código.", "OK");
+            System.Diagnostics.Debug.WriteLine("[ERRO] Dizimista inválido");
             return;
         }
 
@@ -470,8 +409,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
 
             if (IsEditMode)
             {
-                await _updateHandler.Handle(new UpdateOfertaCommand(Id, DizimistaIdProp, Valor, DataOferta, MesRef, AnoRef));
-                // Atualizar tipo de pagamento
+                await _updateHandler.Handle(new UpdateOfertaCommand(Id, DizimistaIdProp, Valor, DataOferta ?? DateTime.Today, MesRef, AnoRef));
                 var oferta = await _unitOfWork.Ofertas.GetByIdAsync(Id);
                 if (oferta != null)
                 {
@@ -484,64 +422,16 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
             {
                 if (UsarRangoMeses)
                 {
-                    int mesInicio = MesRef;
-                    int mesFim = MesRefFim;
-                    int anoInicio = AnoRef;
-                    int anoFim = AnoRefFim;
-
-                    // Calcular quantidade total de meses no range
-                    int qtdMeses = 0;
-                    int mesTemp = mesInicio;
-                    int anoTemp = anoInicio;
-
-                    while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
-                    {
-                        qtdMeses++;
-                        mesTemp++;
-                        if (mesTemp > 12)
-                        {
-                            mesTemp = 1;
-                            anoTemp++;
-                        }
-                    }
-
-                    // Dividir valor igualmente entre os meses
-                    decimal valorPorMes = qtdMeses > 0 ? Valor / qtdMeses : Valor;
-
-                    // Criar ofertas para cada mês no range
-                    mesTemp = mesInicio;
-                    anoTemp = anoInicio;
-                    while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
-                    {
-                        var novaOferta = new Oferta
-                        {
-                            Id = Guid.NewGuid(),
-                            DizimistaId = DizimistaIdProp,
-                            Valor = valorPorMes,
-                            Data = DataOferta,
-                            MesReferencia = mesTemp,
-                            AnoReferencia = anoTemp,
-                            TipoPagamento = tipoPagamento
-                        };
-                        await _unitOfWork.Ofertas.AddAsync(novaOferta);
-                        mesTemp++;
-                        if (mesTemp > 12)
-                        {
-                            mesTemp = 1;
-                            anoTemp++;
-                        }
-                    }
-                    await _unitOfWork.SaveChangesAsync();
+                    await CriarOfertasRangoAsync(tipoPagamento);
                 }
                 else
                 {
-                    // Oferta única
                     var novaOferta = new Oferta
                     {
                         Id = Guid.NewGuid(),
                         DizimistaId = DizimistaIdProp,
                         Valor = Valor,
-                        Data = DataOferta,
+                        Data = DataOferta ?? DateTime.Today,
                         MesReferencia = MesRef,
                         AnoReferencia = AnoRef,
                         TipoPagamento = tipoPagamento
@@ -551,211 +441,322 @@ public partial class OfertaCadastroViewModel : ObservableObject, IQueryAttributa
                 }
             }
 
-            // Após salvar, mostrar alerta apenas ao criar nova oferta
             if (!IsEditMode)
             {
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                {
-                    var resultado = await mainPage.DisplayAlertAsync(
-                        "Sucesso",
-                        "Oferta(s) salva(s) com sucesso! Deseja cadastrar outra oferta?",
-                        "Sim",
-                        "Não");
+                System.Diagnostics.Debug.WriteLine("[INFO] Oferta(s) salva(s) com sucesso");
+                
+                var criarOutra = await _dialogService.ShowConfirmAsync(
+                    "Oferta Criada com Sucesso!",
+                    "Deseja cadastrar outra oferta?",
+                    "Sim, Criar Outra",
+                    "Não, Voltar");
 
-                    if (resultado)
-                    {
-                        // Limpar o formulário para novo cadastro
-                        LimparCampos();
-                    }
-                    else
-                    {
-                        // Ir para a lista de ofertas
-                        await Shell.Current.GoToAsync("///ofertas", true);
-                    }
+                if (criarOutra)
+                {
+                    LimparCampos();
                 }
                 else
                 {
-                    await Shell.Current.GoToAsync("///ofertas", true);
+                    _navigationService.GoBack();
                 }
             }
             else
             {
-                // Em modo edição, voltar direto para a lista
-                var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Sucesso", "Oferta atualizada com sucesso!", "OK");
-                
-                await Shell.Current.GoToAsync("///ofertas", true);
+                _navigationService.GoBack();
             }
         }
         catch (Exception ex)
         {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao salvar oferta: {ex.Message}", "OK");
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao salvar oferta: {ex.Message}");
         }
     }
 
-    public IAsyncRelayCommand ExcluirCommand => new AsyncRelayCommand(ExcluirAsync);
+    private async Task CriarOfertasRangoAsync(TipoPagamento tipoPagamento)
+    {
+        int mesInicio = MesRef;
+        int mesFim = MesRefFim;
+        int anoInicio = AnoRef;
+        int anoFim = AnoRefFim;
 
+        int qtdMeses = CalcularQuantidadeMeses(mesInicio, mesFim, anoInicio, anoFim);
+        decimal valorPorMes = qtdMeses > 0 ? Valor / qtdMeses : Valor;
+
+        int mesTemp = mesInicio;
+        int anoTemp = anoInicio;
+        
+        while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
+        {
+            var novaOferta = new Oferta
+            {
+                Id = Guid.NewGuid(),
+                DizimistaId = DizimistaIdProp,
+                Valor = valorPorMes,
+                Data = DataOferta ?? DateTime.Today,
+                MesReferencia = mesTemp,
+                AnoReferencia = anoTemp,
+                TipoPagamento = tipoPagamento
+            };
+            await _unitOfWork.Ofertas.AddAsync(novaOferta);
+            
+            mesTemp++;
+            if (mesTemp > 12)
+            {
+                mesTemp = 1;
+                anoTemp++;
+            }
+        }
+        
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    private static int CalcularQuantidadeMeses(int mesInicio, int mesFim, int anoInicio, int anoFim)
+    {
+        int qtdMeses = 0;
+        int mesTemp = mesInicio;
+        int anoTemp = anoInicio;
+
+        while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
+        {
+            qtdMeses++;
+            mesTemp++;
+            if (mesTemp > 12)
+            {
+                mesTemp = 1;
+                anoTemp++;
+            }
+        }
+
+        return qtdMeses;
+    }
+    [RelayCommand]
+    public void Voltar()
+    {
+        try
+        {
+            _navigationService.GoBack();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao voltar: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
     public async Task ExcluirAsync()
     {
         if (IsEditMode && Id != Guid.Empty)
         {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
+            try
             {
-                bool confirm = await mainPage.DisplayAlertAsync(
-                    "Confirmação",
-                    $"Deseja excluir a oferta de valor {Valor:C} em {DataOferta:dd/MM/yyyy}?",
-                    "Sim", "Não");
-
-                if (confirm)
-                {
-                    try
-                    {
-                        await _unitOfWork.Ofertas.DeleteAsync(Id);
-                        await _unitOfWork.SaveChangesAsync();
-                        await mainPage.DisplayAlertAsync("Sucesso", "Oferta excluída com sucesso.", "OK");
-                        await Shell.Current.GoToAsync("///ofertas", true);
-                    }
-                    catch (Exception ex)
-                    {
-                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
-                    }
-                }
+                await _unitOfWork.Ofertas.DeleteAsync(Id);
+                await _unitOfWork.SaveChangesAsync();
+                System.Diagnostics.Debug.WriteLine("[INFO] Oferta excluída com sucesso");
+                _navigationService.GoBack();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao excluir oferta: {ex.Message}");
             }
         }
     }
 
     [RelayCommand]
-    public static async Task BaixarModeloAsync()
+    public async Task BaixarModeloAsync()
     {
         try
         {
-            var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>()?? throw new InvalidOperationException("OfertaExcelService não está registrado no contêiner de serviços.");
-
-            var templateStream = OfertaExcelService.GerarModelo();
+            System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
+            
             var fileName = $"oferta_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-
-#if WINDOWS
-            var result = await FileSaver.Default.SaveAsync(fileName, templateStream, CancellationToken.None);
-
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPageResult = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPageResult != null)
+            
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
             {
-                if (result.IsSuccessful)
-                    await mainPageResult.DisplayAlertAsync("Sucesso", "Planilha modelo baixada com sucesso!", "OK");
-                else
-                    await mainPageResult.DisplayAlertAsync("Erro", "Erro ao salvar o arquivo.", "OK");
+                try
+                {
+                    var storageProvider = desktop.MainWindow.StorageProvider;
+                    
+                    if (storageProvider != null)
+                    {
+                        var file = await storageProvider.SaveFilePickerAsync(new()
+                        {
+                            Title = "Salvar Planilha Modelo",
+                            DefaultExtension = "xlsx",
+                            FileTypeChoices = new[] { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                            SuggestedFileName = fileName
+                        });
+
+                        if (file != null)
+                        {
+                            var excelStream = OfertaExcelService.GerarModelo();
+                            await using var fileStream = await file.OpenWriteAsync();
+                            await fileStream.WriteAsync(excelStream.ToArray());
+                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
+                            return;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                }
             }
-#else
+
+            // Fallback: salvar em Downloads
+            var excelStreamFallback = OfertaExcelService.GerarModelo();
             var downloadsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "Downloads");
 
             if (!Directory.Exists(downloadsPath))
-            {
                 Directory.CreateDirectory(downloadsPath);
-            }
 
             var filePath = Path.Combine(downloadsPath, fileName);
-            await File.WriteAllBytesAsync(filePath, templateStream.ToArray());
+            await File.WriteAllBytesAsync(filePath, excelStreamFallback.ToArray());
 
-            var mainPageSuccess = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (mainPageSuccess != null)
-                await mainPageSuccess.DisplayAlertAsync("Sucesso", 
-                    $"Planilha modelo baixada com sucesso!\n\nLocalização: {filePath}", "OK");
-#endif
+            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
         }
         catch (Exception ex)
         {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPageError = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPageError != null)
-                await mainPageError.DisplayAlertAsync("Erro", $"Erro ao baixar modelo: {ex.Message}", "OK");
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
         }
     }
 
-    public IAsyncRelayCommand ImportarCommand => new AsyncRelayCommand(ImportarAsync);
-
+    [RelayCommand]
     public async Task ImportarAsync()
     {
         try
         {
-            var result = await FilePicker.Default.PickAsync(new PickOptions
+            System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
+            
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
             {
-                PickerTitle = "Selecione a planilha de ofertas",
-                FileTypes = ExcelFileType
-            });
-
-            if (result == null)
-                return;
-
-            var excelService = Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services.GetService<OfertaExcelService>();
-
-            if (excelService == null)
-            {
-                var windowsNull = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPageNull = windowsNull is { Count: > 0 } ? windowsNull[0].Page : null;
-                if (mainPageNull != null)
-                    await mainPageNull.DisplayAlertAsync("Erro", "Serviço de Excel não está disponível.", "OK");
-                return;
-            }
-
-            using var stream = await result.OpenReadAsync();
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            var fileBytes = memoryStream.ToArray();
-            var resultado = await excelService.ImportarAsync(fileBytes);
-
-            if (resultado.OfertasImportadas.Count > 0)
-            {
-                var windowsConfirm = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPage = windowsConfirm is { Count: > 0 } ? windowsConfirm[0].Page : null;
-                if (mainPage != null)
+                try
                 {
-                    bool confirmar = await mainPage.DisplayAlertAsync(
-                        "Confirmar Importação",
-                        $"{resultado.OfertasImportadas.Count} oferta(s) encontrada(s). Deseja importar?",
-                        "Sim", "Não");
-
-                    if (confirmar)
+                    var storageProvider = desktop.MainWindow.StorageProvider;
+                    if (storageProvider != null)
                     {
-                        foreach (var oferta in resultado.OfertasImportadas)
+                        var files = await storageProvider.OpenFilePickerAsync(new()
                         {
-                            await _unitOfWork.Ofertas.AddAsync(oferta);
+                            Title = "Selecionar Planilha para Importar",
+                            AllowMultiple = false,
+                            FileTypeFilter = new[] { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
+                        });
+
+                        if (files.Count > 0)
+                        {
+                            var file = files[0];
+                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
+
+                            await using var stream = await file.OpenReadAsync();
+                            using var memoryStream = new MemoryStream();
+                            await stream.CopyToAsync(memoryStream);
+                            var excelBytes = memoryStream.ToArray();
+
+                            var excelService = new OfertaExcelService(_unitOfWork);
+                            var resultado = await excelService.ImportarAsync(excelBytes);
+                            
+                            if (resultado.OfertasImportadas.Count == 0)
+                            {
+                                var mensagemErro = resultado.Erros.Count > 0 
+                                    ? $"Nenhuma oferta foi importada.\n\nErros:\n{string.Join("\n", resultado.Erros.Take(5))}{(resultado.Erros.Count > 5 ? $"\n... e mais {resultado.Erros.Count - 5} erro(s)" : "")}"
+                                    : "Nenhuma oferta foi encontrada no arquivo.";
+                                    
+                                await _dialogService.ShowAlertAsync("Importação", mensagemErro);
+                                return;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine($"[INFO] {resultado.OfertasImportadas.Count} ofertas lidas da planilha");
+
+                            int sucessos = 0;
+                            int erros = resultado.Erros.Count;
+
+                            foreach (var oferta in resultado.OfertasImportadas)
+                            {
+                                try
+                                {
+                                    await _unitOfWork.Ofertas.AddAsync(oferta);
+                                    sucessos++;
+                                }
+                                catch (Exception ex)
+                                {
+                                    erros++;
+                                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar oferta: {ex.Message}");
+                                }
+                            }
+
+                            try
+                            {
+                                await _unitOfWork.SaveChangesAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao salvar ofertas: {ex.Message}");
+                                await _dialogService.ShowErrorAsync($"Erro ao salvar ofertas: {ex.Message}");
+                                return;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
+
+                            var mensagem = $"Importação concluída!\n\n✓ {sucessos} oferta(s) importada(s) com sucesso";
+                            if (erros > 0)
+                                mensagem += $"\n✗ {erros} erro(s)/aviso(s) durante a importação";
+
+                            mensagem += "\n\nDeseja cadastrar outra oferta ou voltar para a lista?";
+
+                            var result = await _dialogService.ShowConfirmAsync(
+                                "Importação Concluída",
+                                mensagem,
+                                "Cadastrar Outra",
+                                "Voltar para Lista");
+
+                            if (!result)
+                            {
+                                _navigationService.GoBack();
+                            }
+                            else
+                            {
+                                LimparCampos();
+                            }
+                            return;
                         }
-                        await _unitOfWork.SaveChangesAsync();
-
-                        await mainPage.DisplayAlertAsync("Sucesso", 
-                            $"{resultado.OfertasImportadas.Count} oferta(s) importada(s) com sucesso!", "OK");
-
-                        // Navegar de volta para a lista de ofertas
-                        await Shell.Current.GoToAsync("///ofertas", true);
                     }
                 }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                    await _dialogService.ShowErrorAsync($"Erro ao abrir file picker: {ex.Message}");
+                }
             }
-            else
-            {
-                var windowsEmpty = Microsoft.Maui.Controls.Application.Current?.Windows;
-                var mainPageEmpty = windowsEmpty is { Count: > 0 } ? windowsEmpty[0].Page : null;
-                if (mainPageEmpty != null)
-                    await mainPageEmpty.DisplayAlertAsync("Aviso", "Nenhuma oferta encontrada na planilha.", "OK");
-            }
+
+            System.Diagnostics.Debug.WriteLine("[ERRO] StorageProvider não disponível");
+            await _dialogService.ShowErrorAsync("StorageProvider não disponível");
         }
         catch (Exception ex)
         {
-            var windowsError = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPageError = windowsError is { Count: > 0 } ? windowsError[0].Page : null;
-            if (mainPageError != null)
-                await mainPageError.DisplayAlertAsync("Erro", $"Erro ao importar: {ex.Message}", "OK");
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
+            await _dialogService.ShowErrorAsync($"Erro ao importar: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Implementação de INavigationAware - Carrega oferta quando navega para esta página
+    /// </summary>
+    public void OnNavigatedTo(NavigationParameters parameters)
+    {
+        if (parameters.TryGetValue("id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var ofertaId))
+        {
+            CarregarOfertaAsync(ofertaId).GetAwaiter().GetResult();
+        }
+        else
+        {
+            LimparCampos();
+        }
+    }
+
+    /// <summary>
+    /// Implementação de INavigationAware - Limpa estado ao sair da página
+    /// </summary>
+    public void OnNavigatedFrom()
+    {
     }
 }

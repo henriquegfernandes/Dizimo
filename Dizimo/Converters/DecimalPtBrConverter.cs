@@ -1,19 +1,20 @@
 using System;
 using System.Globalization;
+using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters;
 
 /// <summary>
-/// Conversor para exibir valores decimais no formato PT-BR (com vÌrgula como separador decimal)
-/// Exemplo: 100.50 -> "100,50"
+/// DEPRECATED: Use DecimalFormatterConverter com ConverterParameter="N2"
+/// Mantido por compatibilidade com c√≥digo legado
 /// </summary>
+[Obsolete("Use DecimalFormatterConverter with ConverterParameter='N2' instead.", false)]
 public class DecimalPtBrConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is decimal decimalValue)
         {
-            // Sempre usar PT-BR culture
             var ptBr = new CultureInfo("pt-BR");
             return decimalValue.ToString("N2", ptBr);
         }

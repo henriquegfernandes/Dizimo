@@ -1,30 +1,34 @@
-using Microsoft.Maui.Controls;
-
 namespace Dizimo.Services
 {
     /// <summary>
-    /// Modal Error Handler.
+    /// Modal Error Handler com logging
     /// </summary>
     public class ModalErrorHandler : IErrorHandler
     {
-        SemaphoreSlim _semaphore = new(1, 1);
+        private readonly IDialogService _dialogService;
+        private SemaphoreSlim _semaphore = new(1, 1);
+
+        public ModalErrorHandler(IDialogService? dialogService = null)
+        {
+            _dialogService = dialogService ?? new DialogService();
+        }
 
         /// <summary>
-        /// Handle error in UI.
+        /// Handle error in UI com logging.
         /// </summary>
         /// <param name="ex">Exception.</param>
         public void HandleError(Exception ex)
         {
-            DisplayAlertAsync(ex).FireAndForgetSafeAsync();
+            System.Diagnostics.Debug.WriteLine($"[ERROR] {ex.Message}");
+            DisplayErrorAsync(ex).FireAndForgetSafeAsync();
         }
 
-        async Task DisplayAlertAsync(Exception ex)
+        private async Task DisplayErrorAsync(Exception ex)
         {
             try
             {
                 await _semaphore.WaitAsync();
-                if (Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page is Page page)
-                    await page.DisplayAlertAsync("Error", ex.Message, "OK");
+                await _dialogService.ShowErrorAsync(ex.Message);
             }
             finally
             {

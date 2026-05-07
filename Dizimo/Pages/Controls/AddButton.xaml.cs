@@ -1,10 +1,15 @@
+using Avalonia.Controls;
+
 namespace Dizimo.Pages.Controls
 {
-    public partial class AddButton
+    /// <summary>
+    /// Controle customizado AddButton para Avalonia UI
+    /// </summary>
+    public partial class AddButton : Button
     {
         public AddButton()
         {
-            InitializeComponent();
+            System.Diagnostics.Debug.WriteLine("[INFO] AddButton inicializado");
         }
     }
 }

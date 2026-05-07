@@ -1,23 +1,28 @@
-using System;
+using Avalonia.Data.Converters;
 using System.Globalization;
-using Microsoft.Maui.Controls;
 
-namespace Dizimo.Converters
+namespace Dizimo.Converters;
+
+public class InvertedBoolConverter : IValueConverter
 {
-    public class InvertedBoolConverter : IValueConverter
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        if (value is bool boolValue)
         {
-            if (value is bool boolValue)
-                return !boolValue;
-            return false;
+            return !boolValue;
         }
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        return false;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is bool boolValue)
         {
-            if (value is bool boolValue)
-                return !boolValue;
-            return false;
+            return !boolValue;
         }
+
+        return false;
     }
 }
+

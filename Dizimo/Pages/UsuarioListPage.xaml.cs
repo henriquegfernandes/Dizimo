@@ -1,106 +1,35 @@
+using Avalonia.Input;
+using Avalonia.Markup.Xaml;
+using Avalonia.Interactivity;
 using Dizimo.ViewModels;
-using Dizimo.Application.Usuarios.Handlers;
-using Dizimo.Domain.Entities;
+using Avalonia.Controls;
 
 namespace Dizimo.Pages;
 
-public partial class UsuarioListPage : ContentPage
+public partial class UsuarioListPage : UserControl
 {
-
-    public UsuarioListPage(
-        GetUsuarioHandlers getHandlers,
-        CreateUsuarioHandler createHandler,
-        UpdateUsuarioHandler updateHandler,
-        DeleteUsuarioHandler deleteHandler,
-        InativarUsuarioHandler inativarHandler)
+    public UsuarioListPage()
     {
-        InitializeComponent();
-
-        BindingContext = new UsuarioListViewModel(
-            getHandlers,
-            createHandler,
-            updateHandler,
-            deleteHandler,
-            inativarHandler
-        );
+        AvaloniaXamlLoader.Load(this);
+        System.Diagnostics.Debug.WriteLine("[INFO] UsuarioListPage inicializado");
     }
 
-    protected override async void OnAppearing()
+    public void FilterTextBox_KeyDown(object? sender, KeyEventArgs e)
     {
-        base.OnAppearing();
-        
-        if (!SessaoService.IsAdmin)
+        if (e.Key == Key.Return)
         {
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Acesso negado", "Apenas administradores podem acessar esta página.", "OK");
-            await Shell.Current.GoToAsync("login");
-            return;
-        }
-
-        if (BindingContext is UsuarioListViewModel viewModel)
-        {
-            await viewModel.CarregarUsuariosCommand.ExecuteAsync(null);
-        }
-    }
-
-    private void OnFiltroCompleted(object sender, EventArgs e)
-    {
-        if (BindingContext is UsuarioListViewModel vm)
-        {
-            vm.AplicarFiltrosCommand?.Execute(null);
-        }
-    }
-
-    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (BindingContext is UsuarioListViewModel vm)
-        {
-            vm.UsuariosSelecionados.Clear();
-
-            foreach (Usuario item in e.CurrentSelection.Cast<Usuario>())
+            if (this.DataContext is UsuarioListViewModel viewModel)
             {
-                vm.UsuariosSelecionados.Add(item);
+                viewModel.AplicarFiltrosEnterCommand.Execute(null);
             }
         }
     }
 
-    private void OnSelecionarTodosClicked(object sender, EventArgs e)
+    public void FilterTextBox_LostFocus(object? sender, RoutedEventArgs e)
     {
-        if (BindingContext is UsuarioListViewModel vm)
+        if (this.DataContext is UsuarioListViewModel viewModel)
         {
-            var collectionView = UsuariosCollectionView;
-            if (collectionView == null)
-                return;
-
-            if (vm.UsuariosSelecionados.Count == vm.Usuarios.Count)
-            {
-                // Desseleciona todos
-                collectionView.SelectedItems.Clear();
-            }
-            else
-            {
-                // Seleciona todos
-                collectionView.SelectedItems.Clear();
-                foreach (var usuario in vm.Usuarios)
-                {
-                    collectionView.SelectedItems.Add(usuario);
-                }
-            }
-        }
-    }
-
-    private async void OnNovoUsuarioClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("usuario-cadastro");
-    }
-
-    private async void OnEditarUsuarioClicked(object sender, EventArgs e)
-    {
-        if (sender is Button button && button.CommandParameter is Usuario usuario)
-        {
-            await Shell.Current.GoToAsync($"usuario-cadastro?id={usuario.Id}");
+            viewModel.AplicarFiltrosEnterCommand.Execute(null);
         }
     }
 }

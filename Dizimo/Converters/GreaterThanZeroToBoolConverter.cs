@@ -1,6 +1,6 @@
 using System;
 using System.Globalization;
-using Microsoft.Maui.Controls;
+using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters
 {
@@ -15,7 +15,8 @@ namespace Dizimo.Converters
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            // OneWay converter - não suporta ConvertBack
+            return Avalonia.Data.BindingOperations.DoNothing;
         }
     }
 }

@@ -1,55 +1,75 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ResourceDictionary 
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
-
-    <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
-
-    <Color x:Key="Primary">#FF0000</Color>
-    <Color x:Key="PrimaryDark">#800000</Color>
-    <Color x:Key="PrimaryDarkText">#242424</Color>
-    <Color x:Key="Secondary">#FFD700</Color>
-    <Color x:Key="SecondaryDarkText">#F5F5F5</Color>
-    <Color x:Key="Tertiary">#8B0000</Color>
-
-    <Color x:Key="DarkBackground">#17171a</Color>
-    <Color x:Key="LightOnDarkBackground">#C3C3C3</Color>
-    <Color x:Key="LightBackground">#F2F2F2</Color>
-    <Color x:Key="DarkOnLightBackground">#0D0D0D</Color>
-
-    <Color x:Key="LightSecondaryBackground">#E0E0E0</Color>
-    <Color x:Key="DarkSecondaryBackground">#222228</Color>
-
-    <Color x:Key="White">White</Color>
-    <Color x:Key="Black">Black</Color>
-    <Color x:Key="Red">#FF0000</Color>
-    <Color x:Key="OffWhite">#F5F5F5</Color>
-    <Color x:Key="OffBlack">#1f1f1f</Color>
-    <Color x:Key="DarkRed">#8B0000</Color>
-
-    <Color x:Key="Gray100">#E1E1E1</Color>
-    <Color x:Key="Gray200">#C8C8C8</Color>
-    <Color x:Key="Gray300">#ACACAC</Color>
-    <Color x:Key="Gray400">#919191</Color>
-    <Color x:Key="Gray500">#6E6E6E</Color>
-    <Color x:Key="Gray600">#404040</Color>
-    <Color x:Key="Gray900">#212121</Color>
-    <Color x:Key="Gray950">#141414</Color>
-
-    <Color x:Key="TitleTextColor">#800000</Color>
-
-    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
-    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
-    <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
-    <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}"/>
-    <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}"/>
-
-    <SolidColorBrush x:Key="Gray100Brush" Color="{StaticResource Gray100}"/>
-    <SolidColorBrush x:Key="Gray200Brush" Color="{StaticResource Gray200}"/>
-    <SolidColorBrush x:Key="Gray300Brush" Color="{StaticResource Gray300}"/>
-    <SolidColorBrush x:Key="Gray400Brush" Color="{StaticResource Gray400}"/>
-    <SolidColorBrush x:Key="Gray500Brush" Color="{StaticResource Gray500}"/>
-    <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
-    <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
-    <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ========================================
+         CORES DA APLICAÇÃO - SISTEMA DE DESIGN
+         ======================================== -->
+    
+    <!-- CORES PRIMÁRIAS E SECUNDÁRIAS -->
+    <Color x:Key="ColorPrimary">#FF0000</Color>
+    <Color x:Key="ColorSecondary">#FFFFFF</Color>
+    
+     <!-- VARIAÇÕES DE CORES PRIMÁRIAS -->
+    <Color x:Key="ColorPrimaryDark">#CC0000</Color>
+    <Color x:Key="ColorPrimaryLight">#FF4444</Color>
+    <Color x:Key="ColorPrimaryVariant">#BB0000</Color>
+    
+    <!-- BRUSHES PARA CORES PRIMÁRIAS -->
+    <SolidColorBrush x:Key="BrushPrimaryDark" Color="{StaticResource ColorPrimaryDark}" />
+    
+    <!-- TONS DE CINZA -->
+    <Color x:Key="ColorGray50">#FAFAFA</Color>
+    <Color x:Key="ColorGray100">#F5F5F5</Color>
+    <Color x:Key="ColorGray200">#EEEEEE</Color>
+    <Color x:Key="ColorGray300">#E0E0E0</Color>
+    <Color x:Key="ColorGray400">#BDBDBD</Color>
+    <Color x:Key="ColorGray500">#9E9E9E</Color>
+    <Color x:Key="ColorGray600">#757575</Color>
+    <Color x:Key="ColorGray700">#616161</Color>
+    <Color x:Key="ColorGray800">#424242</Color>
+    <Color x:Key="ColorGray900">#212121</Color>
+    
+    <!-- CORES SEMÂNTICAS -->
+    <Color x:Key="ColorSuccess">#4CAF50</Color>
+    <Color x:Key="ColorWarning">#FF9800</Color>
+    <Color x:Key="ColorError">#F44336</Color>
+    <Color x:Key="ColorInfo">#2196F3</Color>
+    
+    <!-- ========================================
+         TEMA CLARO (Light Theme)
+         ======================================== -->
+    
+    <!-- Superfícies -->
+    <Color x:Key="LightBackgroundPrimary">#FFFFFF</Color>
+    <Color x:Key="LightBackgroundSecondary">#F5F5F5</Color>
+    <Color x:Key="LightBackgroundTertiary">#EEEEEE</Color>
+    
+    <!-- Texto -->
+    <Color x:Key="LightTextPrimary">#212121</Color>
+    <Color x:Key="LightTextSecondary">#666666</Color>
+    <Color x:Key="LightTextTertiary">#999999</Color>
+    
+    <!-- Bordas e Separadores -->
+    <Color x:Key="LightBorder">#E0E0E0</Color>
+    <Color x:Key="LightDivider">#EEEEEE</Color>
+    
+    <!-- ========================================
+         TEMA ESCURO (Dark Theme)
+         ======================================== -->
+    
+    <!-- Superfícies -->
+    <Color x:Key="DarkBackgroundPrimary">#121212</Color>
+    <Color x:Key="DarkBackgroundSecondary">#1E1E1E</Color>
+    <Color x:Key="DarkBackgroundTertiary">#2C2C2C</Color>
+    
+    <!-- Texto -->
+    <Color x:Key="DarkTextPrimary">#FFFFFF</Color>
+    <Color x:Key="DarkTextSecondary">#B3B3B3</Color>
+    <Color x:Key="DarkTextTertiary">#808080</Color>
+    
+    <!-- Bordas e Separadores -->
+    <Color x:Key="DarkBorder">#383838</Color>
+    <Color x:Key="DarkDivider">#2C2C2C</Color>
+    
 </ResourceDictionary>

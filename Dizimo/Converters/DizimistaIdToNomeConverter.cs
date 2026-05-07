@@ -1,31 +1,32 @@
 using System;
 using System.Globalization;
-using Microsoft.Maui.Controls;
+using Avalonia.Data.Converters;
 using Dizimo.Domain.Repositories;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace Dizimo.Converters;
 
 public class DizimistaIdToNomeConverter : IValueConverter
 {
-    private IUnitOfWork? _unitOfWork;
-
-    public void SetUnitOfWork(IUnitOfWork unitOfWork)
-    {
-        _unitOfWork = unitOfWork;
-    }
-
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is Guid dizimistaId && _unitOfWork != null)
+        if (value is Guid dizimistaId && dizimistaId != Guid.Empty)
         {
             try
             {
-                var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(dizimistaId).GetAwaiter().GetResult();
-                return $"{dizimista?.NumeroCadastro} - {dizimista?.Nome}" ?? "Desconhecido";
+                var unitOfWork = Ioc.Default.GetService<IUnitOfWork>();
+                if (unitOfWork != null)
+                {
+                    var dizimista = unitOfWork.Dizimistas.GetByIdAsync(dizimistaId).GetAwaiter().GetResult();
+                    if (dizimista != null)
+                    {
+                        return $"{dizimista.NumeroCadastro} - {dizimista.Nome}";
+                    }
+                }
             }
             catch
             {
-                return "Erro ao carregar";
+                return "Carregando...";
             }
         }
         return "ID desconhecido";

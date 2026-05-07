@@ -1,34 +1,38 @@
-using Microsoft.Maui.Controls;
+using Avalonia.Input;
 
 namespace Dizimo.Behaviors;
 
-public class NumericValidationBehavior : Behavior<Entry>
+public class NumericValidationBehavior
 {
-    protected override void OnAttachedTo(Entry entry)
+    public static void Attach(TextBox textBox)
     {
-        entry.TextChanged += OnEntryTextChanged;
-        base.OnAttachedTo(entry);
+        textBox.KeyDown += OnKeyDown;
     }
 
-    protected override void OnDetachingFrom(Entry entry)
+    public static void Detach(TextBox textBox)
     {
-        entry.TextChanged -= OnEntryTextChanged;
-        base.OnDetachingFrom(entry);
+        textBox.KeyDown -= OnKeyDown;
     }
 
-    private void OnEntryTextChanged(object? sender, TextChangedEventArgs e)
+    private static void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (sender is not Entry entry) return;
+        if (sender is not TextBox) return;
 
-        // Proteger contra NewTextValue nulo
-        if (string.IsNullOrEmpty(e.NewTextValue)) return;
-
-        // Remove caracteres não numéricos
-        var newText = new string(e.NewTextValue.Where(char.IsDigit).ToArray());
-        
-        if (e.NewTextValue != newText)
+        // Permitir apenas nÃºmeros e teclas de controle
+        if (char.IsDigit((char)e.Key) || IsControlKey(e.Key))
         {
-            entry.Text = newText;
+            return;
         }
+
+        e.Handled = true;
+    }
+
+    private static bool IsControlKey(Key key)
+    {
+        return key == Key.Back || key == Key.Delete || key == Key.Tab ||
+               key == Key.Left || key == Key.Right || key == Key.Home || key == Key.End;
     }
 }
+
+
+

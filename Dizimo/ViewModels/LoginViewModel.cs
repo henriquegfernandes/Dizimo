@@ -1,14 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Application.Usuarios.Queries;
-using Dizimo.Application.Usuarios.Handlers;
-using Microsoft.Maui.Controls;
+using Dizimo.Services;
 
 namespace Dizimo.ViewModels;
 
 public partial class LoginViewModel : ObservableObject
 {
-    private readonly GetUsuarioHandlers _getUsuarioHandlers;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly IDialogService _dialogService;
 
     private string _login = string.Empty;
     public string Login
@@ -31,9 +30,10 @@ public partial class LoginViewModel : ObservableObject
         set => SetProperty(ref _isLoginFailed, value);
     }
 
-    public LoginViewModel(GetUsuarioHandlers getUsuarioHandlers)
+    public LoginViewModel(IAuthenticationService authenticationService, IDialogService? dialogService = null)
     {
-        _getUsuarioHandlers = getUsuarioHandlers;
+        _authenticationService = authenticationService;
+        _dialogService = dialogService ?? new DialogService();
         ResetLoginState();
     }
 
@@ -44,33 +44,43 @@ public partial class LoginViewModel : ObservableObject
         IsLoginFailed = false;
     }
 
+    /// <summary>
+    /// Define o callback a ser executado após login bem-sucedido (DEPRECATED - usar IAuthenticationService)
+    /// </summary>
+    public void SetOnLoginSuccess(Func<Task> onLoginSuccess)
+    {
+        // Este método mantém compatibilidade com código legado
+        // A configuração real é feita via IAuthenticationService no AppRootViewModel
+        System.Diagnostics.Debug.WriteLine("[AUTH] SetOnLoginSuccess (deprecated) chamado - use IAuthenticationService.SetOnLoginSuccess");
+    }
+
     [RelayCommand]
     public async Task LoginAsync()
     {
-        var usuario = await _getUsuarioHandlers.Handle(new GetUsuarioByLoginQuery(Login));
-        if (usuario != null && usuario.Ativo && usuario.SenhaHash == SessaoService.HashSenha(Senha))
+        try
         {
-            SessaoService.Login(usuario.Id, usuario.Perfil);
-            // Atualiza o BindingContext do AppShell após login
-            if (Shell.Current is AppShell appShell)
+            // Usa o IAuthenticationService para realizar login
+            var loginSuccess = await _authenticationService.PerformLoginAsync(Login, Senha);
+            
+            if (loginSuccess)
             {
-                var app = Microsoft.Maui.Controls.Application.Current as App;
-                var mainVm = app?.Services.GetService<MainViewModel>();
-                var backupVm = app?.Services.GetService<LocalBackupViewModel>();
-                if (mainVm != null && backupVm != null)
-                    appShell.BindingContext = new ShellViewModel(mainVm, backupVm);
+                // Login bem-sucedido - o callback será executado pelo serviço
+                System.Diagnostics.Debug.WriteLine($"[AUTH] Login bem-sucedido via LoginViewModel");
+                IsLoginFailed = false;
             }
-            await Shell.Current.GoToAsync("//main");
+            else
+            {
+                // Login falhou - mostrar erro
+                IsLoginFailed = true;
+                await _dialogService.ShowErrorAsync("Login ou senha inválidos.");
+                System.Diagnostics.Debug.WriteLine($"[AUTH] Login falhou - Usuário inválido ou inativo");
+            }
         }
-        else
+        catch (Exception ex)
         {
             IsLoginFailed = true;
-            var windows = Microsoft.Maui.Controls.Application.Current?.Windows;
-            var mainPage = windows is { Count: > 0 } ? windows[0].Page : null;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync("Erro", "Login ou senha inválidos.", "OK");
-            }
+            await _dialogService.ShowErrorAsync($"Erro ao fazer login: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Exceção no login: {ex.Message}");
         }
     }
 }
