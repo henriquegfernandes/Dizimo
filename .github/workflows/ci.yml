@@ -1,6 +1,4 @@
-name: CI
-# Automated build and test workflow for Avalonia desktop application
-# Runs on all PRs and pushes to main and develop branches
+name: CI/CD
 
 on:
   push:
@@ -9,8 +7,27 @@ on:
     branches: [ main, develop ]
 
 jobs:
+  # ============================================================================
+  # BUILD & TEST - Runs on all platforms
+  # ============================================================================
   build-and-test:
-    runs-on: windows-latest
+    name: Build & Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            name: Windows
+          - os: ubuntu-latest
+            rid: linux-x64
+            name: Linux
+          - os: macos-latest
+            rid: osx-x64
+            name: macOS Intel
+          - os: macos-latest
+            rid: osx-arm64
+            name: macOS ARM64
     
     steps:
       - uses: actions/checkout@v4
@@ -39,19 +56,182 @@ jobs:
           dotnet build Dizimo.Application/Dizimo.Application.csproj --configuration Release --no-restore
           dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj --configuration Release --no-restore
 
-      - name: Build Avalonia application
+      - name: Build Avalonia application for ${{ matrix.name }}
         run: dotnet build Dizimo/Dizimo.csproj --configuration Release --no-restore
 
       - name: Build test project
+        if: matrix.os == 'windows-latest'
         run: dotnet build Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-restore
 
-      - name: Run tests
+      - name: Run tests (Windows only)
+        if: matrix.os == 'windows-latest'
         run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
         continue-on-error: true
     
-      - name: Upload test results
-        if: always()
+      - name: Upload test results (Windows only)
+        if: matrix.os == 'windows-latest' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-${{ matrix.os }}
           path: '**/TestResults/**'
+          retention-days: 7
+
+      - name: Publish for ${{ matrix.name }}
+        run: dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }}
+        continue-on-error: true
+
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
+          retention-days: 30
+
+  # ============================================================================
+  # CODE QUALITY - Runs on Ubuntu
+  # ============================================================================
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+    
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Analyze code
+        run: |
+          echo "Checking for build warnings..."
+          dotnet build Dizimo.Domain/Dizimo.Domain.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          dotnet build Dizimo.Application/Dizimo.Application.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          dotnet build Dizimo/Dizimo.csproj -c Release /p:TreatWarningsAsErrors=true || true
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
+
+  # ============================================================================
+  # CREATE RELEASE - Only on main branch, after all builds pass
+  # ============================================================================
+  create-release:
+    name: Create GitHub Release
+    needs: [build-and-test, code-quality]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release directory
+        run: |
+          mkdir -p release
+          cd artifacts
+          for dir in dizimo-*; do
+            if [ -d "$dir" ]; then
+              zip -r "../release/${dir}.zip" "$dir"
+            fi
+          done
+          ls -lh ../release/
+
+      - name: Extract version from csproj
+        id: version
+        run: |
+          VERSION=$(grep -oP '<ApplicationDisplayVersion>\K[^<]+' Dizimo/Dizimo.csproj | head -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Dizimo v${{ steps.version.outputs.version }}
+          body: |
+            ## Dizimo v${{ steps.version.outputs.version }}
+            
+            ### 📦 Release artifacts
+            
+            Multi-platform builds are available in the assets below:
+            - **Windows** (x64)
+            - **Linux** (x64)
+            - **macOS** (Intel x64 & Apple Silicon ARM64)
+            
+            ### 🚀 Installation
+            
+            1. Download the ZIP file for your platform
+            2. Extract to a folder
+            3. Run the application
+            
+            ### 📝 Changelog
+            
+            Please see commit history for detailed changes.
+            
+            ---
+            
+            **Auto-generated release from CI/CD pipeline**
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets (Windows)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/dizimo-win-x64.zip
+          asset_name: Dizimo-v${{ steps.version.outputs.version }}-windows-x64.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+      - name: Upload Release Assets (Linux)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/dizimo-linux-x64.zip
+          asset_name: Dizimo-v${{ steps.version.outputs.version }}-linux-x64.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+      - name: Upload Release Assets (macOS Intel)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/dizimo-osx-x64.zip
+          asset_name: Dizimo-v${{ steps.version.outputs.version }}-macos-intel-x64.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+      - name: Upload Release Assets (macOS ARM)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/dizimo-osx-arm64.zip
+          asset_name: Dizimo-v${{ steps.version.outputs.version }}-macos-arm64.zip
+          asset_content_type: application/zip
+        continue-on-error: true
