@@ -1,4 +1,6 @@
 name: CI
+# Automated build and test workflow for Avalonia desktop application
+# Runs on all PRs and pushes to main and develop branches
 
 on:
   push:
