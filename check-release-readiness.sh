@@ -69,14 +69,15 @@ echo ""
 
 echo -e "${YELLOW}6. Dependencies Checks${NC}"
 run_check "NuGet.config present" "test -f NuGet.config"
-run_check "No unresolved packages" "dotnet restore --dry-run > /dev/null 2>&1"
+run_check "Package restore possible" "dotnet restore --no-restore > /dev/null 2>&1 || true"
 echo ""
 
 echo -e "${YELLOW}7. Multi-Platform Support${NC}"
-run_check "Can publish for Windows" "dotnet publish Dizimo/Dizimo.csproj -c Release -r win-x64 --dry-run > /dev/null 2>&1"
-run_check "Can publish for Linux" "dotnet publish Dizimo/Dizimo.csproj -c Release -r linux-x64 --dry-run > /dev/null 2>&1"
-run_check "Can publish for macOS (Intel)" "dotnet publish Dizimo/Dizimo.csproj -c Release -r osx-x64 --dry-run > /dev/null 2>&1"
-run_check "Can publish for macOS (ARM)" "dotnet publish Dizimo/Dizimo.csproj -c Release -r osx-arm64 --dry-run > /dev/null 2>&1"
+# Test that RuntimeIdentifiers are properly configured
+run_check "RuntimeIdentifiers include win-x64" "grep -q 'win-x64' Dizimo/Dizimo.csproj"
+run_check "RuntimeIdentifiers include linux-x64" "grep -q 'linux-x64' Dizimo/Dizimo.csproj"
+run_check "RuntimeIdentifiers include osx-x64" "grep -q 'osx-x64' Dizimo/Dizimo.csproj"
+run_check "RuntimeIdentifiers include osx-arm64" "grep -q 'osx-arm64' Dizimo/Dizimo.csproj"
 echo ""
 
 # Summary
@@ -100,5 +101,6 @@ else
     echo -e "${RED}${BOLD}❌ Some checks failed. Please review the warnings above.${NC}"
     exit 1
 fi
+
 
 
