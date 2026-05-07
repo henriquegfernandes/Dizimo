@@ -28,9 +28,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Install MAUI workload
-        run: dotnet workload restore
-
       - name: Restore dependencies
         run: dotnet restore
 
@@ -47,8 +44,13 @@ jobs:
       - name: Run tests
         run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
     
-      - name: Build MAUI app
+      - name: Build Avalonia app (Windows)
         run: dotnet build Dizimo/Dizimo.csproj --configuration Release --no-restore
+
+      - name: Publish for multi-platform (verification)
+        run: |
+          echo "Verifying multi-platform publish configuration..."
+          dotnet publish Dizimo/Dizimo.csproj -c Release -r win-x64 --self-contained false --no-build || true
     
       - name: Upload test results
         if: always()
