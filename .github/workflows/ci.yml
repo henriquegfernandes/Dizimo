@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: write
+
 jobs:
   # ============================================================================
   # BUILD & TEST - Runs on all platforms (x64 and ARM64)
