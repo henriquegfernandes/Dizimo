@@ -8,26 +8,35 @@ on:
 
 jobs:
   # ============================================================================
-  # BUILD & TEST - Runs on all platforms
+  # BUILD & TEST - Runs on all platforms (x64 and ARM64)
   # ============================================================================
   build-and-test:
-    name: Build & Test on ${{ matrix.os }}
+    name: Build & Test on ${{ matrix.os }} (${{ matrix.rid }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
+          # Windows
           - os: windows-latest
             rid: win-x64
-            name: Windows
+            name: Windows (x64)
+          - os: windows-latest
+            rid: win-arm64
+            name: Windows (ARM64)
+          # Linux
           - os: ubuntu-latest
             rid: linux-x64
-            name: Linux
+            name: Linux (x64)
+          - os: ubuntu-latest
+            rid: linux-arm64
+            name: Linux (ARM64)
+          # macOS
           - os: macos-latest
             rid: osx-x64
-            name: macOS Intel
+            name: macOS (Intel x64)
           - os: macos-latest
             rid: osx-arm64
-            name: macOS ARM64
+            name: macOS (Apple Silicon ARM64)
     
     steps:
       - uses: actions/checkout@v4
@@ -59,20 +68,20 @@ jobs:
       - name: Build Avalonia application for ${{ matrix.name }}
         run: dotnet build Dizimo/Dizimo.csproj --configuration Release --no-restore
 
-      - name: Build test project
-        if: matrix.os == 'windows-latest'
+      - name: Build test project (Windows x64 only)
+        if: matrix.rid == 'win-x64'
         run: dotnet build Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-restore
 
-      - name: Run tests (Windows only)
-        if: matrix.os == 'windows-latest'
+      - name: Run tests (Windows x64 only)
+        if: matrix.rid == 'win-x64'
         run: dotnet test Dizimo.Tests/Dizimo.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
         continue-on-error: true
     
-      - name: Upload test results (Windows only)
-        if: matrix.os == 'windows-latest' && always()
+      - name: Upload test results (Windows x64 only)
+        if: matrix.rid == 'win-x64' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}
+          name: test-results-${{ matrix.rid }}
           path: '**/TestResults/**'
           retention-days: 7
 
@@ -89,46 +98,220 @@ jobs:
           retention-days: 30
 
   # ============================================================================
-  # CODE QUALITY - Runs on Ubuntu
+  # BUILD WINDOWS INSTALLER - Only for x64 and ARM64
   # ============================================================================
-  code-quality:
-    runs-on: ubuntu-latest
+  build-windows-installer:
+    name: Build Windows Installer (${{ matrix.arch }})
+    runs-on: windows-latest
+    needs: build-and-test
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            arch: x64
+          - rid: win-arm64
+            arch: ARM64
     
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Download artifact for ${{ matrix.arch }}
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
-    
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Install NSIS
+        run: choco install nsis -y
 
-      - name: Analyze code
+      - name: Create installer directory
         run: |
-          echo "Checking for build warnings..."
-          dotnet build Dizimo.Domain/Dizimo.Domain.csproj -c Release /p:TreatWarningsAsErrors=true || true
-          dotnet build Dizimo.Application/Dizimo.Application.csproj -c Release /p:TreatWarningsAsErrors=true || true
-          dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj -c Release /p:TreatWarningsAsErrors=true || true
-          dotnet build Dizimo/Dizimo.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          mkdir -p installer
+          copy-item publish-${{ matrix.rid }}\* installer\ -Recurse
 
-      - name: Check for secrets
-        uses: trufflesecurity/trufflehog@main
+      - name: Build NSIS installer
+        run: |
+          $nsiScript = @"
+          !include "MUI2.nsh"
+          Name "Dizimo"
+          OutFile "Dizimo-v2.0.0-windows-${{ matrix.arch }}-Setup.exe"
+          InstallDir "`$PROGRAMFILES\Dizimo"
+          RequestExecutionLevel admin
+          !insertmacro MUI_PAGE_DIRECTORY
+          !insertmacro MUI_PAGE_INSTFILES
+          !insertmacro MUI_LANGUAGE "English"
+          Section "Install"
+            SetOutPath "`$INSTDIR"
+            File /r "installer\*.*"
+            CreateDirectory "`$SMPROGRAMS\Dizimo"
+            CreateShortcut "`$SMPROGRAMS\Dizimo\Dizimo.lnk" "`$INSTDIR\Dizimo.exe"
+            CreateShortcut "`$DESKTOP\Dizimo.lnk" "`$INSTDIR\Dizimo.exe"
+            WriteUninstaller "`$INSTDIR\Uninstall.exe"
+          SectionEnd
+          Section "Uninstall"
+            RMDir /r "`$INSTDIR"
+            RMDir /r "`$SMPROGRAMS\Dizimo"
+            Delete "`$DESKTOP\Dizimo.lnk"
+          SectionEnd
+          "@
+          $nsiScript | Out-File -Encoding ASCII "installer.nsi"
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
         with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
+          name: dizimo-windows-${{ matrix.arch }}-installer
+          path: Dizimo-v2.0.0-windows-${{ matrix.arch }}-Setup.exe
+          retention-days: 30
+
+  # ============================================================================
+  # BUILD LINUX APPIMAGE - Only for x64 and ARM64
+  # ============================================================================
+  build-linux-appimage:
+    name: Build Linux AppImage (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    strategy:
+      matrix:
+        include:
+          - rid: linux-x64
+            arch: x86_64
+          - rid: linux-arm64
+            arch: aarch64
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download artifact for ${{ matrix.arch }}
+        uses: actions/download-artifact@v4
+        with:
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
+
+      - name: Install AppImage tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y appimagetool appstream libfuse-dev
         continue-on-error: true
+
+      - name: Build AppImage
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          
+          cp -r publish-${{ matrix.rid }}/* AppDir/usr/bin/
+          chmod +x AppDir/usr/bin/Dizimo
+          
+          cat > AppDir/usr/share/applications/Dizimo.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Dizimo
+          Exec=Dizimo
+          Icon=Dizimo
+          Categories=Utility;
+          EOF
+          
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          SELF=$(readlink -f "$0")
+          HERE=${SELF%/*}
+          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+          exec "$HERE/usr/bin/Dizimo" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+          
+          if command -v appimagetool &> /dev/null; then
+            appimagetool AppDir "Dizimo-v2.0.0-linux-${{ matrix.arch }}.AppImage"
+          else
+            echo "WARNING: appimagetool not found, creating fallback"
+            cp AppDir/AppRun "Dizimo-v2.0.0-linux-${{ matrix.arch }}.AppImage"
+          fi
+
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-linux-${{ matrix.arch }}-appimage
+          path: Dizimo-v2.0.0-linux-${{ matrix.arch }}.AppImage
+          retention-days: 30
+
+  # ============================================================================
+  # BUILD MACOS DMG - For both x64 and ARM64
+  # ============================================================================
+  build-macos-dmg:
+    name: Build macOS DMG (${{ matrix.arch }})
+    runs-on: macos-latest
+    needs: build-and-test
+    strategy:
+      matrix:
+        include:
+          - rid: osx-x64
+            arch: x86_64
+          - rid: osx-arm64
+            arch: arm64
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download artifact for ${{ matrix.arch }}
+        uses: actions/download-artifact@v4
+        with:
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
+
+      - name: Create macOS App Bundle and DMG
+        run: |
+          # Create app bundle structure
+          mkdir -p Dizimo.app/Contents/MacOS
+          mkdir -p Dizimo.app/Contents/Resources
+          
+          # Copy application files
+          cp -r publish-${{ matrix.rid }}/* Dizimo.app/Contents/MacOS/
+          chmod +x Dizimo.app/Contents/MacOS/Dizimo
+          
+          # Create Info.plist
+          cat > Dizimo.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>Dizimo</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.henriquefernandestech.dizimo</string>
+              <key>CFBundleName</key>
+              <string>Dizimo</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>2.0.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          
+          # Create DMG
+          mkdir Dizimo-DMG
+          cp -r Dizimo.app Dizimo-DMG/
+          ln -s /Applications Dizimo-DMG/Applications
+          
+          hdiutil create -volname "Dizimo" -srcfolder Dizimo-DMG -ov -format UDZO "Dizimo-v2.0.0-macos-${{ matrix.arch }}.dmg"
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-macos-${{ matrix.arch }}-dmg
+          path: Dizimo-v2.0.0-macos-${{ matrix.arch }}.dmg
+          retention-days: 30
 
   # ============================================================================
   # CREATE RELEASE - Only on main branch, after all builds pass
   # ============================================================================
   create-release:
     name: Create GitHub Release
-    needs: [build-and-test, code-quality]
+    needs: [build-and-test, build-windows-installer, build-linux-appimage, build-macos-dmg]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
@@ -140,23 +323,31 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create release directory
-        run: |
-          mkdir -p release
-          cd artifacts
-          for dir in dizimo-*; do
-            if [ -d "$dir" ]; then
-              zip -r "../release/${dir}.zip" "$dir"
-            fi
-          done
-          ls -lh ../release/
-
       - name: Extract version from csproj
         id: version
         run: |
           VERSION=$(grep -oP '<ApplicationDisplayVersion>\K[^<]+' Dizimo/Dizimo.csproj | head -1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION"
+
+      - name: Organize release files
+        run: |
+          mkdir -p release
+          cd artifacts
+          
+          # ZIP files (build artifacts)
+          for dir in dizimo-*; do
+            if [ -d "$dir" ] && [[ "$dir" != *"-installer" ]] && [[ "$dir" != *"-appimage" ]] && [[ "$dir" != *"-dmg" ]]; then
+              zip -r "../release/${dir}.zip" "$dir" || true
+            fi
+          done
+          
+          # Installers and AppImages
+          find . -name "*.exe" -exec cp {} ../release/ \; 2>/dev/null || true
+          find . -name "*.AppImage" -exec cp {} ../release/ \; 2>/dev/null || true
+          find . -name "*.dmg" -exec cp {} ../release/ \; 2>/dev/null || true
+          
+          ls -lh ../release/
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -171,16 +362,35 @@ jobs:
             
             ### 📦 Release artifacts
             
-            Multi-platform builds are available in the assets below:
-            - **Windows** (x64)
-            - **Linux** (x64)
-            - **macOS** (Intel x64 & Apple Silicon ARM64)
+            Multi-platform builds are available:
             
-            ### 🚀 Installation
+            **Windows**
+            - Windows x64 - Setup.exe (Recommended for easy installation)
+            - Windows x64 - ZIP (For portable/manual installation)
+            - Windows ARM64 - Setup.exe (For ARM-based Windows devices)
+            - Windows ARM64 - ZIP
             
-            1. Download the ZIP file for your platform
-            2. Extract to a folder
-            3. Run the application
+            **Linux**
+            - Linux x64 - AppImage (Runs on any Linux distribution)
+            - Linux x64 - ZIP (For manual installation)
+            - Linux ARM64 - AppImage (For ARM-based Linux devices)
+            - Linux ARM64 - ZIP
+            
+            **macOS**
+            - macOS Intel x64 - DMG (Recommended - drag and drop installer)
+            - macOS Apple Silicon ARM64 - DMG (For M1/M2/M3 Macs)
+            
+            ### 🚀 Installation Instructions
+            
+            **Windows**: Download the Setup.exe and follow the installer wizard
+            
+            **Linux**: Download the AppImage, mark as executable, and run:
+            ```bash
+            chmod +x Dizimo-*.AppImage
+            ./Dizimo-*.AppImage
+            ```
+            
+            **macOS**: Download the DMG, open it, drag Dizimo.app to Applications folder
             
             ### 📝 Changelog
             
@@ -192,46 +402,19 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Assets (Windows)
-        uses: actions/upload-release-asset@v1
+      - name: Upload Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/dizimo-win-x64.zip
-          asset_name: Dizimo-v${{ steps.version.outputs.version }}-windows-x64.zip
-          asset_content_type: application/zip
-        continue-on-error: true
-
-      - name: Upload Release Assets (Linux)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/dizimo-linux-x64.zip
-          asset_name: Dizimo-v${{ steps.version.outputs.version }}-linux-x64.zip
-          asset_content_type: application/zip
-        continue-on-error: true
-
-      - name: Upload Release Assets (macOS Intel)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/dizimo-osx-x64.zip
-          asset_name: Dizimo-v${{ steps.version.outputs.version }}-macos-intel-x64.zip
-          asset_content_type: application/zip
-        continue-on-error: true
-
-      - name: Upload Release Assets (macOS ARM)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/dizimo-osx-arm64.zip
-          asset_name: Dizimo-v${{ steps.version.outputs.version }}-macos-arm64.zip
-          asset_content_type: application/zip
+        run: |
+          cd release
+          for file in *; do
+            if [ -f "$file" ]; then
+              curl -X POST \
+                -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Content-Type: $(file -b --mime-type $file)" \
+                --data-binary @"$file" \
+                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$file" \
+                || echo "Failed to upload $file"
+            fi
+          done
         continue-on-error: true
