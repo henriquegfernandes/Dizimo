@@ -204,8 +204,11 @@ jobs:
           retention-days: 30
 
   # ============================================================================
-  # BUILD LINUX APPIMAGE - Only for x64 and ARM64
+  # BUILD LINUX APPIMAGE - Only for x86_64
   # ============================================================================
+  # Note: ARM64 AppImage is not built in CI because ubuntu-latest is x86_64 only.
+  # ARM64 binaries are available as ZIP artifacts from build-and-test job.
+  # To build ARM64 AppImage in CI, add a self-hosted ARM64 runner to the matrix.
   build-linux-appimage:
     name: Build Linux AppImage (${{ matrix.arch }})
     runs-on: ubuntu-latest
@@ -215,8 +218,6 @@ jobs:
         include:
           - rid: linux-x64
             arch: x86_64
-          - rid: linux-arm64
-            arch: aarch64
     
     steps:
       - uses: actions/checkout@v4
