@@ -2,17 +2,32 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using Microsoft.Maui.Controls;
-using System.Security.Cryptography;
-using System.Text;
+using Dizimo.Services;
 
 namespace Dizimo.ViewModels;
 
-public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
+public partial class SetupViewModel : ObservableObject
 {
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAuthenticationService _authenticationService;
+    private Func<Task>? _onSetupComplete;
 
+    public SetupViewModel(IUnitOfWork unitOfWork, IAuthenticationService authenticationService)
+    {
+        _unitOfWork = unitOfWork;
+        _authenticationService = authenticationService;
+    }
 
+    /// <summary>
+    /// Define o callback a ser executado após setup bem-sucedido (DEPRECATED - usar IAuthenticationService)
+    /// </summary>
+    public void SetOnSetupComplete(Func<Task> onSetupComplete)
+    {
+        _onSetupComplete = onSetupComplete;
+        System.Diagnostics.Debug.WriteLine("[AUTH] SetOnSetupComplete (deprecated) chamado - use IAuthenticationService.SetOnLoginSuccess");
+    }
+
+    // ...existing code...
     private string _nomeUsuario = string.Empty;
     public string NomeUsuario
     {
@@ -87,7 +102,7 @@ public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
             if (usuariosExistentes.Any())
             {
                 MensagemErro = "Já existe um usuário cadastrado. Faça login para continuar.";
-                await Shell.Current.GoToAsync("login");
+                System.Diagnostics.Debug.WriteLine("[NAV] Redirecionando para login (usuários já existem)");
                 return;
             }
             // Verifica se já existe um usuário com esse login usando busca direta por login
@@ -104,29 +119,39 @@ public partial class SetupViewModel(IUnitOfWork unitOfWork) : ObservableObject
                 Id = Guid.NewGuid(),
                 Nome = "Administrador",
                 Login = NomeUsuario,
-                SenhaHash = HashSenhaBase64(Senha),
+                SenhaHash = SessaoService.HashSenha(Senha),
                 Perfil = PerfilUsuario.Admin,
                 Ativo = true
             };
 
             await _unitOfWork.Usuarios.AddAsync(admin);
             await _unitOfWork.SaveChangesAsync();
+            System.Diagnostics.Debug.WriteLine("[AUTH] Primeiro usuário criado com sucesso");
 
-            // Navega para a página de login
-            await Shell.Current.GoToAsync("login");
+            // Faz login automático com as credenciais digitadas
+            // Usa o IAuthenticationService para manter consistência
+            var loginSuccess = await _authenticationService.PerformLoginAsync(NomeUsuario, Senha);
+
+            if (loginSuccess)
+            {
+                // Login bem-sucedido - o callback será executado pelo serviço (NavigateToDashboard)
+                System.Diagnostics.Debug.WriteLine("[AUTH] Setup concluído - login automático realizado");
+            }
+            else
+            {
+                // Login falhou (não deveria acontecer neste contexto)
+                MensagemErro = "Erro ao fazer login automático após setup.";
+                System.Diagnostics.Debug.WriteLine("[ERROR] Erro ao fazer login automático após setup");
+            }
         }
         catch (Exception ex)
         {
             MensagemErro = $"Erro ao criar usuário: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"[ERROR] Erro ao criar primeiro usuário: {ex.Message}");
         }
         finally
         {
             IsLoading = false;
         }
-    }
-
-    private static string HashSenhaBase64(string senha)
-    {
-        return SessaoService.HashSenha(senha);
     }
 }

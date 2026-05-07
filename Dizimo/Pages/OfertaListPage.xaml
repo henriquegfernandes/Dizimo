@@ -1,203 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:local="clr-namespace:Dizimo.Converters"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             xmlns:fonts="clr-namespace:Dizimo.Resources.Fonts"
+             xmlns:behaviors="clr-namespace:Dizimo.Behaviors"
              xmlns:domain="clr-namespace:Dizimo.Domain.Entities;assembly=Dizimo.Domain"
              x:Class="Dizimo.Pages.OfertaListPage"
              x:DataType="vm:OfertaListViewModel">
-    <ContentPage.Resources>
+    <UserControl.Resources>
         <ResourceDictionary>
-            <local:NullToBoolConverter x:Key="NullToBoolConverter" />
+            <local:NullOrEmptyToBoolConverter x:Key="NullOrEmptyToBoolConverter" />
             <local:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
             <local:MonthNumberToNameConverter x:Key="MonthNumberToNameConverter" />
-            <local:DecimalToRealConverter x:Key="DecimalToRealConverter" />
+            <local:DecimalFormatterConverter x:Key="DecimalFormatterConverter" />
             <local:DizimistaIdToNomeConverter x:Key="DizimistaIdToNomeConverter" />
             <local:MesAnoToStringConverter x:Key="MesAnoToStringConverter" />
+            <local:DatePtBrConverter x:Key="DatePtBrConverter" />
         </ResourceDictionary>
-    </ContentPage.Resources>
+    </UserControl.Resources>
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Spacing="{StaticResource LayoutSpacing}" Padding="{StaticResource LayoutPadding}">
-                <StackLayout Padding="16" Spacing="12">
+        <ScrollViewer>
+            <StackPanel Spacing="16" Margin="16">
+                <StackPanel Margin="16" Spacing="12">
+                    <TextBlock Text="Gerenciamento de Ofertas" 
+                               FontSize="24" 
+                               FontWeight="Bold" 
+                               Foreground="{DynamicResource BrushPrimary}" />
                     <!-- Filtro unificado, data e tipo de pagamento -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
-                        <DatePicker Date="{Binding FiltroDataInicio}"
-                                    Grid.Column="0"
-                                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
-                                    VerticalOptions="Center"
-                                    Format="dd/MM/yyyy" />
-                        <Label Text="até" Grid.Column="1" VerticalOptions="Center" Margin="4,0" FontSize="12" />
-                        <DatePicker Date="{Binding FiltroDataFim}"
-                                    Grid.Column="2"
-                                    BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" 
-                                    VerticalOptions="Center"
-                                    Format="dd/MM/yyyy" />
-                        <Entry Placeholder="Buscar por nome ou código do dizimista" 
-                               Text="{Binding FiltroNome}" 
-                               Grid.Column="3"
-                               BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}"
-                               Completed="OnFiltroCompleted" />
-                        <!-- Picker para tipo de pagamento -->
-                        <Picker Grid.Column="4"
-                                ItemsSource="{Binding TiposPagamento}"
-                                SelectedItem="{Binding FiltroTipoPagamento, Mode=TwoWay}"
-                                VerticalOptions="Center"
-                                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#222228}" />
+                    <Grid ColumnSpacing="16" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
+                        <CalendarDatePicker SelectedDate="{Binding FiltroDataInicio}"
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center" />
+                        <TextBlock Text="até" Grid.Column="1" VerticalAlignment="Center" Margin="4,0" FontSize="12" />
+                        <CalendarDatePicker SelectedDate="{Binding FiltroDataFim}"
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center" />
+                        <TextBox PlaceholderText="Buscar por nome ou código do dizimista" 
+                                Text="{Binding FiltroNome}" 
+                                Grid.Column="3"
+                                VerticalAlignment="Center"
+                                KeyDown="OnFiltroKeyDown"
+                                LostFocus="OnFiltroLostFocus" />
+                        <!-- ComboBox para tipo de pagamento -->
+                        <ComboBox Grid.Column="4"
+                                 ItemsSource="{Binding TiposPagamento}"
+                                 SelectedItem="{Binding FiltroTipoPagamento, Mode=TwoWay}"
+                                 VerticalAlignment="Center" />
                         <Button Grid.Column="5"
-                                Command="{Binding AplicarFiltrosCommand}" 
-                                Padding="12"
-                                VerticalOptions="Center"
-                                HorizontalOptions="Center"
-                                ImageSource="{StaticResource IconSearch}"
-                                ToolTipProperties.Text="Filtrar"
-                                CornerRadius="6" />
+                               Classes="Secondary"
+                               Command="{Binding AplicarFiltrosCommand}" 
+                               Content="Filtrar"
+                               Padding="12"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               CornerRadius="6" />
                         <Button Grid.Column="6"
-                                Command="{Binding LimparFiltrosCommand}" 
-                                Padding="12"
-                                VerticalOptions="Center"
-                                HorizontalOptions="Center"
-                                ImageSource="{StaticResource IconClean}"
-                                ToolTipProperties.Text="Limpar Filtros"
-                                CornerRadius="6" />
+                               Classes="Secondary"
+                               Command="{Binding LimparFiltrosCommand}" 
+                               Content="Limpar"
+                               Padding="12"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               CornerRadius="6" />
                     </Grid>
                     <!-- Linha de botões de exportação/impressão -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="*,*">
-                        <Button Text="Exportar"
-                                Command="{Binding ExportarCommand}" 
-                                ImageSource="{StaticResource IconExport}" 
-                                ToolTipProperties.Text="Exportar em Excel" 
-                                CornerRadius="8"
-                                Padding="10"
-                                Grid.Column="0"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        <Button Text="Imprimir"
-                                Command="{Binding ImprimirCommand}" 
-                                ImageSource="{StaticResource IconPrint}" 
-                                ToolTipProperties.Text="Imprimir em HTML" 
-                                CornerRadius="8"
-                                Padding="10"
-                                Grid.Column="1"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
+                    <Grid ColumnSpacing="16" ColumnDefinitions="*,*">
+                        <Button Classes="Primary"
+                               Content="Exportar"
+                               Command="{Binding ExportarCommand}" 
+                               CornerRadius="8"
+                               Padding="10"
+                               Grid.Column="0"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                        <Button Classes="Primary"
+                               Content="Imprimir"
+                               Command="{Binding ImprimirCommand}" 
+                               CornerRadius="8"
+                               Padding="10"
+                               Grid.Column="1"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
                     </Grid>
                     <!-- Linha de título da lista -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,2*,1*" Padding="8">
-                        <Label Text="" Grid.Column="0" />
-                        <Label Text="Data" Grid.Column="1" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Dizimista" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Valor" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Período" Grid.Column="4" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="Tipo Pagto" Grid.Column="5" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="" Grid.Column="6" />
+                    <Grid ColumnSpacing="16" ColumnDefinitions="1*,2*,3*,2*,2*,2*,Auto,Auto">
+                        <TextBlock Text="" Grid.Column="0" />
+                        <TextBlock Text="Data" Grid.Column="1" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Dizimista" Grid.Column="2" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Valor" Grid.Column="3" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Período" Grid.Column="4" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="Tipo Pagto" Grid.Column="5" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="       " Grid.Column="6" />
+                        <TextBlock Text="       " Grid.Column="7" />
                     </Grid>
-                    <!-- Lista paginada com infinite scroll -->
-                    <CollectionView x:Name="OfertasCollectionView"
-                                    ItemsSource="{Binding Ofertas}"
-                                    RemainingItemsThreshold="5"
-                                    RemainingItemsThresholdReachedCommand="{Binding CarregarMaisOfertasCommand}"
-                                    SelectionMode="Multiple"
-                                    SelectionChanged="OnSelectionChanged"
-                                    Margin="0,0,0,8">
-                        <CollectionView.ItemTemplate>
+                    <!-- Lista paginada com ItemsControl -->
+                    <ItemsControl x:Name="OfertasCollectionView"
+                                 ItemsSource="{Binding Ofertas}"
+                                 Margin="0,0,0,8">
+                        <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="domain:Oferta">
-                                <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,2*,1*" Padding="8">
-                                    <Label Text="" Grid.Column="0" />
-                                    <Label Text="{Binding Data, StringFormat='{0:dd/MM/yyyy}'}" Grid.Column="1" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding DizimistaId, Converter={StaticResource DizimistaIdToNomeConverter}}" Grid.Column="2" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding Valor, Converter={StaticResource DecimalToRealConverter}}" Grid.Column="3" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding ., Converter={StaticResource MesAnoToStringConverter}}" Grid.Column="4" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding TipoPagamento}" Grid.Column="5" HorizontalTextAlignment="Center" />
+                                <Grid ColumnSpacing="16" ColumnDefinitions="1*,2*,3*,2*,2*,2*,Auto,Auto" Margin="0,8">
+                                    <!-- Checkbox para seleção -->
+                                    <CheckBox Grid.Column="0"
+                                             behaviors:CheckBoxSelectionBehavior.Item="{Binding}"
+                                             behaviors:CheckBoxSelectionBehavior.SelectedItems="{Binding $parent[ItemsControl].DataContext.OfertasSelecionadas}"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding Data, Converter={StaticResource DatePtBrConverter}}" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding DizimistaId, Converter={StaticResource DizimistaIdToNomeConverter}}" Grid.Column="2" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Valor, Converter={StaticResource DecimalFormatterConverter}}" Grid.Column="3" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding ., Converter={StaticResource MesAnoToStringConverter}}" Grid.Column="4" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding TipoPagamento}" Grid.Column="5" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <!-- Botão de editar com ícone de lápis -->
                                     <Button Grid.Column="6"
-                                            Clicked="OnEditarOfertaClicked"
-                                            CommandParameter="{Binding .}"
-                                            ImageSource="{StaticResource IconEdit}"
-                                            Padding="0"
-                                            CornerRadius="6"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center"/>
+                                           Command="{Binding $parent[ItemsControl].DataContext.EditarOfertaCommand}"
+                                           CommandParameter="{Binding}"
+                                           Padding="8,4"
+                                           CornerRadius="6"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           ToolTip.Tip="Editar"
+                                           Classes="Primary">
+                                        <TextBlock Text="✏️" FontSize="14" Foreground="White" />
+                                    </Button>
+                                    <!-- Botão de visualizar com ícone de olho -->
+                                    <Button Grid.Column="7"
+                                           Command="{Binding $parent[ItemsControl].DataContext.ExcluirOfertaCommand}"
+                                           CommandParameter="{Binding}"
+                                           Padding="8,4"
+                                           CornerRadius="6"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           ToolTip.Tip="Excluir"
+                                           Classes="Primary">
+                                        <TextBlock Text="🗑" FontSize="14" Foreground="White" />
+                                    </Button>
                                 </Grid>
                             </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <!-- Linha de resultados -->
-                    <Label Text="{Binding TextoResultados}" 
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center"
-                           FontAttributes="Bold"
-                           Margin="0,8" />
-
+                    <TextBlock Text="{Binding TextoResultados}" 
+                              HorizontalAlignment="Center"
+                              TextAlignment="Center"
+                              FontWeight="Bold"
+                              Margin="0,8" />
                     <!-- Botão Carregar Mais -->
-                    <Button Text="Carregar Mais" 
+                    <Button Classes="Primary"
+                            Content="Carregar Mais" 
                             Command="{Binding CarregarMaisOfertasCommand}"
                             IsVisible="{Binding TemProxima}"
                             Margin="0,12,0,8"
                             Padding="12"
-                            HorizontalOptions="Center" />
-
+                            HorizontalAlignment="Center" />
                     <!-- Linha de total -->
-                    <Grid ColumnSpacing="{StaticResource LayoutSpacing}" ColumnDefinitions="2*,2*,3*,2*,2*,2*,1*" Padding="8" >
-                        <Label Text="" Grid.Column="0" />
-                        <Label Text="" Grid.Column="1" />
-                        <Label Text="TOTAL" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="{Binding ValorTotal, Converter={StaticResource DecimalToRealConverter}}" Grid.Column="3" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Text="" Grid.Column="4" />
-                        <Label Text="" Grid.Column="5" />
-                        <Label Text="" Grid.Column="6" />
+                    <Grid ColumnSpacing="16" ColumnDefinitions="Auto,2*,2*,3*,2*,2*,2*,Auto,Auto">
+                        <TextBlock Text="" Grid.Column="0" />
+                        <TextBlock Text="" Grid.Column="1" />
+                        <TextBlock Text="TOTAL" Grid.Column="2" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="{Binding ValorTotal, Converter={StaticResource DecimalFormatterConverter}}" Grid.Column="3" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="" Grid.Column="4" />
+                        <TextBlock Text="" Grid.Column="5" />
+                        <TextBlock Text="" Grid.Column="6" />
+                        <TextBlock Text="" Grid.Column="7" />
+                        <TextBlock Text="" Grid.Column="8" />
                     </Grid>
-
-                    <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="12" Margin="0,8,0,0">
-                        
-                    </StackLayout>
-                </StackLayout>
-            </VerticalStackLayout>
-        </ScrollView>
-        
-        <!-- Botões flutuantes de ação em massa (excluir, ativar/inativar, selecionar todos) - Centralizados -->
-        <Grid ColumnSpacing="12" ColumnDefinitions="*,*" Padding="12" VerticalOptions="End" HorizontalOptions="Center" IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24">
-            <!-- Botão de selecionar todos (aparece quando há seleção) -->
-            <Button Text="Selecionar todos"
-                 Clicked="OnSelecionarTodosClicked"
-                 IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
-                 Padding="12"
-                 CornerRadius="8"
-                 Grid.Column="0"
-                 HorizontalOptions="Center"
-                 VerticalOptions="Center"
-                 ImageSource="{StaticResource IconSelect}">
-            </Button>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,8,0,0">
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+        <!-- Botões flutuantes de ação em massa - Centralizados -->
+        <Grid ColumnSpacing="12" ColumnDefinitions="Auto,Auto" VerticalAlignment="Bottom" HorizontalAlignment="Center" IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24" ZIndex="100">
+            <Button Content="{Binding TextoBotaoSelecao}"
+                   Classes="Secondary"
+                   Command="{Binding SelecionarTodosCommand}"
+                   Padding="12"
+                   CornerRadius="8"
+                   Grid.Column="0"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
             <!-- Botão flutuante de excluir -->
-            <Button Text="Excluir" 
-                Command="{Binding ExcluirOfertasSelecionadasCommand}" 
-                IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
-                Padding="12"
-                CornerRadius="8"
-                Grid.Column="1"
-                HorizontalOptions="Center"
-                VerticalOptions="Center"
-                ImageSource="{StaticResource IconTrash}">
-            </Button>
+            <Button Content="Excluir" 
+               Classes="Danger"
+               Command="{Binding ExcluirOfertasSelecionadasCommand}" 
+               Padding="12"
+               CornerRadius="8"
+               Grid.Column="1"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center" />
         </Grid>
-
         <!-- Botão flutuante de adicionar oferta -->
-        <Button
+        <Button Classes="Floating"
             Command="{Binding NovaOfertaCommand}"
             IsEnabled="True"
-            ImageSource="{StaticResource IconAdd}"
-            CornerRadius="28"
-            Padding="0"
-            HeightRequest="56"
-            WidthRequest="56"
-            VerticalOptions="End"
-            HorizontalOptions="End"
-            Margin="24"
-            BackgroundColor="{DynamicResource Primary}"
-            TextColor="White"
-            FontSize="28"
-            SemanticProperties.Description="Adicionar oferta" />
+            Content="+"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Margin="24" />
     </Grid>
-</ContentPage>
+</UserControl>

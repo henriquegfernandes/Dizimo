@@ -4,17 +4,20 @@ using Dizimo.Application.Usuarios.Commands;
 using Dizimo.Application.Usuarios.Handlers;
 using Dizimo.Application.Usuarios.Queries;
 using Dizimo.Domain.Entities;
-using Microsoft.Maui.Controls;
+using Dizimo.Services;
 using System.Collections.ObjectModel;
 
 namespace Dizimo.ViewModels;
 
-public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttributable
+
+public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAware
 {
     private readonly GetUsuarioHandlers _getHandlers;
     private readonly UpdateUsuarioHandler _updateHandler;
     private readonly CreateUsuarioHandler _createHandler;
     private readonly DeleteUsuarioHandler _deleteHandler;
+    private readonly IDialogService _dialogService;
+    private readonly INavigationService _navigationService;
 
     private string _nome = string.Empty;
     public string Nome
@@ -76,12 +79,16 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
         GetUsuarioHandlers getHandlers,
         UpdateUsuarioHandler updateHandler,
         CreateUsuarioHandler createHandler,
-        DeleteUsuarioHandler deleteHandler)
+        DeleteUsuarioHandler deleteHandler,
+        IDialogService dialogService,
+        INavigationService navigationService)
     {
         _getHandlers = getHandlers ?? throw new ArgumentNullException(nameof(getHandlers));
         _updateHandler = updateHandler ?? throw new ArgumentNullException(nameof(updateHandler));
         _createHandler = createHandler ?? throw new ArgumentNullException(nameof(createHandler));
         _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         InitializePerfilOptions();
     }
@@ -96,11 +103,22 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
         PerfilSelecionado = PerfilUsuario.Padrao.ToString();
     }
 
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    public void OnNavigatedTo(NavigationParameters parameters)
     {
-        if (query.TryGetValue("id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var usuarioId))
+        // Tenta extrair o ID do parâmetro de navegação
+        Guid? usuarioId = null;
+
+        if (parameters != null && parameters.TryGetValue("id", out var idObj))
         {
-            CarregarUsuarioCommand.Execute(usuarioId);
+            if (idObj is Guid guidId)
+                usuarioId = guidId;
+            else if (Guid.TryParse(idObj?.ToString(), out var parsedId))
+                usuarioId = parsedId;
+        }
+
+        if (usuarioId.HasValue && usuarioId.Value != Guid.Empty)
+        {
+            _ = CarregarUsuarioAsync(usuarioId.Value);
         }
         else
         {
@@ -108,7 +126,10 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
         }
     }
 
-    public IAsyncRelayCommand<Guid> CarregarUsuarioCommand => new AsyncRelayCommand<Guid>(CarregarUsuarioAsync);
+    public void OnNavigatedFrom()
+    {
+        // Lógica ao sair da página se necessário
+    }
 
     private async Task CarregarUsuarioAsync(Guid usuarioId)
     {
@@ -122,7 +143,7 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
                 Id = usuario.Id;
                 Nome = usuario.Nome;
                 Login = usuario.Login;
-                Senha = string.Empty; // N�o carrega a hash, for�a o usu�rio a inserir nova senha
+                Senha = string.Empty; // Não carrega a hash, força o usuário a inserir nova senha
                 Ativo = usuario.Ativo;
                 PerfilSelecionado = usuario.Perfil.ToString();
                 IsEditMode = true;
@@ -130,7 +151,7 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
         }
         catch (Exception ex)
         {
-            await GetMainPage()?.DisplayAlertAsync("Erro", $"Erro ao carregar usu�rio: {ex.Message}", "OK")!;
+            await _dialogService.ShowAlertAsync("Erro", $"Erro ao carregar usuário: {ex.Message}");
         }
     }
 
@@ -138,11 +159,16 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
 
     private async Task SalvarAsync()
     {
-        var mainPage = GetMainPage();
-        if (string.IsNullOrWhiteSpace(Nome) || string.IsNullOrWhiteSpace(Login) || string.IsNullOrWhiteSpace(Senha))
+        if (string.IsNullOrWhiteSpace(Nome) || string.IsNullOrWhiteSpace(Login))
         {
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Valida��o", "Todos os campos s�o obrigat�rios.", "OK");
+            await _dialogService.ShowAlertAsync("Validação", "Por favor, preencha Nome e Login");
+            return;
+        }
+
+        // Em modo de criação, senha é obrigatória
+        if (!IsEditMode && string.IsNullOrWhiteSpace(Senha))
+        {
+            await _dialogService.ShowAlertAsync("Validação", "Por favor, preencha a Senha");
             return;
         }
 
@@ -151,23 +177,23 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
             if (IsEditMode)
             {
                 var perfilEnum = (PerfilUsuario)Enum.Parse(typeof(PerfilUsuario), PerfilSelecionado);
-                await _updateHandler.Handle(new UpdateUsuarioCommand(Id, Nome, Login, SessaoService.HashSenha(Senha), Ativo, perfilEnum));
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Sucesso", "Usu�rio atualizado com sucesso.", "OK");
+                // Se senha vazia em modo edição, usa um valor especial indicando para não alterar
+                var senhaHash = string.IsNullOrWhiteSpace(Senha) ? string.Empty : SessaoService.HashSenha(Senha);
+                await _updateHandler.Handle(new UpdateUsuarioCommand(Id, Nome, Login, senhaHash, Ativo, perfilEnum));
+                await _dialogService.ShowAlertAsync("Sucesso", "Usuário atualizado com sucesso");
             }
             else
             {
                 await _createHandler.Handle(new CreateUsuarioCommand(Nome, Login, SessaoService.HashSenha(Senha)));
-                if (mainPage != null)
-                    await mainPage.DisplayAlertAsync("Sucesso", "Usu�rio criado com sucesso.", "OK");
+                await _dialogService.ShowAlertAsync("Sucesso", "Usuário criado com sucesso");
             }
 
-            await Shell.Current.GoToAsync("///usuarios", true);
+            LimparCampos();
+            _navigationService.GoBack();
         }
         catch (Exception ex)
         {
-            if (mainPage != null)
-                await mainPage.DisplayAlertAsync("Erro", $"Erro ao salvar usu�rio: {ex.Message}", "OK");
+            await _dialogService.ShowAlertAsync("Erro", $"Erro ao salvar usuário: {ex.Message}");
         }
     }
 
@@ -177,25 +203,28 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
     {
         if (IsEditMode && Id != Guid.Empty)
         {
-            var mainPage = GetMainPage();
-            if (mainPage != null)
+            bool confirm = await _dialogService.ShowConfirmAsync("Confirmar", "Tem certeza que deseja excluir este usuário?");
+            if (confirm)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirma��o", $"Deseja excluir o usu�rio '{Nome}'?", "Sim", "N�o");
-                if (confirm)
+                try
                 {
-                    try
-                    {
-                        await _deleteHandler.Handle(new DeleteUsuarioCommand(Id));
-                        await mainPage.DisplayAlertAsync("Sucesso", "Usu�rio exclu�do com sucesso.", "OK");
-                        await Shell.Current.GoToAsync("../");
-                    }
-                    catch (Exception ex)
-                    {
-                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir usu�rio: {ex.Message}", "OK");
-                    }
+                    await _deleteHandler.Handle(new DeleteUsuarioCommand(Id));
+                    await _dialogService.ShowAlertAsync("Sucesso", "Usuário excluído com sucesso");
+                    LimparCampos();
+                    _navigationService.GoBack();
+                }
+                catch (Exception ex)
+                {
+                    await _dialogService.ShowAlertAsync("Erro", $"Erro ao excluir usuário: {ex.Message}");
                 }
             }
         }
+    }
+
+    [RelayCommand]
+    public void Voltar()
+    {
+        _navigationService.GoBack();
     }
 
     private void LimparCampos()
@@ -207,10 +236,5 @@ public partial class UsuarioCadastroViewModel : ObservableObject, IQueryAttribut
         Ativo = true;
         PerfilSelecionado = PerfilUsuario.Padrao.ToString();
         IsEditMode = false;
-    }
-
-    private static Page? GetMainPage()
-    {
-        return Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
     }
 }

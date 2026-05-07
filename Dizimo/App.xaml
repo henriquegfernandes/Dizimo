@@ -1,18 +1,310 @@
-﻿<?xml version = "1.0" encoding = "UTF-8" ?>
-<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:Dizimo"
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:Dizimo.Converters"
              x:Class="Dizimo.App">
+    
     <Application.Resources>
-        <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-                            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+        <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/ShellContentStyle.xaml" />
-                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
-                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
-                <ResourceDictionary Source="Resources/Styles/AppStyles.xaml" />
-                <ResourceDictionary Source="Resources/Styles/Converters.xaml" />
+                <!-- Cores da aplicação (primária, secundária e variações) -->
+                <ResourceInclude Source="Resources/Styles/Colors.xaml" />
+                
+                <!-- Tema de recursos (claro por padrão) -->
+                <ResourceInclude Source="Resources/Styles/ThemeResourcesLight.xaml" />
+                
+                <!-- Estilos específicos da aplicação -->
+                <ResourceInclude Source="Resources/Styles/AppStyles.xaml" />
+                <ResourceInclude Source="Resources/Styles/Converters.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Conversores de Dados -->
+            <conv:ViewModelToViewConverter x:Key="ViewModelToViewConverter" />
+            
+            <!-- Novos Converters Consolidados -->
+            <conv:NullOrEmptyToBoolConverter x:Key="NullOrEmptyToBoolConverter" />
+            <conv:BoolToTextConverter x:Key="BoolToTextConverter" />
+            <conv:DecimalFormatterConverter x:Key="DecimalFormatterConverter" />
+            <conv:BoolToThemeIconConverter x:Key="BoolToThemeIconConverter" />
+            <conv:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <conv:StringToColorConverter x:Key="StringToColorConverter" />
+            <conv:RelativeWidthConverter x:Key="RelativeWidthConverter" />
         </ResourceDictionary>
     </Application.Resources>
+    
+    <Application.Styles>
+        <!-- SimpleTheme do Avalonia - Tema minimalista e customizável -->
+        <SimpleTheme />
+        
+        <!-- ========================================
+             ESTILOS BASE - COMPONENTES COMUNS
+             ======================================== -->
+        
+        <!-- ========================================
+             BOTÕES - ESTILOS BASE E VARIAÇÕES
+             ======================================== -->
+        
+        <!-- BOTÕES -->
+        <Style Selector="Button">
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+            <Setter Property="Background" Value="{DynamicResource BrushBackgroundSecondary}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+        
+        <!-- Estado hover para botões padrão -->
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushBackgroundTertiary}" />
+        </Style>
+        
+        <!-- Estado pressed para botões padrão -->
+        <Style Selector="Button:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="Opacity" Value="0.9" />
+        </Style>
+        
+        <!-- Estado disabled para botões padrão -->
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Cursor" Value="No" />
+        </Style>
+        
+        <!-- BOTÃO PRIMARY - Fundo Vermelho, Texto Branco (Ações Principais) -->
+        <Style Selector="Button.Primary">
+            <Setter Property="Background" Value="{DynamicResource BrushPrimary}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushSecondary}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushPrimary}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+        
+        <!-- Estado hover para botão primary -->
+        <Style Selector="Button.Primary:pointerover">
+            <Setter Property="Background" Value="{StaticResource ColorPrimaryDark}" />
+        </Style>
+        
+        <!-- Estado pressed para botão primary -->
+        <Style Selector="Button.Primary:pressed">
+            <Setter Property="Background" Value="{StaticResource ColorPrimaryVariant}" />
+            <Setter Property="Opacity" Value="0.95" />
+        </Style>
+        
+        <!-- Estado disabled para botão primary -->
+        <Style Selector="Button.Primary:disabled">
+            <Setter Property="Background" Value="#CCCCCC" />
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        
+         <!-- BOTÃO SECONDARY - Fundo Transparente, Texto Vermelho (Ações Secundárias) -->
+         <Style Selector="Button.Secondary">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushPrimary}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        
+         <!-- Estado hover para botão secondary -->
+         <Style Selector="Button.Secondary:pointerover">
+             <Setter Property="Background" Value="Transparent" />
+             <Setter Property="Foreground" Value="{StaticResource ColorPrimaryDark}" />
+             <Setter Property="BorderBrush" Value="{StaticResource ColorPrimaryDark}" />
+         </Style>
+        
+         <!-- Estado pressed para botão secondary -->
+         <Style Selector="Button.Secondary:pressed">
+             <Setter Property="Background" Value="Transparent" />
+             <Setter Property="Foreground" Value="{StaticResource BrushPrimary}" />
+             <Setter Property="BorderBrush" Value="{StaticResource BrushPrimary}" />
+             <Setter Property="Opacity" Value="0.8" />
+         </Style>
+        
+        <!-- BOTÃO DANGER - Para Ações Destrutivas (Delete, Remove) -->
+        <Style Selector="Button.Danger">
+            <Setter Property="Background" Value="{StaticResource ColorError}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushSecondary}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ColorError}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+        
+        <!-- Estado hover para botão danger -->
+        <Style Selector="Button.Danger:pointerover">
+            <Setter Property="Opacity" Value="0.85" />
+        </Style>
+        
+        <!-- BOTÃO SUCCESS - Para Ações de Confirmação (Save, Submit) -->
+        <Style Selector="Button.Success">
+            <Setter Property="Background" Value="{StaticResource ColorSuccess}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushSecondary}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ColorSuccess}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+        
+        <!-- BOTÃO FLOATING - Para Botões Flutuantes (FAB) -->
+        <Style Selector="Button.Floating">
+            <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushSecondary}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushPrimary}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Width" Value="56" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        
+         <!-- BOTÃO NAVIGATION - Para Botões de Navegação na Sidebar -->
+         <Style Selector="Button.NavButton">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+            <Setter Property="Padding" Value="16,14" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="FontWeight" Value="Medium" />
+         </Style>
+         
+         <!-- Estado hover para botão de navegação -->
+         <Style Selector="Button.NavButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushBackgroundTertiary}" />
+         </Style>
+         
+         <Style Selector="Button.NavButton:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushBorder}" />
+        </Style>
+        
+        <!-- TEXTBLOCKS -->
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        
+        <Style Selector="TextBlock.Title">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushPrimary}" />
+        </Style>
+        
+        <Style Selector="TextBlock.Subtitle">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+        </Style>
+        
+        <Style Selector="TextBlock.Body">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}" />
+        </Style>
+        
+        <Style Selector="TextBlock.Caption">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextTertiary}" />
+        </Style>
+        
+        <!-- TEXTBOXES -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource BrushBackgroundPrimary}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushPrimary}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Background" Value="{DynamicResource BrushBackgroundPrimary}" />
+        </Style>
+        
+         <!-- COMBOBOXES -->
+         <Style Selector="ComboBox">
+             <Setter Property="Background" Value="{DynamicResource BrushBackgroundPrimary}" />
+             <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+             <Setter Property="BorderThickness" Value="1" />
+             <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+             <Setter Property="Padding" Value="10,8" />
+             <Setter Property="FontSize" Value="13" />
+         </Style>
+         
+          <!-- CALENDAR DATE PICKER -->
+          <Style Selector="CalendarDatePicker">
+              <Setter Property="Background" Value="{DynamicResource BrushBackgroundPrimary}" />
+              <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+              <Setter Property="BorderThickness" Value="1" />
+              <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+              <Setter Property="Padding" Value="10,8" />
+              <Setter Property="FontSize" Value="13" />
+              <Setter Property="CornerRadius" Value="4" />
+          </Style>
+          
+          <Style Selector="CalendarDatePicker:focus">
+              <Setter Property="BorderBrush" Value="{DynamicResource BrushPrimary}" />
+              <Setter Property="BorderThickness" Value="2" />
+          </Style>
+          
+           <!-- Estilo para o ícone de calendário -->
+           <Style Selector="CalendarDatePicker /template/ Button">
+               <Setter Property="Background" Value="Transparent" />
+               <Setter Property="BorderBrush" Value="Transparent" />
+               <Setter Property="BorderThickness" Value="0" />
+               <Setter Property="Padding" Value="4" />
+           </Style>
+           
+           <Style Selector="CalendarDatePicker /template/ Path">
+               <Setter Property="Stroke" Value="{DynamicResource BrushPrimary}" />
+               <Setter Property="StrokeThickness" Value="1.5" />
+               <Setter Property="Fill" Value="Transparent" />
+           </Style>
+          
+          <!-- TOGGLE SWITCH - Cores Primárias -->
+          <Style Selector="ToggleSwitch">
+              <Setter Property="OffContent" Value="" />
+              <Setter Property="OnContent" Value="" />
+          </Style>
+          
+          <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+              <Setter Property="Background" Value="{DynamicResource BrushPrimary}" />
+          </Style>
+          
+          <Style Selector="ToggleSwitch:checked /template/ Border#OuterBorder">
+              <Setter Property="Background" Value="{DynamicResource BrushPrimary}" />
+          </Style>
+          
+          <Style Selector="ToggleSwitch:checked /template/ Path">
+              <Setter Property="Fill" Value="{DynamicResource BrushPrimary}" />
+          </Style>
+         
+         <!-- BORDERS -->
+        <Style Selector="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        </Style>
+        
+        <!-- PANELS -->
+        <Style Selector="StackPanel">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        
+        <Style Selector="Grid">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        
+        <!-- PROGRESSBAR -->
+        <Style Selector="ProgressBar">
+            <Setter Property="Foreground" Value="{DynamicResource BrushPrimary}" />
+        </Style>
+    </Application.Styles>
 </Application>

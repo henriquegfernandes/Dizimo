@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ========================================
+         TEMA CLARO - RECURSOS DE APLICAÇÃO
+         ======================================== -->
+    
+    <!-- BRUSHES - TEMA CLARO -->
+    <SolidColorBrush x:Key="BrushBackgroundPrimary">#FFFFFF</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushBackgroundSecondary">#F5F5F5</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushBackgroundTertiary">#EEEEEE</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="BrushTextPrimary">#212121</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushTextSecondary">#666666</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushTextTertiary">#999999</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="BrushBorder">#E0E0E0</SolidColorBrush>
+    <SolidColorBrush x:Key="BrushDivider">#EEEEEE</SolidColorBrush>
+    
+    <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorPrimary}" />
+    <SolidColorBrush x:Key="BrushSecondary" Color="{StaticResource ColorSecondary}" />
+    
+</ResourceDictionary>
+

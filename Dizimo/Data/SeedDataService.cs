@@ -10,7 +10,7 @@ namespace Dizimo.Data
         private readonly TaskRepository _taskRepository;
         private readonly TagRepository _tagRepository;
         private readonly CategoryRepository _categoryRepository;
-        private readonly string _seedDataFilePath = "SeedData.json";
+        private readonly string _seedDataFilePath;
         private readonly ILogger<SeedDataService> _logger;
 
         public SeedDataService(ProjectRepository projectRepository, TaskRepository taskRepository, TagRepository tagRepository, CategoryRepository categoryRepository, ILogger<SeedDataService> logger)
@@ -20,36 +20,45 @@ namespace Dizimo.Data
             _tagRepository = tagRepository;
             _categoryRepository = categoryRepository;
             _logger = logger;
+            
+            var appPath = AppContext.BaseDirectory;
+            _seedDataFilePath = Path.Combine(appPath, "SeedData.json");
         }
 
         public async Task LoadSeedDataAsync()
         {
             ClearTables();
 
-            await using Stream templateStream = await FileSystem.OpenAppPackageFileAsync(_seedDataFilePath);
+            if (!File.Exists(_seedDataFilePath))
+            {
+                _logger.LogWarning($"Arquivo de seed data não encontrado: {_seedDataFilePath}");
+                return;
+            }
 
             ProjectsJson? payload = null;
             try
             {
-                payload = JsonSerializer.Deserialize(templateStream, JsonContext.Default.ProjectsJson);
+                await using var fileStream = File.OpenRead(_seedDataFilePath);
+                payload = JsonSerializer.Deserialize(fileStream, JsonContext.Default.ProjectsJson);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error deserializing seed data");
+                return;
             }
 
             try
             {
-                if (payload is not null)
+                if (payload?.Projects != null)
                 {
                     foreach (var project in payload.Projects)
                     {
-                        if (project is null)
+                        if (project == null)
                         {
                             continue;
                         }
 
-                        if (project.Category is not null)
+                        if (project.Category != null)
                         {
                             await _categoryRepository.SaveItemAsync(project.Category);
                             project.CategoryID = project.Category.ID;
@@ -57,7 +66,7 @@ namespace Dizimo.Data
 
                         await _projectRepository.SaveItemAsync(project);
 
-                        if (project?.Tasks is not null)
+                        if (project.Tasks != null)
                         {
                             foreach (var task in project.Tasks)
                             {
@@ -66,7 +75,7 @@ namespace Dizimo.Data
                             }
                         }
 
-                        if (project?.Tags is not null)
+                        if (project.Tags != null)
                         {
                             foreach (var tag in project.Tags)
                             {
@@ -95,7 +104,7 @@ namespace Dizimo.Data
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao limpar tabelas: {e.Message}");
             }
         }
     }

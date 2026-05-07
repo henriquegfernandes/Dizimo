@@ -1,3 +1,4 @@
+using Avalonia.Data.Converters;
 using System.Globalization;
 
 namespace Dizimo.Converters
@@ -8,7 +9,7 @@ namespace Dizimo.Converters
         {
             if (value is string visualizacao)
             {
-                return visualizacao == "Mês";
+                return visualizacao == "MÃªs";
             }
             return false;
         }

@@ -5,17 +5,18 @@ using Dizimo.Application.Usuarios.Handlers;
 using Dizimo.Application.Usuarios.Commands;
 using Dizimo.Application.Usuarios.Queries;
 using System.Collections.ObjectModel;
-using Microsoft.Maui.Controls;
 
 namespace Dizimo.ViewModels;
 
-public partial class UsuarioListViewModel : ObservableObject
+public partial class UsuarioListViewModel : ObservableObject, INavigationAware
 {
     private readonly GetUsuarioHandlers _getHandlers;
-    private readonly CreateUsuarioHandler _createHandler;
-    private readonly UpdateUsuarioHandler _updateHandler;
     private readonly DeleteUsuarioHandler _deleteHandler;
-    private readonly InativarUsuarioHandler _inativarHandler;
+    private readonly UpdateUsuarioHandler _updateHandler;
+    private readonly IDialogService _dialogService;
+    private readonly INavigationService _navigationService;
+
+    // ...existing code...
 
     public List<Usuario> TodosUsuarios { get; private set; } = new List<Usuario>();
 
@@ -53,8 +54,11 @@ public partial class UsuarioListViewModel : ObservableObject
                 _usuariosSelecionados.CollectionChanged += UsuariosSelecionados_CollectionChanged;
             OnPropertyChanged(nameof(UsuariosSelecionados));
             OnPropertyChanged(nameof(UsuariosSelecionados.Count));
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
         }
     }
+
+    public string TextoBotaoSelecao => UsuariosSelecionados.Count == Usuarios.Count && Usuarios.Count > 0 ? "Desselecionar Todos" : "Selecionar Todos";
 
     private void UsuariosSelecionados_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
@@ -64,16 +68,16 @@ public partial class UsuarioListViewModel : ObservableObject
 
     public UsuarioListViewModel(
         GetUsuarioHandlers getHandlers,
-        CreateUsuarioHandler createHandler,
-        UpdateUsuarioHandler updateHandler,
         DeleteUsuarioHandler deleteHandler,
-        InativarUsuarioHandler inativarHandler)
+        UpdateUsuarioHandler updateHandler,
+        IDialogService dialogService,
+        INavigationService navigationService)
     {
         _getHandlers = getHandlers ?? throw new ArgumentNullException(nameof(getHandlers));
-        _createHandler = createHandler ?? throw new ArgumentNullException(nameof(createHandler));
-        _updateHandler = updateHandler ?? throw new ArgumentNullException(nameof(updateHandler));
         _deleteHandler = deleteHandler ?? throw new ArgumentNullException(nameof(deleteHandler));
-        _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
+        _updateHandler = updateHandler ?? throw new ArgumentNullException(nameof(updateHandler));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
     }
 
     [RelayCommand]
@@ -107,27 +111,63 @@ public partial class UsuarioListViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public async Task EditarUsuarioAsync(Usuario usuario)
+    {
+        try
+        {
+            if (usuario != null)
+            {
+                var parameters = new NavigationParameters();
+                parameters.Add("id", usuario.Id);
+                _navigationService.Navigate("usuario-cadastro", parameters);
+                System.Diagnostics.Debug.WriteLine($"[NAV] Editando usuário: {usuario.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao editar usuário: {ex.Message}");
+        }
+        await Task.CompletedTask;
+    }
+
+    [RelayCommand]
+    public async Task NovoUsuarioAsync()
+    {
+        try
+        {
+            _navigationService.Navigate("usuario-cadastro");
+            System.Diagnostics.Debug.WriteLine("[NAV] Navegado para Novo Usuário");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao navegar para novo usuário: {ex.Message}");
+        }
+        await Task.CompletedTask;
+    }
+
+    [RelayCommand]
     public async Task ExcluirUsuarioAsync()
     {
         if (SelectedUsuario != null)
         {
-            var mainPage = GetMainPage();
-            if (mainPage != null)
+            bool confirm = await _dialogService.ShowConfirmAsync(
+                "Confirmação de Exclusão",
+                $"Deseja realmente excluir o usuário {SelectedUsuario.Login}? Esta ação não pode ser desfeita.",
+                "Sim", "Não");
+            
+            if (confirm)
             {
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir o usuário '{SelectedUsuario.Nome}'?", "Sim", "Não");
-                if (confirm)
+                try
                 {
-                    try
-                    {
-                        await _deleteHandler.Handle(new DeleteUsuarioCommand(SelectedUsuario.Id));
-                        await CarregarUsuariosAsync();
-                        SelectedUsuario = null;
-                        await mainPage.DisplayAlertAsync("Sucesso", "Usuário excluído com sucesso.", "OK");
-                    }
-                    catch (Exception ex)
-                    {
-                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir: {ex.Message}", "OK");
-                    }
+                    await _deleteHandler.Handle(new DeleteUsuarioCommand(SelectedUsuario.Id));
+                    await CarregarUsuariosAsync();
+                    SelectedUsuario = null;
+                    await _dialogService.ShowSuccessAsync("Usuário excluído com sucesso!");
+                }
+                catch (Exception ex)
+                {
+                    await _dialogService.ShowErrorAsync($"Erro ao excluir: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
                 }
             }
         }
@@ -137,18 +177,29 @@ public partial class UsuarioListViewModel : ObservableObject
     public async Task ExcluirUsuariosSelecionadosAsync()
     {
         if (UsuariosSelecionados.Count == 0) return;
-        var mainPage = GetMainPage();
-        if (mainPage != null)
+        
+        bool confirm = await _dialogService.ShowConfirmAsync(
+            "Confirmação de Exclusão",
+            $"Deseja excluir {UsuariosSelecionados.Count} usuário(s)? Esta ação não pode ser desfeita.",
+            "Sim", "Não");
+        
+        if (!confirm) return;
+
+        try
         {
-            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja excluir {UsuariosSelecionados.Count} usuário(s)?", "Sim", "Não");
-            if (!confirm) return;
+            foreach (var usuario in UsuariosSelecionados.ToList())
+            {
+                await _deleteHandler.Handle(new DeleteUsuarioCommand(usuario.Id));
+            }
+            await CarregarUsuariosAsync();
+            UsuariosSelecionados.Clear();
+            await _dialogService.ShowSuccessAsync("Usuários excluídos com sucesso!");
         }
-        foreach (var usuario in UsuariosSelecionados.ToList())
+        catch (Exception ex)
         {
-            await _deleteHandler.Handle(new DeleteUsuarioCommand(usuario.Id));
+            await _dialogService.ShowErrorAsync($"Erro ao excluir: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
         }
-        await CarregarUsuariosAsync();
-        UsuariosSelecionados.Clear();
     }
 
     [RelayCommand]
@@ -156,55 +207,128 @@ public partial class UsuarioListViewModel : ObservableObject
     {
         if (SelectedUsuario != null)
         {
-            var mainPage = GetMainPage();
-            if (mainPage != null)
+            string status = SelectedUsuario.Ativo ? "inativar" : "ativar";
+            bool confirm = await _dialogService.ShowConfirmAsync(
+                "Confirmação",
+                $"Deseja {status} o usuário {SelectedUsuario.Login}?",
+                "Sim", "Não");
+            
+            if (confirm)
             {
-                string status = SelectedUsuario.Ativo ? "inativar" : "ativar";
-                bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja {status} o usuário '{SelectedUsuario.Nome}'?", "Sim", "Não");
-                if (confirm)
+                try
                 {
-                    try
+                    // Buscar usuário atualizado do banco para ter dados completos
+                    var usuarioAtualizado = TodosUsuarios.FirstOrDefault(u => u.Id == SelectedUsuario.Id);
+                    
+                    if (usuarioAtualizado is not null)
                     {
-                        await _inativarHandler.Handle(new InativarUsuarioCommand(SelectedUsuario.Id));
-                        await CarregarUsuariosAsync();
-                        SelectedUsuario = null;
-                        await mainPage.DisplayAlertAsync("Sucesso", $"Usuário {status}o com sucesso.", "OK");
+                        // Fazer toggle do status
+                        usuarioAtualizado.Ativo = !usuarioAtualizado.Ativo;
+                        
+                        // Chamar UpdateUsuarioHandler
+                        var comando = new UpdateUsuarioCommand(
+                            usuarioAtualizado.Id,
+                            usuarioAtualizado.Nome,
+                            usuarioAtualizado.Login,
+                            string.Empty, // Senha vazia mantém a existente
+                            usuarioAtualizado.Ativo,
+                            usuarioAtualizado.Perfil);
+                        
+                        await _updateHandler.Handle(comando);
                     }
-                    catch (Exception ex)
-                    {
-                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao {status}ar: {ex.Message}", "OK");
-                    }
+                    
+                    await CarregarUsuariosAsync();
+                    SelectedUsuario = null;
+                    await _dialogService.ShowSuccessAsync($"Usuário {status}do com sucesso!");
+                }
+                catch (Exception ex)
+                {
+                    await _dialogService.ShowErrorAsync($"Erro ao {status}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
                 }
             }
         }
     }
 
-    [RelayCommand]
+     [RelayCommand]
     public async Task InativarUsuariosSelecionadosAsync()
     {
         if (UsuariosSelecionados.Count == 0) return;
-        var mainPage = GetMainPage();
-        if (mainPage != null)
+        
+        bool confirm = await _dialogService.ShowConfirmAsync(
+            "Confirmação",
+            $"Deseja inativar/ativar {UsuariosSelecionados.Count} usuário(s)?",
+            "Sim", "Não");
+        
+        if (!confirm) return;
+
+        try
         {
-            bool confirm = await mainPage.DisplayAlertAsync("Confirmação", $"Deseja inativar/ativar {UsuariosSelecionados.Count} usuário(s)?", "Sim", "Não");
-            if (!confirm) return;
+            // Executar o toggle para cada usuário selecionado
+            foreach (var usuarioSelecionado in UsuariosSelecionados.ToList())
+            {
+                // Buscar usuário atualizado da lista
+                var usuarioAtualizado = TodosUsuarios.FirstOrDefault(u => u.Id == usuarioSelecionado.Id);
+                
+                if (usuarioAtualizado is not null)
+                {
+                    // Fazer toggle do status
+                    usuarioAtualizado.Ativo = !usuarioAtualizado.Ativo;
+                    
+                    // Chamar UpdateUsuarioHandler
+                    var comando = new UpdateUsuarioCommand(
+                        usuarioAtualizado.Id,
+                        usuarioAtualizado.Nome,
+                        usuarioAtualizado.Login,
+                        string.Empty, // Senha vazia mantém a existente
+                        usuarioAtualizado.Ativo,
+                        usuarioAtualizado.Perfil);
+                    
+                    await _updateHandler.Handle(comando);
+                }
+            }
+            
+            // Recarregar dados APÓS fazer todos os toggles
+            await CarregarUsuariosAsync();
+            UsuariosSelecionados.Clear();
+            await _dialogService.ShowSuccessAsync("Usuários ativados/inativados com sucesso!");
         }
-        foreach (var usuario in UsuariosSelecionados.ToList())
+        catch (Exception ex)
         {
-            await _inativarHandler.Handle(new InativarUsuarioCommand(usuario.Id));
+            await _dialogService.ShowErrorAsync($"Erro ao ativar/inativar: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
         }
-        await CarregarUsuariosAsync();
-        UsuariosSelecionados.Clear();
     }
 
     [RelayCommand]
-    public async Task NovoUsuarioAsync()
+    public void SelecionarTodos()
     {
-        await Shell.Current.GoToAsync("usuario-cadastro");
+        if (UsuariosSelecionados.Count == Usuarios.Count)
+        {
+            UsuariosSelecionados.Clear();
+        }
+        else
+        {
+            UsuariosSelecionados.Clear();
+            foreach (var usuario in Usuarios)
+            {
+                UsuariosSelecionados.Add(usuario);
+            }
+        }
     }
 
-    private static Page? GetMainPage()
+    [RelayCommand]
+    public void AplicarFiltrosEnter()
     {
-        return Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
+        AplicarFiltrosCommand.Execute(null);
+    }
+
+    public void OnNavigatedTo(NavigationParameters parameters)
+    {
+        _ = CarregarUsuariosAsync();
+    }
+
+    public void OnNavigatedFrom()
+    {
     }
 }

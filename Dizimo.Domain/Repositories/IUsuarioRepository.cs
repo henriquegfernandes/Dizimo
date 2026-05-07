@@ -13,5 +13,4 @@ public interface IUsuarioRepository
     Task AddAsync(Usuario usuario);
     Task UpdateAsync(Usuario usuario);
     Task DeleteAsync(Guid id);
-    Task InativarAsync(Guid id);
 }

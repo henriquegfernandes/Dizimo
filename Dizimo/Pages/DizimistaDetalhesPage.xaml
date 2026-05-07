@@ -1,89 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              xmlns:converters="clr-namespace:Dizimo.Converters"
              x:Class="Dizimo.Pages.DizimistaDetalhesPage"
-             x:DataType="vm:DizimistaDetalhesViewModel"
-             Title="">
-    <ContentPage.Resources>
-        <converters:AtivoStatusConverter x:Key="AtivoStatusConverter" />
-        <converters:AtivoButtonTextConverter x:Key="AtivoButtonTextConverter" />
-    </ContentPage.Resources>
+             x:DataType="vm:DizimistaDetalhesViewModel">
+    <UserControl.Resources>
+        <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
+        <converters:DatePtBrConverter x:Key="DatePtBrConverter" />
+    </UserControl.Resources>
     <Grid RowDefinitions="Auto,*">
         <!-- Barra de navegação customizada -->
-        <Grid Grid.Row="0" Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-            <!-- Botão de voltar -->
-            <Button Grid.Column="0" 
-                    Text="Voltar"
-                    ImageSource="{StaticResource IconLeftArrow}"
-                    Clicked="OnBackButtonClicked"
-                    Style="{StaticResource NavButtonStyle}"
-                    Padding="12"
-                    HorizontalOptions="Start"
-                    VerticalOptions="Center" />
-            
-            <!-- Título centralizado -->
-            <Label Grid.Column="1" 
-                   Text="Detalhes do Dizimista" 
-                   FontSize="20"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center" />
-            
-            <!-- Botão de excluir -->
-            <Button Grid.Column="2" 
-                    Text="Excluir"
-                    ImageSource="{StaticResource IconDelete}"
-                    Command="{Binding ExcluirCommand}"
-                    Style="{StaticResource NavButtonStyle}"
-                    Padding="12"
-                    HorizontalOptions="End"
-                    VerticalOptions="Center" />
+        <Grid Grid.Row="0" Margin="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+             <!-- Botão de voltar -->
+             <Button Grid.Column="0" 
+                     Content="Voltar"
+                     Command="{Binding VoltarCommand}"
+                     Classes="Secondary"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Center" />
+             
+             <!-- Título centralizado -->
+             <TextBlock Grid.Column="1" 
+                    Text="Detalhes do Dizimista" 
+                    FontSize="20"
+                    FontWeight="Bold"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+             
+             <!-- Botão de excluir -->
+             <Button Grid.Column="2" 
+                     Content="Excluir"
+                     Command="{Binding ExcluirCommand}"
+                     Classes="Danger"
+                     HorizontalAlignment="Right"
+                     VerticalAlignment="Center" />
         </Grid>
 
         <!-- Conteúdo da página -->
-        <ScrollView Grid.Row="1">
-            <Grid Padding="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="2*,2*" RowSpacing="10">
+        <ScrollViewer Grid.Row="1">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="2*,2*" RowSpacing="10" Margin="20">
                 <!-- Número de Cadastro -->
-                <Label Grid.Row="0" Grid.Column="0" Text="Nº Cadastro:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="0" Grid.Column="1" Text="{Binding Dizimista.NumeroCadastro}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Nº Cadastro:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Dizimista.NumeroCadastro}" VerticalAlignment="Center"/>
 
                 <!-- Nome -->
-                <Label Grid.Row="1" Grid.Column="0" Text="Nome:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="1" Grid.Column="1" Text="{Binding Dizimista.Nome}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Nome:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Dizimista.Nome}" VerticalAlignment="Center"/>
 
                 <!-- Data de Nascimento -->
-                <Label Grid.Row="2" Grid.Column="0" Text="Data Nascimento:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="2" Grid.Column="1" Text="{Binding Dizimista.DataNascimento, StringFormat='{0:dd/MM/yyyy}'}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Data Nascimento:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Dizimista.DataNascimento, Converter={StaticResource DatePtBrConverter}}" VerticalAlignment="Center"/>
 
                 <!-- Telefone -->
-                <Label Grid.Row="3" Grid.Column="0" Text="Telefone:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="3" Grid.Column="1" Text="{Binding TelefoneFormatado}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Telefone:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TelefoneFormatado}" VerticalAlignment="Center"/>
 
                 <!-- WhatsApp -->
-                <Label Grid.Row="4" Grid.Column="0" Text="WhatsApp:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="4" Grid.Column="1" Text="{Binding WhatsappFormatado}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="WhatsApp:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WhatsappFormatado}" VerticalAlignment="Center"/>
 
                 <!-- Endereço -->
-                <Label Grid.Row="5" Grid.Column="0" Text="Endereço:" FontAttributes="Bold" VerticalOptions="Start" Margin="0,5,0,0"/>
-                <Label Grid.Row="5" Grid.Column="1" Text="{Binding EnderecoCompleto}" VerticalOptions="Start" Margin="0,5,0,0"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Endereço:" FontWeight="Bold" VerticalAlignment="Top" Margin="0,5,0,0"/>
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding EnderecoCompleto}" VerticalAlignment="Top" Margin="0,5,0,0"/>
 
                 <!-- Última Oferta -->
-                <Label Grid.Row="6" Grid.Column="0" Text="Última oferta:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="6" Grid.Column="1" Text="{Binding UltimaOferta}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Última oferta:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding UltimaOferta}" VerticalAlignment="Center"/>
 
                 <!-- Status -->
-                <Label Grid.Row="7" Grid.Column="0" Text="Status:" FontAttributes="Bold" VerticalOptions="Center"/>
-                <Label Grid.Row="7" Grid.Column="1" Text="{Binding Dizimista.Ativo, Converter={StaticResource AtivoStatusConverter}}" VerticalOptions="Center"/>
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Status:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Dizimista.Ativo, Converter={StaticResource BoolToTextConverter}}" VerticalAlignment="Center"/>
 
-                <!-- Botões -->
-                <Grid Grid.Row="8" Grid.ColumnSpan="2" ColumnDefinitions="*" ColumnSpacing="10" Margin="0,20,0,0">
-                    <Button Text="Editar" 
-                            ImageSource="{StaticResource IconEdit}"
-                            Command="{Binding EditarCommand}"/>
-                </Grid>
+                <!-- Botão Editar -->
+                <Button Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
+                        Content="Editar"
+                        Command="{Binding EditarCommand}"
+                        Classes="Primary"
+                        Width="150"
+                        HorizontalAlignment="Center"
+                        Margin="0,20,0,0"/>
             </Grid>
-        </ScrollView>
+        </ScrollViewer>
     </Grid>
-</ContentPage>
+</UserControl>

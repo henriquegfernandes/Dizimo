@@ -1,85 +1,42 @@
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
 using Dizimo.ViewModels;
-using Dizimo.Domain.Repositories;
-using Dizimo.Application.Ofertas.Handlers;
-using Dizimo.Domain.Entities;
-using Dizimo.Converters;
 
 namespace Dizimo.Pages;
 
-public partial class OfertaListPage : ContentPage
+public class OfertaListPage : UserControl
 {
-    private readonly SessaoService _sessaoService;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public OfertaListPage(SessaoService sessaoService, OfertaListViewModel viewModel, IUnitOfWork unitOfWork)
+    public OfertaListPage()
     {
-        InitializeComponent();
-        _sessaoService = sessaoService;
-        _unitOfWork = unitOfWork;
-        BindingContext = viewModel;
-
-        // Registrar UnitOfWork no converter
-        var dizimistaConverter = Resources["DizimistaIdToNomeConverter"] as DizimistaIdToNomeConverter;
-        dizimistaConverter?.SetUnitOfWork(_unitOfWork);
+        AvaloniaXamlLoader.Load(this);
+        System.Diagnostics.Debug.WriteLine("[INFO] OfertaListPage inicializado");
     }
 
-    protected override async void OnAppearing()
+    /// <summary>
+    /// Aplica filtro ao pressionar Enter no campo de texto
+    /// </summary>
+    private void OnFiltroKeyDown(object? sender, KeyEventArgs e)
     {
-        base.OnAppearing();
-        if (!SessaoService.IsLogado)
+        if (e.Key == Key.Return)
         {
-            await DisplayAlertAsync("Acesso negado", "Faça login para acessar o sistema.", "OK");
-            await Shell.Current.GoToAsync("login");
-            return;
-        }
-
-        var viewModel = (OfertaListViewModel)BindingContext;
-        await viewModel.CarregarOfertasAsync();
-    }
-
-    private void OnFiltroCompleted(object sender, EventArgs e)
-    {
-        var viewModel = (OfertaListViewModel)BindingContext;
-        viewModel.AplicarFiltrosCommand.Execute(null);
-    }
-
-    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        var viewModel = (OfertaListViewModel)BindingContext;
-        viewModel.OfertasSelecionadas.Clear();
-
-        foreach (Oferta item in e.CurrentSelection.Cast<Oferta>())
-        {
-            viewModel.OfertasSelecionadas.Add(item);
-        }
-    }
-
-    private void OnSelecionarTodosClicked(object sender, EventArgs e)
-    {
-        var viewModel = (OfertaListViewModel)BindingContext;
-        var collectionView = (CollectionView)FindByName("OfertasCollectionView");
-
-        if (viewModel.OfertasSelecionadas.Count == viewModel.Ofertas.Count)
-        {
-            // Desseleciona todos
-            collectionView.SelectedItems.Clear();
-        }
-        else
-        {
-            // Seleciona todos
-            collectionView.SelectedItems.Clear();
-            foreach (var oferta in viewModel.Ofertas)
+            var dataContext = this.DataContext as OfertaListViewModel;
+            if (dataContext?.AplicarFiltrosCommand.CanExecute(null) == true)
             {
-                collectionView.SelectedItems.Add(oferta);
+                dataContext.AplicarFiltrosCommand.Execute(null);
             }
         }
     }
 
-    private async void OnEditarOfertaClicked(object sender, EventArgs e)
+    /// <summary>
+    /// Aplica filtro ao tirar foco do campo de texto
+    /// </summary>
+    private void OnFiltroLostFocus(object? sender, RoutedEventArgs e)
     {
-        var button = (Button)sender;
-        var oferta = (Oferta)button.CommandParameter;
-        var viewModel = (OfertaListViewModel)BindingContext;
-        await viewModel.EditarOfertaCommand.ExecuteAsync(oferta);
+        var dataContext = this.DataContext as OfertaListViewModel;
+        if (dataContext?.AplicarFiltrosCommand.CanExecute(null) == true)
+        {
+            dataContext.AplicarFiltrosCommand.Execute(null);
+        }
     }
 }

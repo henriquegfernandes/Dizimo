@@ -1,15 +1,11 @@
-using Dizimo.ViewModels;
-using System.Runtime.Versioning;
-
-namespace Dizimo.Pages
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+namespace Dizimo.Pages;
+public partial class BackupConfigPage : UserControl
 {
-    public partial class BackupConfigPage : ContentPage
+    public BackupConfigPage()
     {
-        [SupportedOSPlatform("windows10.0.17763.0")]
-        public BackupConfigPage(LocalBackupViewModel vm)
-        {
-            InitializeComponent();
-            BindingContext = vm;
-        }
+        AvaloniaXamlLoader.Load(this);
+        System.Diagnostics.Debug.WriteLine("[INFO] BackupConfigPage inicializado");
     }
 }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Dizimo.ViewModels"
+        xmlns:conv="clr-namespace:Dizimo.Converters"
+        x:Class="Dizimo.MainWindow"
+        x:DataType="vm:AppRootViewModel"
+        Title="Dizimo - Sistema de Controle Financeiro"
+        Width="1200"
+        Height="800"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+
+    <Window.Resources>
+        <conv:ViewModelToViewConverter x:Key="ViewModelToViewConverter" />
+    </Window.Resources>
+
+    <!-- ContentControl para exibir conteúdo dinâmico -->
+    <ContentControl Content="{Binding CurrentView, Converter={StaticResource ViewModelToViewConverter}}" />
+</Window>
+

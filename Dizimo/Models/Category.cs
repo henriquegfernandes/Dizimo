@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Avalonia.Media;
 
 namespace Dizimo.Models
 {
@@ -9,14 +10,22 @@ namespace Dizimo.Models
         public string Color { get; set; } = "#FF0000";
 
         [JsonIgnore]
-        public Brush ColorBrush
+        public IBrush ColorBrush
         {
             get
             {
-                return new SolidColorBrush(Microsoft.Maui.Graphics.Color.FromArgb(Color));
+                try
+                {
+                    return new SolidColorBrush(ColorHelper.ParseColor(Color));
+                }
+                catch
+                {
+                    return new SolidColorBrush(Colors.Red);
+                }
             }
         }
 
         public override string ToString() => $"{Title}";
     }
 }
+

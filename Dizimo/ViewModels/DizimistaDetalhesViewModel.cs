@@ -1,22 +1,20 @@
 using Dizimo.Domain.Entities;
 using Dizimo.Application.Dizimistas.Handlers;
-using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Application.Dizimistas.Queries;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Domain.Repositories;
-using System.Threading.Tasks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Dizimo.Services;
 
 namespace Dizimo.ViewModels
 {
-    public partial class DizimistaDetalhesViewModel : ObservableObject
+    public partial class DizimistaDetalhesViewModel : ObservableObject, INavigationAware
     {
         private readonly InativarDizimistaHandler _inativarHandler;
         private readonly GetDizimistaHandlers _getDizimistaHandlers;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IDialogService _dialogService;
+        private readonly INavigationService _navigationService;
         private Dizimista? _dizimista;
         private Guid _currentDizimistaId;
         private string _ultimaOferta = string.Empty;
@@ -29,7 +27,7 @@ namespace Dizimo.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[INFO] DizimistaDetalhesViewModel.Dizimista sendo definido: {value?.Nome ?? "NULL"}");
                 if (SetProperty(ref _dizimista, value))
                 {
-                    // Notificar mudanças nas propriedades computadas quando Dizimista muda
+                    // Notificar mudanï¿½as nas propriedades computadas quando Dizimista muda
                     OnPropertyChanged(nameof(EnderecoCompleto));
                     OnPropertyChanged(nameof(TelefoneFormatado));
                     OnPropertyChanged(nameof(WhatsappFormatado));
@@ -99,25 +97,25 @@ namespace Dizimo.ViewModels
         {
             get
             {
-                // Verificar se o dizimista está nulo
+                // Verificar se o dizimista estï¿½ nulo
                 if (_dizimista == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[WARN] EnderecoCompleto: Dizimista é null");
+                    System.Diagnostics.Debug.WriteLine("[WARN] EnderecoCompleto: Dizimista ï¿½ null");
                     return string.Empty;
                 }
 
-                // Verificar se o endereço está nulo
+                // Verificar se o endereï¿½o estï¿½ nulo
                 if (_dizimista.Endereco == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[WARN] EnderecoCompleto: Endereco é null");
+                    System.Diagnostics.Debug.WriteLine("[WARN] EnderecoCompleto: Endereco ï¿½ null");
                     return string.Empty;
                 }
 
-                // Verificar se os campos obrigatórios do endereço estão preenchidos
+                // Verificar se os campos obrigatï¿½rios do endereï¿½o estï¿½o preenchidos
                 if (string.IsNullOrWhiteSpace(_dizimista.Endereco.Rua) || 
                     string.IsNullOrWhiteSpace(_dizimista.Endereco.Numero))
                 {
-                    System.Diagnostics.Debug.WriteLine("[WARN] EnderecoCompleto: Rua ou Número vazios");
+                    System.Diagnostics.Debug.WriteLine("[WARN] EnderecoCompleto: Rua ou Nï¿½mero vazios");
                     return string.Empty;
                 }
 
@@ -128,7 +126,7 @@ namespace Dizimo.ViewModels
                         ? "" 
                         : $", {endereco.Complemento}";
                     
-                    // Formatar CEP dentro do endereço
+                    // Formatar CEP dentro do endereï¿½o
                     var cepFormatado = CepFormatado;
                     
                     var enderecoStr = $"{endereco.Rua}, {endereco.Numero}{complemento} - {endereco.Bairro}, {endereco.Cidade} - {endereco.UF}, {cepFormatado}";
@@ -144,13 +142,15 @@ namespace Dizimo.ViewModels
             }
         }
 
-        public DizimistaDetalhesViewModel(InativarDizimistaHandler inativarHandler, GetDizimistaHandlers getDizimistaHandlers, IUnitOfWork unitOfWork)
-        {
-            _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
-            _getDizimistaHandlers = getDizimistaHandlers ?? throw new ArgumentNullException(nameof(getDizimistaHandlers));
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            System.Diagnostics.Debug.WriteLine("[INFO] DizimistaDetalhesViewModel construtor executado");
-        }
+    public DizimistaDetalhesViewModel(InativarDizimistaHandler inativarHandler, GetDizimistaHandlers getDizimistaHandlers, IUnitOfWork unitOfWork, IDialogService dialogService, INavigationService navigationService)
+    {
+        _inativarHandler = inativarHandler ?? throw new ArgumentNullException(nameof(inativarHandler));
+        _getDizimistaHandlers = getDizimistaHandlers ?? throw new ArgumentNullException(nameof(getDizimistaHandlers));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        System.Diagnostics.Debug.WriteLine("[INFO] DizimistaDetalhesViewModel construtor executado");
+    }
 
         public async Task LoadDizimistaAsync(Guid id)
         {
@@ -164,12 +164,12 @@ namespace Dizimo.ViewModels
                 if (dizimista != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"[INFO] Dizimista detalhes - Nome: {dizimista.Nome}, Telefone: {dizimista.Telefone}, Whatsapp: {dizimista.Whatsapp}");
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Endereco objeto é null? {dizimista.Endereco == null}");
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Endereco objeto ï¿½ null? {dizimista.Endereco == null}");
                     
                     if (dizimista.Endereco != null)
                     {
                         System.Diagnostics.Debug.WriteLine($"[INFO] Endereco - Rua: {dizimista.Endereco.Rua}");
-                        System.Diagnostics.Debug.WriteLine($"[INFO] Endereco - Número: {dizimista.Endereco.Numero}");
+                        System.Diagnostics.Debug.WriteLine($"[INFO] Endereco - Nï¿½mero: {dizimista.Endereco.Numero}");
                         System.Diagnostics.Debug.WriteLine($"[INFO] Endereco - Complemento: {dizimista.Endereco.Complemento}");
                         System.Diagnostics.Debug.WriteLine($"[INFO] Endereco - Bairro: {dizimista.Endereco.Bairro}");
                         System.Diagnostics.Debug.WriteLine($"[INFO] Endereco - Cidade: {dizimista.Endereco.Cidade}");
@@ -178,20 +178,20 @@ namespace Dizimo.ViewModels
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("[ERRO] Endereco é NULL após carregar o dizimista!");
+                        System.Diagnostics.Debug.WriteLine("[ERRO] Endereco ï¿½ NULL apï¿½s carregar o dizimista!");
                     }
                     
                     System.Diagnostics.Debug.WriteLine($"[INFO] Status Ativo: {dizimista.Ativo}");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[ERRO] Dizimista carregado é NULL!");
+                    System.Diagnostics.Debug.WriteLine("[ERRO] Dizimista carregado ï¿½ NULL!");
                 }
                 
-                // Definir o dizimista (isso irá disparar as notificações de mudança)
+                // Definir o dizimista (isso irï¿½ disparar as notificaï¿½ï¿½es de mudanï¿½a)
                 Dizimista = dizimista;
                 
-                // Carregar última oferta
+                // Carregar ï¿½ltima oferta
                 await CarregarUltimaOfertaAsync(id);
             }
             catch (Exception ex)
@@ -214,7 +214,7 @@ namespace Dizimo.ViewModels
                     if (ultimaOferta != null)
                     {
                         UltimaOferta = $"R$ {ultimaOferta.Valor:F2} em {ultimaOferta.Data:dd/MM/yyyy}";
-                        System.Diagnostics.Debug.WriteLine($"[INFO] Última oferta encontrada: {UltimaOferta}");
+                        System.Diagnostics.Debug.WriteLine($"[INFO] ï¿½ltima oferta encontrada: {UltimaOferta}");
                     }
                     else
                     {
@@ -225,19 +225,22 @@ namespace Dizimo.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao carregar última oferta: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao carregar ï¿½ltima oferta: {ex.Message}");
                 UltimaOferta = "Erro ao carregar oferta";
             }
         }
 
-        [RelayCommand]
-        public async Task EditarAsync()
-        {
-            if (_dizimista != null)
-            {
-                await Shell.Current.GoToAsync($"dizimista-cadastro?id={_dizimista.Id}");
-            }
-        }
+         [RelayCommand]
+         public async Task EditarAsync()
+         {
+             if (_dizimista != null)
+             {
+                 System.Diagnostics.Debug.WriteLine($"[NAV] Editando dizimista: {_dizimista.Id}");
+                 var parameters = new NavigationParameters();
+                 parameters.Add("id", _dizimista.Id);
+                 _navigationService.Navigate("dizimista-cadastro", parameters);
+             }
+         }
 
         [RelayCommand]
         public async Task ExcluirAsync()
@@ -246,41 +249,71 @@ namespace Dizimo.ViewModels
             {
                 try
                 {
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                    if (mainPage != null)
-                    {
-                        bool confirm = await mainPage.DisplayAlertAsync(
-                            "Confirmação de Exclusão",
-                            $"Deseja realmente excluir o dizimista {_dizimista.Nome}? Esta ação não pode ser desfeita.",
-                            "Sim",
-                            "Não");
-                        
-                        if (!confirm) return;
-                    }
+                    bool confirm = await _dialogService.ShowConfirmAsync(
+                        "ConfirmaÃ§Ã£o de ExclusÃ£o",
+                        $"Deseja realmente excluir o dizimista {_dizimista.Nome}? Esta aÃ§Ã£o nÃ£o pode ser desfeita.",
+                        "Sim",
+                        "NÃ£o");
+                    
+                    if (!confirm) return;
 
                     System.Diagnostics.Debug.WriteLine($"[INFO] ExcluirAsync - Excluindo dizimista ID: {_dizimista.Id}");
                     
-                    // Usar o UnitOfWork para excluir
                     await _unitOfWork.Dizimistas.DeleteAsync(_dizimista.Id);
                     await _unitOfWork.SaveChangesAsync();
                     
-                    System.Diagnostics.Debug.WriteLine($"[INFO] ExcluirAsync - Dizimista excluído com sucesso");
+                    System.Diagnostics.Debug.WriteLine($"[INFO] ExcluirAsync - Dizimista excluÃ­do com sucesso");
+                    await _dialogService.ShowSuccessAsync("Dizimista excluÃ­do com sucesso!");
                     
-                    // Voltar para a lista
-                    await Shell.Current.GoToAsync("..", true);
+                    System.Diagnostics.Debug.WriteLine("[NAV] Navegando para lista de dizimistas");
+                    _navigationService.Navigate("dizimistas");
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ERRO] ExcluirAsync - Erro ao excluir: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
                     
-                    var mainPage = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault()?.Page;
-                    if (mainPage != null)
-                    {
-                        await mainPage.DisplayAlertAsync("Erro", $"Erro ao excluir dizimista: {ex.Message}", "OK");
-                    }
+                    await _dialogService.ShowErrorAsync($"Erro ao excluir: {ex.Message}");
                 }
             }
+        }
+
+        [RelayCommand]
+        public void Voltar()
+        {
+            try
+            {
+                _navigationService.GoBack();
+                System.Diagnostics.Debug.WriteLine("[NAV] Voltou da pÃ¡gina de detalhes");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao voltar: {ex.Message}");
+            }
+        }
+
+        void INavigationAware.OnNavigatedTo(NavigationParameters parameters)
+        {
+            // Extrai o ID do parÃ¢metro de navegaÃ§Ã£o
+            Guid? dizimistaId = null;
+            
+            if (parameters != null && parameters.TryGetValue("id", out var idObj))
+            {
+                if (idObj is Guid guidId)
+                    dizimistaId = guidId;
+                else if (Guid.TryParse(idObj?.ToString(), out var parsedId))
+                    dizimistaId = parsedId;
+            }
+
+            if (dizimistaId.HasValue && dizimistaId.Value != Guid.Empty)
+            {
+                _ = LoadDizimistaAsync(dizimistaId.Value);
+            }
+        }
+
+        void INavigationAware.OnNavigatedFrom()
+        {
+            // LÃ³gica ao sair da pÃ¡gina se necessÃ¡rio
         }
     }
 }

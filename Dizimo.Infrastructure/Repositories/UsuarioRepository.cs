@@ -23,9 +23,4 @@ public class UsuarioRepository : IUsuarioRepository
         var entity = await _context.Usuarios.FindAsync(id);
         if (entity != null) _context.Usuarios.Remove(entity);
     }
-    public async Task InativarAsync(Guid id)
-    {
-        var entity = await _context.Usuarios.FindAsync(id);
-        if (entity != null) { entity.Ativo = false; _context.Usuarios.Update(entity); }
-    }
 }

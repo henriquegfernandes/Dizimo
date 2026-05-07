@@ -18,7 +18,13 @@ public class UpdateUsuarioHandler
         {
             usuario.Nome = command.Nome;
             usuario.Login = command.Login;
-            usuario.SenhaHash = command.Senha;
+            
+            // Atualizar senha apenas se não for vazia
+            if (!string.IsNullOrWhiteSpace(command.Senha))
+            {
+                usuario.SenhaHash = command.Senha;
+            }
+            
             usuario.Ativo = command.Ativo;
             usuario.Perfil = command.Perfil;
             
