@@ -101,6 +101,42 @@ jobs:
           retention-days: 30
 
   # ============================================================================
+  # CODE QUALITY - Runs on all branches
+  # ============================================================================
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+    
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Analyze code
+        run: |
+          echo "Checking for build warnings..."
+          dotnet build Dizimo.Domain/Dizimo.Domain.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          dotnet build Dizimo.Application/Dizimo.Application.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          dotnet build Dizimo.Infrastructure/Dizimo.Infrastructure.csproj -c Release /p:TreatWarningsAsErrors=true || true
+          dotnet build Dizimo/Dizimo.csproj -c Release /p:TreatWarningsAsErrors=true || true
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
+
+  # ============================================================================
   # BUILD WINDOWS INSTALLER - Only for x64 and ARM64
   # ============================================================================
   build-windows-installer:
@@ -327,7 +363,7 @@ jobs:
   # ============================================================================
   create-release:
     name: Create GitHub Release
-    needs: [build-and-test, build-windows-installer, build-linux-appimage, build-macos-dmg]
+    needs: [build-and-test, code-quality, build-windows-installer, build-linux-appimage, build-macos-dmg]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
