@@ -271,15 +271,21 @@ jobs:
           cp -r publish-${{ matrix.rid }}/* AppDir/usr/bin/
           chmod +x AppDir/usr/bin/Dizimo
           
-          cat > AppDir/usr/share/applications/Dizimo.desktop << 'EOF'
+          # Create desktop entry at AppDir root for appimagetool compatibility
+          cat > AppDir/Dizimo.desktop << 'EOF'
           [Desktop Entry]
           Type=Application
           Name=Dizimo
           Exec=Dizimo
           Icon=Dizimo
           Categories=Utility;
+          Terminal=false
           EOF
           
+          # Also keep a copy in the standard location
+          install -D AppDir/Dizimo.desktop AppDir/usr/share/applications/Dizimo.desktop
+          
+          # Create AppRun script
           cat > AppDir/AppRun << 'EOF'
           #!/bin/bash
           SELF=$(readlink -f "$0")
@@ -289,12 +295,20 @@ jobs:
           EOF
           chmod +x AppDir/AppRun
           
+          # Provide an icon at AppDir root (required by appimagetool)
+          # Generate a placeholder icon using ImageMagick
+          sudo apt-get update
+          sudo apt-get install -y imagemagick || true
+          convert -size 256x256 xc:lightgray -gravity center -pointsize 32 -annotate 0 "D" AppDir/Dizimo.png || {
+            echo "Warning: Could not generate icon, continuing..."
+          }
+          
           # Diagnostics
           echo "=== AppImage tools diagnostics ==="
           ./appimagetool --version || true
           file appimagetool || true
-          echo "AppDir structure:"
-          ls -la AppDir/
+          echo "=== AppDir structure ==="
+          ls -laR AppDir/ | head -50
           
           # Create AppImage
           echo "=== Creating AppImage ==="
