@@ -70,18 +70,18 @@ build-scripts/
 ## 🚀 Como instalador e executar
 
 ### Via Instalador (Recomendado)
-1. **Windows**: Download `Dizimo-v2.0.0-windows-x64-Setup.exe` ou ARM64
+1. **Windows**: Download `Dizimo-v1.1.0-windows-x64-Setup.exe` ou ARM64
    - Execute e siga o wizard
    - App será instalado em Program Files com atalho no Desktop
 
-2. **Linux**: Download `Dizimo-v2.0.0-linux-x86_64.AppImage`
+2. **Linux**: Download `Dizimo-v1.1.0-linux-x86_64.AppImage`
    ```bash
-   chmod +x Dizimo-v2.0.0-linux-x86_64.AppImage
-   ./Dizimo-v2.0.0-linux-x86_64.AppImage
+   chmod +x Dizimo-v1.1.0-linux-x86_64.AppImage
+   ./Dizimo-v1.1.0-linux-x86_64.AppImage
    ```
    Funciona em **qualquer distribuição Linux**
 
-3. **macOS**: Download `Dizimo-v2.0.0-macos-x86_64.dmg`
+3. **macOS**: Download `Dizimo-v1.1.0-macos-x86_64.dmg`
    - Duplo-clique para montar
    - Arraste a aplicação para Applications folder
 
@@ -149,15 +149,15 @@ O pipeline em [.github/workflows/ci.yml](.github/workflows/ci.yml):
 build-scripts/Dizimo.nsi
 
 # Linux AppImage
-bash build-scripts/build-appimage.sh publish-dir v2.0.0
+bash build-scripts/build-appimage.sh publish-dir v1.1.0
 
 # macOS DMG
-bash build-scripts/build-dmg.sh publish-dir v2.0.0
+bash build-scripts/build-dmg.sh publish-dir v1.1.0
 ```
 
 ## 📋 Versão
 
-- **Atual**: v2.0.0
+- **Atual**: v1.1.0
 - **Framework**: Avalonia 12.0.2
 - **.NET**: 10.0
 - **Banco de dados**: SQLite
