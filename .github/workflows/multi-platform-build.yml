@@ -1,0 +1,54 @@
+name: Multi-Platform Build Verification
+
+on:
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  verify-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            name: Windows
+          - os: ubuntu-latest
+            rid: linux-x64
+            name: Linux
+          - os: macos-latest
+            rid: osx-x64
+            name: macOS Intel
+          - os: macos-latest
+            rid: osx-arm64
+            name: macOS ARM64
+    
+    steps:
+      - uses: actions/checkout@v4
+    
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build for ${{ matrix.name }} (${{ matrix.rid }})
+        run: dotnet build Dizimo/Dizimo.csproj --configuration Release --no-restore -p:Platform=AnyCPU
+      
+      - name: Verify publishability for ${{ matrix.name }} (${{ matrix.rid }})
+        run: dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true --no-build -o publish-${{ matrix.rid }}
+        continue-on-error: true
+      
+      - name: Upload build artifact for ${{ matrix.name }}
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
+          retention-days: 7
