@@ -229,17 +229,34 @@ jobs:
 
       - name: Download and setup AppImage tools
         run: |
-          # Download appimagetool directly from GitHub releases
+          set -euo pipefail
+
           ARCH="${{ matrix.arch }}"
+
+          # Use a reliable appimagetool source (continuous builds include aarch64)
           if [ "$ARCH" = "x86_64" ]; then
-            APPIMAGETOOL_ARCH="x86_64"
+            URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
           elif [ "$ARCH" = "aarch64" ]; then
-            APPIMAGETOOL_ARCH="aarch64"
+            URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage"
+          else
+            echo "Unsupported arch: $ARCH"
+            exit 1
           fi
-          
-          # Download appimagetool
-          curl -L "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-${APPIMAGETOOL_ARCH}.AppImage" -o appimagetool
+
+          # Fail on HTTP errors; follow redirects
+          curl -fSL "$URL" -o appimagetool
           chmod +x appimagetool
+
+          # Sanity check (prevents the 9-byte 'Not Found' situation)
+          test -s appimagetool
+          FILE_SIZE=$(stat -c%s appimagetool)
+          if [ "$FILE_SIZE" -lt 1000000 ]; then
+            echo "Downloaded appimagetool is unexpectedly small ($FILE_SIZE bytes). Likely a bad URL or HTTP error page."
+            head -n 5 appimagetool || true
+            exit 1
+          fi
+
+          echo "AppImage tools downloaded successfully (size: $FILE_SIZE bytes)"
           
           # Install runtime dependencies
           sudo apt-get update
@@ -272,12 +289,22 @@ jobs:
           EOF
           chmod +x AppDir/AppRun
           
+          # Diagnostics
+          echo "=== AppImage tools diagnostics ==="
+          ./appimagetool --version || true
+          file appimagetool || true
+          echo "AppDir structure:"
+          ls -la AppDir/
+          
           # Create AppImage
-          ls -la appimagetool
+          echo "=== Creating AppImage ==="
           ./appimagetool AppDir "Dizimo-v1.1.0-linux-${{ matrix.arch }}.AppImage" || {
             echo "appimagetool failed, check logs above"
             exit 1
           }
+          
+          echo "=== AppImage created successfully ==="
+          ls -lh Dizimo-v1.1.0-linux-${{ matrix.arch }}.AppImage
 
       - name: Upload Linux AppImage
         uses: actions/upload-artifact@v4
