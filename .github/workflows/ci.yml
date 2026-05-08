@@ -187,12 +187,12 @@ jobs:
           mkdir -p installer
           copy-item publish-${{ matrix.rid }}\* installer\ -Recurse
 
-       - name: Build NSIS installer
-         run: |
-           $nsiScript = @"
-           !include "MUI2.nsh"
-           Name "Dizimo"
-            OutFile "Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe"
+      - name: Build NSIS installer
+        run: |
+          $nsiScript = @"
+          !include "MUI2.nsh"
+          Name "Dizimo"
+          OutFile "Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe"
           InstallDir "`$PROGRAMFILES\Dizimo"
           RequestExecutionLevel admin
           !insertmacro MUI_PAGE_DIRECTORY
@@ -219,7 +219,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dizimo-windows-${{ matrix.arch }}-installer
-          path: Dizimo-v1.1.0-windows-${{ matrix.arch }}-Setup.exe
+          path: Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe
           retention-days: 30
 
   # ============================================================================
