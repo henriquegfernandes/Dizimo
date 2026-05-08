@@ -330,22 +330,22 @@ jobs:
           echo "=== AppDir structure ==="
           ls -laR AppDir/ | head -50
           
-           # Create AppImage
-           echo "=== Creating AppImage ==="
-           ./appimagetool AppDir "Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage" || {
-             echo "appimagetool failed, check logs above"
-             exit 1
-           }
-           
-           echo "=== AppImage created successfully ==="
-           ls -lh Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
+          # Create AppImage
+          echo "=== Creating AppImage ==="
+          ./appimagetool AppDir "Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage" || {
+            echo "appimagetool failed, check logs above"
+            exit 1
+          }
+          
+          echo "=== AppImage created successfully ==="
+          ls -lh Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
 
-       - name: Upload Linux AppImage
-         uses: actions/upload-artifact@v4
-         with:
-           name: dizimo-linux-${{ matrix.arch }}-appimage
-           path: Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
-           retention-days: 30
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-linux-${{ matrix.arch }}-appimage
+          path: Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
+          retention-days: 30
 
   # ============================================================================
   # BUILD MACOS DMG - For both x64 and ARM64
@@ -395,29 +395,29 @@ jobs:
               <string>Dizimo</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
-               <key>CFBundleShortVersionString</key>
-               <string>${{ needs.extract-version.outputs.version }}</string>
-               <key>CFBundleVersion</key>
-               <string>1</string>
-               <key>NSHighResolutionCapable</key>
-               <true/>
-           </dict>
-           </plist>
-           EOF
-           
-           # Create DMG
-           mkdir Dizimo-DMG
-           cp -r Dizimo.app Dizimo-DMG/
-           ln -s /Applications Dizimo-DMG/Applications
-           
-           hdiutil create -volname "Dizimo" -srcfolder Dizimo-DMG -ov -format UDZO "Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg"
+              <key>CFBundleShortVersionString</key>
+              <string>${{ needs.extract-version.outputs.version }}</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          
+          # Create DMG
+          mkdir Dizimo-DMG
+          cp -r Dizimo.app Dizimo-DMG/
+          ln -s /Applications Dizimo-DMG/Applications
+          
+          hdiutil create -volname "Dizimo" -srcfolder Dizimo-DMG -ov -format UDZO "Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg"
 
-       - name: Upload macOS DMG
-         uses: actions/upload-artifact@v4
-         with:
-           name: dizimo-macos-${{ matrix.arch }}-dmg
-           path: Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg
-           retention-days: 30
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-macos-${{ matrix.arch }}-dmg
+          path: Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg
+          retention-days: 30
 
    # ============================================================================
    # CREATE RELEASE - Only on main branch, after all builds pass
@@ -428,89 +428,89 @@ jobs:
      runs-on: ubuntu-latest
      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
-    steps:
-      - uses: actions/checkout@v4
+     steps:
+       - uses: actions/checkout@v4
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+       - name: Download all artifacts
+         uses: actions/download-artifact@v4
+         with:
+           path: artifacts
 
-      - name: Extract version from csproj
-        id: version
-        run: |
-          VERSION=$(grep -oP '<ApplicationDisplayVersion>\K[^<]+' Dizimo/Dizimo.csproj | head -1)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "VERSION=$VERSION"
+       - name: Extract version from csproj
+         id: version
+         run: |
+           VERSION=$(grep -oP '<ApplicationDisplayVersion>\K[^<]+' Dizimo/Dizimo.csproj | head -1)
+           echo "version=$VERSION" >> $GITHUB_OUTPUT
+           echo "VERSION=$VERSION"
 
-      - name: Organize release files
-        run: |
-          mkdir -p release
-          cd artifacts
-          
-          # ZIP files (build artifacts)
-          for dir in dizimo-*; do
-            if [ -d "$dir" ] && [[ "$dir" != *"-installer" ]] && [[ "$dir" != *"-appimage" ]] && [[ "$dir" != *"-dmg" ]]; then
-              zip -r "../release/${dir}.zip" "$dir" || true
-            fi
-          done
-          
-          # Installers and AppImages
-          find . -name "*.exe" -exec cp {} ../release/ \; 2>/dev/null || true
-          find . -name "*.AppImage" -exec cp {} ../release/ \; 2>/dev/null || true
-          find . -name "*.dmg" -exec cp {} ../release/ \; 2>/dev/null || true
-          
-          ls -lh ../release/
+       - name: Organize release files
+         run: |
+           mkdir -p release
+           cd artifacts
+           
+           # ZIP files (build artifacts)
+           for dir in dizimo-*; do
+             if [ -d "$dir" ] && [[ "$dir" != *"-installer" ]] && [[ "$dir" != *"-appimage" ]] && [[ "$dir" != *"-dmg" ]]; then
+               zip -r "../release/${dir}.zip" "$dir" || true
+             fi
+           done
+           
+           # Installers and AppImages
+           find . -name "*.exe" -exec cp {} ../release/ \; 2>/dev/null || true
+           find . -name "*.AppImage" -exec cp {} ../release/ \; 2>/dev/null || true
+           find . -name "*.dmg" -exec cp {} ../release/ \; 2>/dev/null || true
+           
+           ls -lh ../release/
 
-      - name: Create GitHub Release and Upload Assets
-        uses: ncipollo/release-action@v1
-        with:
-          tag: v${{ steps.version.outputs.version }}
-          name: Dizimo v${{ steps.version.outputs.version }}
-          body: |
-            ## Dizimo v${{ steps.version.outputs.version }}
-            
-            ### 📦 Release artifacts
-            
-            Multi-platform builds are available:
-            
-            **Windows**
-            - Windows x64 - Setup.exe (Recommended for easy installation)
-            - Windows x64 - ZIP (For portable/manual installation)
-            - Windows ARM64 - Setup.exe (For ARM-based Windows devices)
-            - Windows ARM64 - ZIP
-            
-            **Linux**
-            - Linux x64 - AppImage (Runs on any Linux distribution)
-            - Linux x64 - ZIP (For manual installation)
-            - Linux ARM64 - AppImage (For ARM-based Linux devices)
-            - Linux ARM64 - ZIP
-            
-            **macOS**
-            - macOS Intel x64 - DMG (Recommended - drag and drop installer)
-            - macOS Apple Silicon ARM64 - DMG (For M1/M2/M3 Macs)
-            
-            ### 🚀 Installation Instructions
-            
-            **Windows**: Download the Setup.exe and follow the installer wizard
-            
-            **Linux**: Download the AppImage, mark as executable, and run:
-            ```bash
-            chmod +x Dizimo-*.AppImage
-            ./Dizimo-*.AppImage
-            ```
-            
-            **macOS**: Download the DMG, open it, drag Dizimo.app to Applications folder
-            
-            ### 📝 Changelog
-            
-            Please see commit history for detailed changes.
-            
-            ---
-            
-            **Auto-generated release from CI/CD pipeline**
-          draft: false
-          prerelease: false
-          artifacts: release/*
-          token: ${{ secrets.GITHUB_TOKEN }}
-          allowUpdates: true
+       - name: Create GitHub Release and Upload Assets
+         uses: ncipollo/release-action@v1
+         with:
+           tag: v${{ steps.version.outputs.version }}
+           name: Dizimo v${{ steps.version.outputs.version }}
+           body: |
+             ## Dizimo v${{ steps.version.outputs.version }}
+             
+             ### 📦 Release artifacts
+             
+             Multi-platform builds are available:
+             
+             **Windows**
+             - Windows x64 - Setup.exe (Recommended for easy installation)
+             - Windows x64 - ZIP (For portable/manual installation)
+             - Windows ARM64 - Setup.exe (For ARM-based Windows devices)
+             - Windows ARM64 - ZIP
+             
+             **Linux**
+             - Linux x64 - AppImage (Runs on any Linux distribution)
+             - Linux x64 - ZIP (For manual installation)
+             - Linux ARM64 - AppImage (For ARM-based Linux devices)
+             - Linux ARM64 - ZIP
+             
+             **macOS**
+             - macOS Intel x64 - DMG (Recommended - drag and drop installer)
+             - macOS Apple Silicon ARM64 - DMG (For M1/M2/M3 Macs)
+             
+             ### 🚀 Installation Instructions
+             
+             **Windows**: Download the Setup.exe and follow the installer wizard
+             
+             **Linux**: Download the AppImage, mark as executable, and run:
+             ```bash
+             chmod +x Dizimo-*.AppImage
+             ./Dizimo-*.AppImage
+             ```
+             
+             **macOS**: Download the DMG, open it, drag Dizimo.app to Applications folder
+             
+             ### 📝 Changelog
+             
+             Please see commit history for detailed changes.
+             
+             ---
+             
+             **Auto-generated release from CI/CD pipeline**
+           draft: false
+           prerelease: false
+           artifacts: release/*
+           token: ${{ secrets.GITHUB_TOKEN }}
+           allowUpdates: true
