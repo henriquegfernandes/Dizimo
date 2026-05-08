@@ -374,15 +374,15 @@ jobs:
        - name: Create macOS App Bundle and DMG
          run: |
            set -euo pipefail
-           
+
            # Create app bundle structure
            mkdir -p Dizimo.app/Contents/MacOS
            mkdir -p Dizimo.app/Contents/Resources
-           
+
            # Copy application files
            cp -r publish-${{ matrix.rid }}/* Dizimo.app/Contents/MacOS/
            chmod +x Dizimo.app/Contents/MacOS/Dizimo
-           
+
            # Create Info.plist
            cat > Dizimo.app/Contents/Info.plist << 'EOF'
            <?xml version="1.0" encoding="UTF-8"?>
@@ -406,46 +406,38 @@ jobs:
            </dict>
            </plist>
            EOF
-           
+
            # Setup paths
            APP_NAME="Dizimo.app"
            DMG_NAME="Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg"
            STAGE_DIR="$(mktemp -d)"
-           RW_DMG="temp-${{ matrix.arch }}.dmg"
-           
-           # Clean up any previous builds
-           rm -f "$DMG_NAME" "$RW_DMG"
-           rm -rf Dizimo-DMG
-           
+
+           rm -f "$DMG_NAME"
+
            # Stage files in isolated temp directory
            cp -R "$APP_NAME" "$STAGE_DIR/"
            ln -s /Applications "$STAGE_DIR/Applications"
-           
+
            echo "Building DMG from staging directory: $STAGE_DIR"
-           echo "Contents:"
            ls -la "$STAGE_DIR"
-           
-           # Build using makehybrid + convert for better reliability
-           echo "Creating read-write DMG image..."
-           hdiutil makehybrid -ov -hfs -hfs-volume-name "Dizimo" -srcfolder "$STAGE_DIR" -o "$RW_DMG" || {
-             echo "Failed to create hybrid image"
-             exit 1
-           }
-           
-           echo "Converting to compressed UDZO format..."
-           hdiutil convert "$RW_DMG" -format UDZO -o "$DMG_NAME" || {
-             echo "Failed to convert DMG"
-             exit 1
-           }
-           
-           # Cleanup
-           rm -f "$RW_DMG"
+
+           # Create compressed DMG image using hdiutil create
+           echo "Creating compressed DMG image..."
+           hdiutil create \
+             -volname "Dizimo" \
+             -srcfolder "$STAGE_DIR" \
+             -ov \
+             -format UDZO \
+             "$DMG_NAME" || {
+               echo "Failed to create DMG"
+               exit 1
+             }
+
            rm -rf "$STAGE_DIR"
-           
-            # Verify the final DMG
-            echo "DMG creation completed successfully"
-            ls -lh "$DMG_NAME"
-            hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
+
+           echo "DMG creation completed successfully"
+           ls -lh "$DMG_NAME"
+           hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
 
        - name: Upload macOS DMG
          uses: actions/upload-artifact@v4
