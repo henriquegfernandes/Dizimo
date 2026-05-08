@@ -138,6 +138,9 @@ class Program
             ));
 #if DEBUG
             services.AddLogging(configure => configure.AddDebug());
+#else
+            // Em Release, registrar logging para evitar DI errors ao injetar ILogger<T>
+            services.AddLogging();
 #endif
             var serviceProvider = services.BuildServiceProvider();
             using (var scope = serviceProvider.CreateScope())
