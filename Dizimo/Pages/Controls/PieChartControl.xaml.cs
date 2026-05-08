@@ -5,10 +5,25 @@ using Avalonia.Controls.Shapes;
 using System.Linq;
 using Dizimo.ViewModels;
 
-namespace Dizimo.Controls;
+namespace Dizimo.Pages.Controls;
 
+/// <summary>
+/// Controle de gráfico de pizza (Donut Chart) que exibe dados com porcentagem no gráfico
+/// e quantidade detalhada na tooltip.
+/// Segue SOLID Principles com responsabilidades bem definidas.
+/// </summary>
 public class PieChartControl : UserControl
 {
+    // Configurações do gráfico
+    private const double CanvasWidth = 500;
+    private const double CanvasHeight = 500;
+    private const double ChartRadius = 120;
+    private const double DonutInnerRadius = 70;
+    private const double CenterX = 250;  // Ajustado para o novo tamanho do canvas
+    private const double CenterY = 250;  // Ajustado para o novo tamanho do canvas
+    private const double ExternalLabelRadius = 60;  // Aumentado para os labels ficarem bem fora
+    private const int PercentageDecimalPlaces = 0;
+
     public static readonly StyledProperty<System.Collections.ObjectModel.ObservableCollection<GraficoData>?> DatasProperty =
         AvaloniaProperty.Register<PieChartControl, System.Collections.ObjectModel.ObservableCollection<GraficoData>?>(
             nameof(Datas),
@@ -19,22 +34,19 @@ public class PieChartControl : UserControl
         get => GetValue(DatasProperty);
         set
         {
-            System.Diagnostics.Debug.WriteLine($"[PIECHART] Datas setter chamado com {value?.Count ?? 0} items");
-            
-            // Unsubscribe from old collection if exists
+            // Desinscrever coleção anterior
             if (GetValue(DatasProperty) is System.Collections.ObjectModel.ObservableCollection<GraficoData> oldDatas)
             {
                 oldDatas.CollectionChanged -= OnDatasCollectionChanged;
             }
             
-            // Set new value
+            // Definir novo valor
             SetValue(DatasProperty, value);
             
-            // Subscribe to new collection
+            // Inscrever na nova coleção
             if (value is not null)
             {
                 value.CollectionChanged += OnDatasCollectionChanged;
-                System.Diagnostics.Debug.WriteLine("[PIECHART] Subscribed to collection changes");
             }
             
             DrawPieChart();
@@ -43,7 +55,6 @@ public class PieChartControl : UserControl
 
     private void OnDatasCollectionChanged(object? _, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"[PIECHART] Collection changed - redrawing chart");
         DrawPieChart();
     }
 
@@ -51,25 +62,21 @@ public class PieChartControl : UserControl
 
     public PieChartControl()
     {
-        // Create Canvas directly in C#
+        // Criar Canvas diretamente em C# com tamanho maior para acomodar labels externos
         _canvas = new Canvas
         {
             Background = new SolidColorBrush(Colors.Transparent),
-            Width = 400,
-            Height = 400
+            Width = CanvasWidth,
+            Height = CanvasHeight
         };
         
         Content = _canvas;
         
-        System.Diagnostics.Debug.WriteLine("[PIECHART] PieChartControl construtor chamado");
-        
-        // Monitor property changes
+        // Monitorar mudanças de propriedade
         this.PropertyChanged += (_, e) =>
         {
-            System.Diagnostics.Debug.WriteLine($"[PIECHART] Property changed: {e.Property?.Name}");
             if (e.Property == DatasProperty)
             {
-                System.Diagnostics.Debug.WriteLine("[PIECHART] Datas property mudou, redrawing...");
                 DrawPieChart();
             }
         };
@@ -77,61 +84,44 @@ public class PieChartControl : UserControl
         DrawPieChart();
     }
 
+    /// <summary>
+    /// Desenha o gráfico de pizza com base nos dados fornecidos.
+    /// </summary>
     private void DrawPieChart()
     {
-        System.Diagnostics.Debug.WriteLine($"[PIECHART] DrawPieChart chamado - Canvas: {_canvas != null}, Datas: {Datas?.Count ?? 0} items");
-        
-        if (_canvas is null)
+        if (_canvas is null || Datas is null || !Datas.Any())
         {
-            System.Diagnostics.Debug.WriteLine("[PIECHART] ERRO: Canvas é null");
-            return;
-        }
-        
-        if (Datas is null || !Datas.Any())
-        {
-            System.Diagnostics.Debug.WriteLine("[PIECHART] ERRO: Datas é null ou vazio");
-            _canvas.Children.Clear();
+            _canvas?.Children.Clear();
             return;
         }
 
         _canvas.Children.Clear();
 
-        var total = Datas.Sum(d => d.Quantidade);
-        System.Diagnostics.Debug.WriteLine($"[PIECHART] Total: {total}, Items com quantidade > 0: {Datas.Count(d => d.Quantidade > 0)}");
+        var validData = Datas.Where(d => d.Quantidade > 0).ToList();
+        if (!validData.Any()) return;
+
+        var total = validData.Sum(d => d.Quantidade);
         
-        if (total == 0) 
-        {
-            System.Diagnostics.Debug.WriteLine("[PIECHART] Total é 0, nenhuma fatia será desenhada");
-            return;
-        }
-
         double startAngle = 0;
-        double radius = 120;
-        double donutInnerRadius = 70;
-        double centerX = 200;
-        double centerY = 200;
-
-        int sliceCount = 0;
-        foreach (var data in Datas.Where(d => d.Quantidade > 0))
+        foreach (var data in validData)
         {
             double sliceAngle = (data.Quantidade / (double)total) * 360;
             double percentual = (data.Quantidade / (double)total) * 100;
-            System.Diagnostics.Debug.WriteLine($"[PIECHART] Slice {sliceCount}: {data.Periodo} = {data.Quantidade} ({sliceAngle}°, {percentual:F1}%)");
             
-            // Draw slice with tooltip
-            DrawSlice(centerX, centerY, radius, donutInnerRadius, startAngle, sliceAngle, data.CorHex, data.Periodo, data.Quantidade);
+            // Desenhar fatia
+            DrawSlice(startAngle, sliceAngle, data.CorHex, data.Periodo, data.Quantidade);
             
-            // Draw label with percentage
-            DrawNumberLabel(centerX, centerY, radius, donutInnerRadius, startAngle, sliceAngle, $"{percentual:F0}%", data.CorHex);
+            // Desenhar label com porcentagem e linha conectora (todos fora do gráfico)
+            DrawExternalPercentageLabel(startAngle, sliceAngle, percentual, data.CorHex);
             
             startAngle += sliceAngle;
-            sliceCount++;
         }
-        
-        System.Diagnostics.Debug.WriteLine($"[PIECHART] Total de {sliceCount} fatias desenhadas");
     }
 
-    private void DrawSlice(double centerX, double centerY, double radius, double innerRadius, double startAngle, double sliceAngle, string colorHex, string periodo, int quantidade)
+    /// <summary>
+    /// Desenha uma fatia do gráfico com tooltip.
+    /// </summary>
+    private void DrawSlice(double startAngle, double sliceAngle, string colorHex, string periodo, int quantidade)
     {
         try
         {
@@ -139,221 +129,259 @@ public class PieChartControl : UserControl
             
             var color = Color.Parse(colorHex);
             var brush = new SolidColorBrush(color);
-            var tooltip = $"{periodo}\n{quantidade} dizimista(s)";
+            var tooltip = CreateTooltip(periodo, quantidade);
 
-            // Handle special case when slice is 360 degrees (full circle)
-            if (sliceAngle >= 359.9)
-            {
-                // Draw as two semicircles to create a complete donut
-                var outerPathFigure = new PathFigure 
-                { 
-                    StartPoint = GetPointOnCircle(centerX, centerY, radius, 0), 
-                    IsFilled = true,
-                    IsClosed = true
-                };
-
-#pragma warning disable CS8602
-                // First semicircle (outer)
-                outerPathFigure.Segments.Add(new ArcSegment
-                {
-                    Point = GetPointOnCircle(centerX, centerY, radius, 180),
-                    Size = new Size(radius, radius),
-                    RotationAngle = 0,
-                    IsLargeArc = false,
-                    SweepDirection = SweepDirection.Clockwise
-                });
-
-                // Second semicircle (outer)
-                outerPathFigure.Segments.Add(new ArcSegment
-                {
-                    Point = GetPointOnCircle(centerX, centerY, radius, 0),
-                    Size = new Size(radius, radius),
-                    RotationAngle = 0,
-                    IsLargeArc = false,
-                    SweepDirection = SweepDirection.Clockwise
-                });
-
-                // Line to inner radius
-                outerPathFigure.Segments.Add(new LineSegment 
-                { 
-                    Point = GetPointOnCircle(centerX, centerY, innerRadius, 0),
-                    IsStroked = true
-                });
-
-                // First semicircle (inner - backwards)
-                outerPathFigure.Segments.Add(new ArcSegment
-                {
-                    Point = GetPointOnCircle(centerX, centerY, innerRadius, 180),
-                    Size = new Size(innerRadius, innerRadius),
-                    RotationAngle = 0,
-                    IsLargeArc = false,
-                    SweepDirection = SweepDirection.CounterClockwise
-                });
-
-                // Second semicircle (inner - backwards)
-                outerPathFigure.Segments.Add(new ArcSegment
-                {
-                    Point = GetPointOnCircle(centerX, centerY, innerRadius, 0),
-                    Size = new Size(innerRadius, innerRadius),
-                    RotationAngle = 0,
-                    IsLargeArc = false,
-                    SweepDirection = SweepDirection.CounterClockwise
-                });
-#pragma warning restore CS8602
-
-                var pathGeometry = new PathGeometry { Figures = new PathFigures { outerPathFigure } };
-                
-                var pathShape = new Avalonia.Controls.Shapes.Path
-                {
-                    Data = pathGeometry,
-                    Fill = brush,
-                    Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
-                };
-                
-                ToolTip.SetTip(pathShape, tooltip);
-
-                _canvas.Children.Add(pathShape);
-            }
-            else
-            {
-                // Normal slice drawing for angles < 360
-                var outerPathFigure = new PathFigure 
-                { 
-                    StartPoint = GetPointOnCircle(centerX, centerY, radius, startAngle), 
-                    IsFilled = true,
-                    IsClosed = true
-                };
-                
-                var arcSegment = new ArcSegment
-                {
-                    Point = GetPointOnCircle(centerX, centerY, radius, startAngle + sliceAngle),
-                    Size = new Size(radius, radius),
-                    RotationAngle = 0,
-                    IsLargeArc = sliceAngle > 180,
-                    SweepDirection = SweepDirection.Clockwise
-                };
-                
-#pragma warning disable CS8602
-                outerPathFigure.Segments.Add(arcSegment);
-
-                // Line to inner radius
-                outerPathFigure.Segments.Add(new LineSegment 
-                { 
-                    Point = GetPointOnCircle(centerX, centerY, innerRadius, startAngle + sliceAngle) 
-                });
-
-                // Draw inner arc (backwards)
-                var innerArcSegment = new ArcSegment
-                {
-                    Point = GetPointOnCircle(centerX, centerY, innerRadius, startAngle),
-                    Size = new Size(innerRadius, innerRadius),
-                    RotationAngle = 0,
-                    IsLargeArc = sliceAngle > 180,
-                    SweepDirection = SweepDirection.CounterClockwise
-                };
-                
-                outerPathFigure.Segments.Add(innerArcSegment);
-                outerPathFigure.Segments.Add(new LineSegment { Point = GetPointOnCircle(centerX, centerY, radius, startAngle) });
-#pragma warning restore CS8602
-
-                var pathGeometry = new PathGeometry { Figures = new PathFigures { outerPathFigure } };
-                
-                var pathShape = new Avalonia.Controls.Shapes.Path
-                {
-                    Data = pathGeometry,
-                    Fill = brush,
-                    Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
-                };
-                
-                ToolTip.SetTip(pathShape, tooltip);
-
-                _canvas.Children.Add(pathShape);
-            }
-            
-            System.Diagnostics.Debug.WriteLine($"[PIECHART] Slice desenhada com cor {colorHex}");
+            var pathShape = CreateSlicePath(startAngle, sliceAngle, brush, tooltip);
+            _canvas.Children.Add(pathShape);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao desenhar slice: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PIECHART] Erro ao desenhar slice: {ex.Message}");
         }
     }
 
-    private void DrawNumberLabel(double centerX, double centerY, double radius, double innerRadius, double startAngle, double sliceAngle, string number, string colorHex)
+    /// <summary>
+    /// Cria o caminho (Path) para uma fatia do gráfico.
+    /// </summary>
+    private Avalonia.Controls.Shapes.Path CreateSlicePath(
+        double startAngle, 
+        double sliceAngle, 
+        SolidColorBrush brush, 
+        string tooltip)
+    {
+        PathFigure pathFigure;
+
+        if (sliceAngle >= 359.9)
+        {
+            // Caso especial: círculo completo (duas semicircunferências)
+            pathFigure = CreateFullCirclePathFigure();
+        }
+        else
+        {
+            // Fatia normal
+            pathFigure = CreateSlicePathFigure(startAngle, sliceAngle);
+        }
+
+        var pathGeometry = new PathGeometry { Figures = new PathFigures { pathFigure } };
+        
+        var pathShape = new Avalonia.Controls.Shapes.Path
+        {
+            Data = pathGeometry,
+            Fill = brush,
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+        };
+        
+        ToolTip.SetTip(pathShape, tooltip);
+        return pathShape;
+    }
+
+    /// <summary>
+    /// Cria PathFigure para uma fatia normal.
+    /// </summary>
+    private PathFigure CreateSlicePathFigure(double startAngle, double sliceAngle)
+    {
+        var pathFigure = new PathFigure 
+        { 
+            StartPoint = GetPointOnCircle(CenterX, CenterY, ChartRadius, startAngle), 
+            IsFilled = true,
+            IsClosed = true
+        };
+        
+        var arcSegment = new ArcSegment
+        {
+            Point = GetPointOnCircle(CenterX, CenterY, ChartRadius, startAngle + sliceAngle),
+            Size = new Size(ChartRadius, ChartRadius),
+            RotationAngle = 0,
+            IsLargeArc = sliceAngle > 180,
+            SweepDirection = SweepDirection.Clockwise
+        };
+        
+#pragma warning disable CS8602
+        pathFigure.Segments.Add(arcSegment);
+        pathFigure.Segments.Add(new LineSegment 
+        { 
+            Point = GetPointOnCircle(CenterX, CenterY, DonutInnerRadius, startAngle + sliceAngle) 
+        });
+
+        var innerArcSegment = new ArcSegment
+        {
+            Point = GetPointOnCircle(CenterX, CenterY, DonutInnerRadius, startAngle),
+            Size = new Size(DonutInnerRadius, DonutInnerRadius),
+            RotationAngle = 0,
+            IsLargeArc = sliceAngle > 180,
+            SweepDirection = SweepDirection.CounterClockwise
+        };
+        
+        pathFigure.Segments.Add(innerArcSegment);
+        pathFigure.Segments.Add(new LineSegment { Point = GetPointOnCircle(CenterX, CenterY, ChartRadius, startAngle) });
+#pragma warning restore CS8602
+
+        return pathFigure;
+    }
+
+    /// <summary>
+    /// Cria PathFigure para um círculo completo (caso extremo de 360 graus).
+    /// </summary>
+    private PathFigure CreateFullCirclePathFigure()
+    {
+        var pathFigure = new PathFigure 
+        { 
+            StartPoint = GetPointOnCircle(CenterX, CenterY, ChartRadius, 0), 
+            IsFilled = true,
+            IsClosed = true
+        };
+
+#pragma warning disable CS8602
+        // Primeira semicircunferência (externa)
+        pathFigure.Segments.Add(new ArcSegment
+        {
+            Point = GetPointOnCircle(CenterX, CenterY, ChartRadius, 180),
+            Size = new Size(ChartRadius, ChartRadius),
+            RotationAngle = 0,
+            IsLargeArc = false,
+            SweepDirection = SweepDirection.Clockwise
+        });
+
+        // Segunda semicircunferência (externa)
+        pathFigure.Segments.Add(new ArcSegment
+        {
+            Point = GetPointOnCircle(CenterX, CenterY, ChartRadius, 0),
+            Size = new Size(ChartRadius, ChartRadius),
+            RotationAngle = 0,
+            IsLargeArc = false,
+            SweepDirection = SweepDirection.Clockwise
+        });
+
+        // Linha até raio interno
+        pathFigure.Segments.Add(new LineSegment 
+        { 
+            Point = GetPointOnCircle(CenterX, CenterY, DonutInnerRadius, 0),
+            IsStroked = true
+        });
+
+        // Primeira semicircunferência (interna - reversa)
+        pathFigure.Segments.Add(new ArcSegment
+        {
+            Point = GetPointOnCircle(CenterX, CenterY, DonutInnerRadius, 180),
+            Size = new Size(DonutInnerRadius, DonutInnerRadius),
+            RotationAngle = 0,
+            IsLargeArc = false,
+            SweepDirection = SweepDirection.CounterClockwise
+        });
+
+        // Segunda semicircunferência (interna - reversa)
+        pathFigure.Segments.Add(new ArcSegment
+        {
+            Point = GetPointOnCircle(CenterX, CenterY, DonutInnerRadius, 0),
+            Size = new Size(DonutInnerRadius, DonutInnerRadius),
+            RotationAngle = 0,
+            IsLargeArc = false,
+            SweepDirection = SweepDirection.CounterClockwise
+        });
+#pragma warning restore CS8602
+
+        return pathFigure;
+    }
+
+    /// <summary>
+    /// Desenha o label com porcentagem SEMPRE fora do gráfico com linha conectora colorida.
+    /// </summary>
+    private void DrawExternalPercentageLabel(double startAngle, double sliceAngle, double percentual, string colorHex)
     {
         try
         {
             if (_canvas is null) return;
 
-            var midAngle = startAngle + sliceAngle / 2;
             var color = Color.Parse(colorHex);
-            var midRadiusInsideDonut = (radius + innerRadius) / 2.0;
-            var labelPositionInsideDonut = GetPointOnCircle(centerX, centerY, midRadiusInsideDonut, midAngle);
+            var colorBrush = new SolidColorBrush(color);
+            
+            var midAngle = startAngle + sliceAngle / 2;
+            var percentageText = FormatPercentage(percentual);
 
-            const double minAngleForInsideLabel = 30; // Se a fatia for menor que 30 graus, coloca fora
+            // Ponto na borda externa do donut
+            var borderPoint = GetPointOnCircle(CenterX, CenterY, ChartRadius + 5, midAngle);
+            
+            // Ponto externo onde o label será colocado
+            var externalRadius = ChartRadius + ExternalLabelRadius + 20;
+            var labelPosition = GetPointOnCircle(CenterX, CenterY, externalRadius, midAngle);
 
-            if (sliceAngle >= minAngleForInsideLabel)
+            // Desenhar linha colorida do gráfico até o label
+            var line = new Avalonia.Controls.Shapes.Line
             {
-                // Label inside the donut
-                var textBlock = new TextBlock
-                {
-                    Text = number,
-                    Foreground = new SolidColorBrush(Colors.White),
-                    FontWeight = FontWeight.Bold,
-                    TextAlignment = TextAlignment.Center,
-                    FontSize = 14
-                };
+                StartPoint = borderPoint,
+                EndPoint = labelPosition,
+                Stroke = colorBrush,
+                StrokeThickness = 2,
+                Opacity = 0.8
+            };
+            _canvas.Children.Add(line);
 
-                Canvas.SetLeft(textBlock, labelPositionInsideDonut.X - 15);
-                Canvas.SetTop(textBlock, labelPositionInsideDonut.Y - 12);
-
-                _canvas.Children.Add(textBlock);
-            }
-            else
+            // Desenhar background (pequeno retângulo/badge) para o número
+            var badgeSize = 30;
+            var background = new Rectangle
             {
-                // Label outside the donut with connector line
-                var externalRadius = radius + 40;
-                var labelExternalPosition = GetPointOnCircle(centerX, centerY, externalRadius, midAngle);
+                Width = badgeSize,
+                Height = badgeSize,
+                Fill = colorBrush,
+                RadiusX = 4,
+                RadiusY = 4,
+                Opacity = 0.9
+            };
+            Canvas.SetLeft(background, labelPosition.X - badgeSize / 2);
+            Canvas.SetTop(background, labelPosition.Y - badgeSize / 2);
+            _canvas.Children.Add(background);
 
-                // Draw line from donut edge to external label
-                var lineStartPoint = GetPointOnCircle(centerX, centerY, radius + 5, midAngle);
-                
-                var line = new Avalonia.Controls.Shapes.Line
-                {
-                    StartPoint = lineStartPoint,
-                    EndPoint = labelExternalPosition,
-                    Stroke = new SolidColorBrush(color),
-                    StrokeThickness = 2
-                };
-                _canvas.Children.Add(line);
+            // Desenhar texto da porcentagem
+            var textBlock = new TextBlock
+            {
+                Text = percentageText,
+                Foreground = new SolidColorBrush(Colors.White),
+                FontWeight = FontWeight.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontSize = 12
+            };
 
-                // Draw external label
-                var textBlock = new TextBlock
-                {
-                    Text = number,
-                    Foreground = new SolidColorBrush(color),
-                    FontWeight = FontWeight.Bold,
-                    TextAlignment = TextAlignment.Center,
-                    FontSize = 12
-                };
+            // Medir o texto para centralizá-lo corretamente
+            var textSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
+            textBlock.Measure(textSize);
+            
+            Canvas.SetLeft(textBlock, labelPosition.X - textBlock.DesiredSize.Width / 2);
+            Canvas.SetTop(textBlock, labelPosition.Y - textBlock.DesiredSize.Height / 2 - 1);
 
-                Canvas.SetLeft(textBlock, labelExternalPosition.X - 12);
-                Canvas.SetTop(textBlock, labelExternalPosition.Y - 12);
-
-                _canvas.Children.Add(textBlock);
-            }
+            _canvas.Children.Add(textBlock);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao desenhar number label: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PIECHART] Erro ao desenhar label externo: {ex.Message}");
         }
     }
 
-    private Point GetPointOnCircle(double centerX, double centerY, double radius, double angleInDegrees)
+    /// <summary>
+    /// Cria texto de tooltip com período e quantidade.
+    /// </summary>
+    private static string CreateTooltip(string periodo, int quantidade)
+    {
+        return $"{periodo}\n{quantidade} dizimista{(quantidade != 1 ? "s" : "")}";
+    }
+
+    /// <summary>
+    /// Obtém um ponto na circunferência dado o centro, raio e ângulo.
+    /// </summary>
+    private static Point GetPointOnCircle(double centerX, double centerY, double radius, double angleInDegrees)
     {
         var angleInRadians = (angleInDegrees - 90) * System.Math.PI / 180.0;
         var x = centerX + radius * System.Math.Cos(angleInRadians);
         var y = centerY + radius * System.Math.Sin(angleInRadians);
         return new Point(x, y);
+    }
+
+    /// <summary>
+    /// Formata a porcentagem com o número de casas decimais configurado.
+    /// </summary>
+    private static string FormatPercentage(double percentual)
+    {
+        var format = $"F{PercentageDecimalPlaces}";
+        return percentual.ToString(format) + "%";
     }
 }
 

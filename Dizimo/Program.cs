@@ -116,7 +116,21 @@ class Program
             services.AddTransient<UsuarioCadastroViewModel>();
             services.AddSingleton<SessaoService>();
             services.AddSingleton<INavigationService, NavigationService>();
-            services.AddSingleton(sp => new LocalBackupService(dbPath, sp, sp.GetRequiredService<IPreferencesService>()));
+            
+            // Registrar serviços de backup com nova arquitetura refatorada
+            services.AddSingleton<IFileOperationService, FileOperationService>();
+            services.AddSingleton<IBackupPreferencesProvider>(sp =>
+                new ReflectionBasedBackupPreferencesProvider(
+                    sp.GetRequiredService<IPreferencesService>(),
+                    sp.GetRequiredService<ILogger<ReflectionBasedBackupPreferencesProvider>>()));
+            services.AddSingleton<LocalBackupService>(sp =>
+                new LocalBackupService(
+                    dbPath,
+                    sp,
+                    sp.GetRequiredService<IBackupPreferencesProvider>(),
+                    sp.GetRequiredService<IFileOperationService>(),
+                    sp.GetRequiredService<ILogger<LocalBackupService>>()));
+            
             services.AddSingleton(sp => new BackupOnCloseService(
                 sp.GetRequiredService<LocalBackupService>(),
                 sp.GetRequiredService<IPreferencesService>(),
