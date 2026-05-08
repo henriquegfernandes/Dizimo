@@ -3,7 +3,7 @@
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             xmlns:viewModels="clr-namespace:Dizimo.ViewModels"
             xmlns:converters="clr-namespace:Dizimo.Converters"
-            xmlns:controls="clr-namespace:Dizimo.Controls"
+            xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
             x:Class="Dizimo.Pages.MainPage"
             x:DataType="viewModels:MainPageViewModel">
 
@@ -31,7 +31,7 @@
                                FontSize="18"
                                FontWeight="Bold" />
                     <!-- Card Gráfico de Donut -->
-                    <Border BorderThickness="1" CornerRadius="10" Padding="12" Background="{DynamicResource BrushBackgroundSecondary}">
+                    <Border BorderThickness="1" CornerRadius="10" Padding="16" Background="{DynamicResource BrushBackgroundSecondary}">
                         <StackPanel Spacing="10" HorizontalAlignment="Center">
                             <controls:PieChartControl Datas="{Binding DadosGrafico}" />
                         </StackPanel>

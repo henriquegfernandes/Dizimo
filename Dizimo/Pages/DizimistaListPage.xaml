@@ -148,7 +148,7 @@
         <!-- Botões flutuantes de ação em massa (excluir, ativar/inativar, selecionar todos) - Centralizados -->
         <Grid ColumnSpacing="12" ColumnDefinitions="*,*,*" VerticalAlignment="Bottom" HorizontalAlignment="Center" IsVisible="{Binding DizimistasSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}, Mode=OneWay}" Margin="0,0,0,24">
             <Button Content="{Binding TextoBotaoSelecao}"
-                   Classes="Secondary"
+                   Classes="Primary"
                    Command="{Binding SelecionarTodosCommand}"
                    Padding="12"
                    CornerRadius="8"
@@ -176,9 +176,10 @@
         <Button Classes="Floating"
             Command="{Binding NovoDizimistaCommand}"
             IsEnabled="True"
-            Content="+"
+            Content="➕"
             VerticalAlignment="Bottom"
             HorizontalAlignment="Right"
-            Margin="24" />
+            Margin="24"
+            ToolTip.Tip="Adicionar" />
     </Grid>
 </UserControl>

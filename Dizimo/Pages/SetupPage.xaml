@@ -109,7 +109,7 @@
         <Border Height="12" Background="Transparent" />
 
         <!-- Botão Criar Usuário -->
-        <Button 
+        <Button Classes="Primary"
             Content="Criar Usuário"
             Command="{Binding CriarPrimeiroUsuarioCommand}"
             IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"

@@ -173,7 +173,7 @@
         <!-- Botões flutuantes de ação em massa - Centralizados -->
         <Grid ColumnSpacing="12" ColumnDefinitions="Auto,Auto" VerticalAlignment="Bottom" HorizontalAlignment="Center" IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24" ZIndex="100">
             <Button Content="{Binding TextoBotaoSelecao}"
-                   Classes="Secondary"
+                   Classes="Primary"
                    Command="{Binding SelecionarTodosCommand}"
                    Padding="12"
                    CornerRadius="8"
@@ -182,7 +182,7 @@
                    VerticalAlignment="Center"/>
             <!-- Botão flutuante de excluir -->
             <Button Content="Excluir" 
-               Classes="Danger"
+               Classes="Primary"
                Command="{Binding ExcluirOfertasSelecionadasCommand}" 
                Padding="12"
                CornerRadius="8"
@@ -194,9 +194,10 @@
         <Button Classes="Floating"
             Command="{Binding NovaOfertaCommand}"
             IsEnabled="True"
-            Content="+"
+            Content="➕"
             VerticalAlignment="Bottom"
             HorizontalAlignment="Right"
-            Margin="24" />
+            Margin="24" 
+            ToolTip.Tip="Adicionar" />
     </Grid>
 </UserControl>

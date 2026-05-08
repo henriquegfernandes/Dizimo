@@ -112,7 +112,7 @@
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"/>
             <Button Content="Excluir" 
-                   Classes="Danger"
+                   Classes="Primary"
                    Command="{Binding ExcluirUsuariosSelecionadosCommand}" 
                    Padding="12"
                    CornerRadius="8"
@@ -133,9 +133,10 @@
         <Button Classes="Floating"
             Command="{Binding NovoUsuarioCommand}"
             IsEnabled="True"
-            Content="+"
+            Content="➕"
             VerticalAlignment="Bottom"
             HorizontalAlignment="Right"
-            Margin="24" />
+            Margin="24"
+            ToolTip.Tip="Adicionar" />
     </Grid>
 </UserControl>

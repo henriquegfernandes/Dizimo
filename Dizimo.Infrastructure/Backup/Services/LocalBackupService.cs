@@ -1,261 +1,263 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Dizimo.Domain.Repositories;
+using Microsoft.Data.Sqlite;
 
 namespace Dizimo.Infrastructure.Backup.Services;
 
-public class LocalBackupService(string dbFilePath, IServiceProvider serviceProvider, object? preferencesService = null)
+/// <summary>
+/// Serviço de backup local que gerencia operações de backup e restauração do banco de dados.
+/// Implementa operações seguras com tratamento de locks do Windows e retry automático.
+/// Segue Clean Architecture com injeção de dependências e separação de responsabilidades.
+/// </summary>
+public class LocalBackupService
 {
-    private readonly string _dbFilePath = dbFilePath;
-    private string _backupFolderPath = GetBackupPath(preferencesService) ?? GetDefaultBackupPath();
-    private readonly IServiceProvider _serviceProvider = serviceProvider;
-    private readonly object? _preferencesService = preferencesService;
+    private readonly string _dbFilePath;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IBackupPreferencesProvider _preferencesProvider;
+    private readonly IFileOperationService _fileOperationService;
+    private readonly ILogger<LocalBackupService> _logger;
+    private string _backupFolderPath;
 
-    private static string? GetBackupPath(object? preferencesService)
+    public LocalBackupService(
+        string dbFilePath,
+        IServiceProvider serviceProvider,
+        IBackupPreferencesProvider preferencesProvider,
+        IFileOperationService fileOperationService,
+        ILogger<LocalBackupService> logger)
     {
-        if (preferencesService == null) return null;
-        
-        try
-        {
-            var getMethod = preferencesService.GetType().GetMethod("Get");
-            if (getMethod != null)
-            {
-                return getMethod.Invoke(preferencesService, new object[] { "BackupFolderPath", GetDefaultBackupPath() }) as string;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao obter caminho de backup do PreferencesService: {ex.Message}");
-        }
-        
-        return null;
+        _dbFilePath = dbFilePath ?? throw new ArgumentNullException(nameof(dbFilePath));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _preferencesProvider = preferencesProvider ?? throw new ArgumentNullException(nameof(preferencesProvider));
+        _fileOperationService = fileOperationService ?? throw new ArgumentNullException(nameof(fileOperationService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        _backupFolderPath = _preferencesProvider.GetBackupFolderPath() ?? GetDefaultBackupPath();
     }
 
+    /// <summary>
+    /// Obtém o caminho padrão para backups.
+    /// </summary>
     private static string GetDefaultBackupPath()
     {
         return Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Dizimo",
-            "Backups");
+            BackupServiceConfiguration.BackupFolderName,
+            BackupServiceConfiguration.BackupSubfolderName);
     }
 
+    /// <summary>
+    /// Obtém ou define o caminho da pasta de backup.
+    /// </summary>
     public string BackupFolderPath
     {
         get => _backupFolderPath;
         set
         {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+
             _backupFolderPath = value;
-            if (_preferencesService != null)
-            {
-                try
-                {
-                    var setMethod = _preferencesService.GetType().GetMethod("Set");
-                    setMethod?.Invoke(_preferencesService, new object[] { "BackupFolderPath", value });
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao salvar caminho de backup no PreferencesService: {ex.Message}");
-                }
-            }
+            _preferencesProvider.SetBackupFolderPath(value);
         }
     }
 
-    public bool IsBackupFolderConfigured => !string.IsNullOrEmpty(_backupFolderPath) && _backupFolderPath != GetDefaultBackupPath();
+    /// <summary>
+    /// Verifica se um caminho de backup diferente do padrão foi configurado.
+    /// </summary>
+    public bool IsBackupFolderConfigured =>
+        !string.IsNullOrEmpty(_backupFolderPath) && 
+        !_backupFolderPath.Equals(GetDefaultBackupPath(), StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Define o caminho da pasta de backup.
+    /// </summary>
     public void SetBackupFolder(string folderPath)
     {
         BackupFolderPath = folderPath;
     }
 
     /// <summary>
-    /// Limpa o DbContext através do UnitOfWork de forma completa.
+    /// Realiza um backup do banco de dados para a pasta configurada.
     /// </summary>
-    private async Task ClearDbContextAsync()
-    {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var unitOfWork = scope.ServiceProvider.GetService(typeof(IUnitOfWork)) as IUnitOfWork;
-            if (unitOfWork != null)
-            {
-                await unitOfWork.ClearDbContextAsync();
-                System.Diagnostics.Debug.WriteLine("[INFO] DbContext desanexado");
-            }
-
-            // Também tenta acessar e descartar o DbContext diretamente
-            var dbContext = scope.ServiceProvider.GetService(typeof(Persistence.DizimoDbContext)) as Persistence.DizimoDbContext;
-            if (dbContext != null)
-            {
-                System.Diagnostics.Debug.WriteLine("[INFO] Descartando DbContext");
-                foreach (var entry in dbContext.ChangeTracker.Entries())
-                {
-                    entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-                }
-                await dbContext.DisposeAsync();
-                System.Diagnostics.Debug.WriteLine("[INFO] DbContext descartado");
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao limpar DbContext: {ex.Message}");
-        }
-    }
-
     public async Task BackupAsync()
     {
         try
         {
-            if (!Directory.Exists(BackupFolderPath))
-            {
-                Directory.CreateDirectory(BackupFolderPath);
-            }
+            EnsureBackupFolderExists();
 
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var backupFileName = $"dizimo_backup_{timestamp}.db";
-            var backupFilePath = Path.Combine(BackupFolderPath, backupFileName);
-
-            await ClearDbContextAsync();
-            await CopyFileAsync(_dbFilePath, backupFilePath, FileShare.Read);
-
-            System.Diagnostics.Debug.WriteLine($"[INFO] Backup realizado com sucesso: {backupFilePath}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao fazer backup: {ex.Message}");
-            throw;
-        }
-    }
-
-    public async Task RestoreAsync()
-    {
-        try
-        {
-            var backupFiles = Directory.GetFiles(BackupFolderPath, "dizimo_backup_*.db")
-                .OrderByDescending(f => new FileInfo(f).CreationTime)
-                .FirstOrDefault();
-
-            if (string.IsNullOrEmpty(backupFiles))
-            {
-                System.Diagnostics.Debug.WriteLine("[AVISO] Nenhum arquivo de backup encontrado");
-                return;
-            }
-
-            await ClearDbContextAsync();
-            await CopyFileAsync(backupFiles, _dbFilePath, FileShare.Read);
+            string backupFilePath = GenerateBackupFilePath();
             
-            CleanupSqliteAuxiliaryFiles();
-            System.Diagnostics.Debug.WriteLine($"[INFO] Restauração realizada com sucesso de: {backupFiles}");
+            _logger.LogInformation("Iniciando backup para: {FilePath}", backupFilePath);
+
+            await PrepareForFileOperationAsync();
+            await _fileOperationService.CopyFileAsync(_dbFilePath, backupFilePath, FileShare.ReadWrite);
+
+            _logger.LogInformation("Backup realizado com sucesso: {FilePath}", backupFilePath);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao restaurar backup: {ex.Message}");
+            _logger.LogError(ex, "Erro ao fazer backup");
             throw;
         }
     }
 
     /// <summary>
-    /// Restaura um arquivo de backup específico
+    /// Restaura o banco de dados a partir do backup mais recente.
+    /// </summary>
+    public async Task RestoreAsync()
+    {
+        try
+        {
+            string? latestBackupFile = FindLatestBackupFile();
+
+            if (string.IsNullOrEmpty(latestBackupFile))
+            {
+                _logger.LogWarning("Nenhum arquivo de backup encontrado");
+                return;
+            }
+
+            _logger.LogInformation("Restaurando backup de: {FilePath}", latestBackupFile);
+
+            await PrepareForFileOperationAsync();
+            await _fileOperationService.ReplaceFileAsync(latestBackupFile, _dbFilePath);
+            _fileOperationService.CleanupAuxiliaryFiles(_dbFilePath);
+
+            _logger.LogInformation("Restauração realizada com sucesso de: {FilePath}", latestBackupFile);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao restaurar backup");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Restaura o banco de dados a partir de um arquivo de backup específico.
     /// </summary>
     public async Task RestoreFromFileAsync(string backupFilePath)
     {
         try
         {
             if (!File.Exists(backupFilePath))
-            {
                 throw new FileNotFoundException($"Arquivo de backup não encontrado: {backupFilePath}");
-            }
 
-            System.Diagnostics.Debug.WriteLine($"[INFO] Iniciando restauração de: {backupFilePath}");
+            _logger.LogInformation("Iniciando restauração de arquivo específico: {FilePath}", backupFilePath);
 
-            // 1. Limpar DbContext para desanexar entidades
-            await ClearDbContextAsync();
-            System.Diagnostics.Debug.WriteLine("[INFO] DbContext limpo");
+            await PrepareForFileOperationAsync();
+            await _fileOperationService.ReplaceFileAsync(backupFilePath, _dbFilePath);
+            _fileOperationService.CleanupAuxiliaryFiles(_dbFilePath);
 
-            // 2. Limpar WAL/SHM ANTES de copiar (importante para liberar locks)
-            CleanupSqliteAuxiliaryFiles();
-            System.Diagnostics.Debug.WriteLine("[INFO] Arquivos auxiliares SQLite limpos");
-
-            // 3. Forçar garbage collection para liberar handles de arquivo
-            System.Diagnostics.Debug.WriteLine("[INFO] Iniciando coleta de lixo...");
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            System.Diagnostics.Debug.WriteLine("[INFO] Coleta de lixo concluída");
-
-            // 4. Aguardar para garantir que os arquivos foram liberados
-            System.Diagnostics.Debug.WriteLine("[INFO] Aguardando 1 segundo para liberar recursos...");
-            await Task.Delay(1000);
-
-            // 5. Copiar o arquivo de backup
-            System.Diagnostics.Debug.WriteLine($"[INFO] Copiando arquivo de: {backupFilePath} para: {_dbFilePath}");
-            await CopyFileAsync(backupFilePath, _dbFilePath, FileShare.Read);
-            System.Diagnostics.Debug.WriteLine("[INFO] Arquivo copiado com sucesso");
-
-            // 6. Verificar se o arquivo foi realmente copiado
             if (!File.Exists(_dbFilePath))
-            {
                 throw new InvalidOperationException($"Falha ao verificar o arquivo restaurado: {_dbFilePath}");
-            }
 
             var fileInfo = new FileInfo(_dbFilePath);
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo restaurado: {fileInfo.FullName} ({fileInfo.Length} bytes)");
-
-            // 7. Limpar WAL/SHM DEPOIS de copiar
-            CleanupSqliteAuxiliaryFiles();
-            System.Diagnostics.Debug.WriteLine("[INFO] Arquivos auxiliares SQLite limpos novamente");
-
-            // 8. Novo garbage collection para garantir limpeza
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            System.Diagnostics.Debug.WriteLine("[INFO] Segunda coleta de lixo concluída");
-
-            // 9. Aguardar mais um pouco
-            await Task.Delay(500);
-
-            System.Diagnostics.Debug.WriteLine("[INFO] Restauração realizada com sucesso!");
+            _logger.LogInformation("Arquivo restaurado com sucesso: {FilePath} ({FileSize} bytes)",
+                fileInfo.FullName, fileInfo.Length);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao restaurar backup: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Stack trace: {ex.StackTrace}");
+            _logger.LogError(ex, "Erro ao restaurar arquivo de backup específico");
             throw;
         }
     }
 
     /// <summary>
-    /// Remove arquivos auxiliares do SQLite (WAL e SHM).
+    /// Prepara o sistemas para operações de arquivo liberando conexões de banco.
     /// </summary>
-    private void CleanupSqliteAuxiliaryFiles()
+    private async Task PrepareForFileOperationAsync()
     {
-        var auxiliaryFiles = new[] { "-wal", "-shm", "-journal", "-backup" };
-        
-        foreach (var suffix in auxiliaryFiles)
+        await ClearDbContextAsync();
+        _fileOperationService.CleanupAuxiliaryFiles(_dbFilePath);
+        ForceGarbageCollection();
+    }
+
+    /// <summary>
+    /// Limpa o DbContext e desabilita todas as conexões SQLite ativas.
+    /// </summary>
+    private async Task ClearDbContextAsync()
+    {
+        try
         {
-            var filePath = _dbFilePath + suffix;
-            if (File.Exists(filePath))
+            using var scope = _serviceProvider.CreateScope();
+            
+            // Limpar através do UnitOfWork
+            var unitOfWork = scope.ServiceProvider.GetService(typeof(IUnitOfWork)) as IUnitOfWork;
+            if (unitOfWork != null)
             {
-                try
-                {
-                    File.Delete(filePath);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao deletar {filePath}: {ex.Message}");
-                }
+                await unitOfWork.ClearDbContextAsync();
+                _logger.LogDebug("DbContext desanexado via UnitOfWork");
             }
+
+            // Limpar DbContext diretamente como backup
+            var dbContext = scope.ServiceProvider.GetService(typeof(Persistence.DizimoDbContext)) as Persistence.DizimoDbContext;
+            if (dbContext != null)
+            {
+                DetachAllEntries(dbContext);
+                await dbContext.DisposeAsync();
+                _logger.LogDebug("DbContext descartado");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Erro ao limpar DbContext");
+        }
+
+        // Limpar pool de conexões
+        SqliteConnection.ClearAllPools();
+        _logger.LogDebug("Pool de conexões SQLite limpo");
+    }
+
+    /// <summary>
+    /// Desanexada todas as entidades rastreadas no DbContext.
+    /// </summary>
+    private static void DetachAllEntries(Persistence.DizimoDbContext dbContext)
+    {
+        foreach (var entry in dbContext.ChangeTracker.Entries())
+        {
+            entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
         }
     }
 
     /// <summary>
-    /// Copia arquivo de forma assíncrona.
+    /// Força coleta de lixo para liberar handles de arquivo.
     /// </summary>
-    private static async Task CopyFileAsync(string sourcePath, string destinationPath, FileShare shareMode)
+    private static void ForceGarbageCollection()
     {
-        using var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, shareMode);
-        using var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-        await sourceStream.CopyToAsync(destinationStream);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+    }
+
+    /// <summary>
+    /// Garante que a pasta de backup existe.
+    /// </summary>
+    private void EnsureBackupFolderExists()
+    {
+        if (!Directory.Exists(BackupFolderPath))
+        {
+            Directory.CreateDirectory(BackupFolderPath);
+            _logger.LogInformation("Pasta de backup criada: {FolderPath}", BackupFolderPath);
+        }
+    }
+
+    /// <summary>
+    /// Encontra o arquivo de backup mais recente.
+    /// </summary>
+    private string? FindLatestBackupFile()
+    {
+        return Directory.GetFiles(BackupFolderPath, BackupServiceConfiguration.BackupFilePattern)
+            .OrderByDescending(f => new FileInfo(f).CreationTime)
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Gera o caminho completo para um novo arquivo de backup.
+    /// </summary>
+    private string GenerateBackupFilePath()
+    {
+        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        string backupFileName = $"{BackupServiceConfiguration.BackupFilePrefix}{timestamp}{BackupServiceConfiguration.BackupFileExtension}";
+        return Path.Combine(BackupFolderPath, backupFileName);
     }
 }
-
-
-
