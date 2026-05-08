@@ -143,17 +143,181 @@ class Program
             services.AddLogging();
 #endif
             var serviceProvider = services.BuildServiceProvider();
+            
+            // Migrate do banco com tratamento de corrupção
+            MigrateDatabase(serviceProvider, dbPath);
+            
+            Ioc.Default.ConfigureServices(serviceProvider);
+            return serviceProvider;
+        }
+
+        /// <summary>
+        /// Realiza migração do banco com recuperação automática de corrupção
+        /// </summary>
+        private static void MigrateDatabase(ServiceProvider serviceProvider, string dbPath)
+        {
+            bool hadCorruption = false;
+            
             using (var scope = serviceProvider.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DizimoDbContext>();
-                db.Database.Migrate();
+                try
+                {
+                    db.Database.Migrate();
+                    System.Diagnostics.Debug.WriteLine("Migração do banco bem-sucedida");
+                }
+                catch (Exception ex) when (IsCorruptedDatabaseError(ex))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Banco de dados corrompido detectado: {ex.Message}");
+                    hadCorruption = true;
+                    
+                    // Tentar descartar o DbContext para liberar a conexão
+                    try
+                    {
+                        db.Database.ExecuteSqlRaw("PRAGMA integrity_check;");
+                    }
+                    catch { }
+                    
+                    try
+                    {
+                        db.Database.CloseConnection();
+                    }
+                    catch { }
+                    
+                    try
+                    {
+                        db.Dispose();
+                    }
+                    catch { }
+                    
+                    // Aguardar para garantir que todas as conexões foram fechadas
+                    Thread.Sleep(800);
+                    
+                    // Limpar arquivos corrompidos do SQLite
+                    CleanupCorruptedDatabase(dbPath);
+                    
+                    // Aguardar novamente para liberar locks
+                    Thread.Sleep(800);
+                    
+                    System.Diagnostics.Debug.WriteLine("Arquivos corrompidos removidos. Recriando banco...");
+                }
+                
+                // Se houve corrupção, criar novo DbContext para tentar novamente
+                if (hadCorruption)
+                {
+                    bool retrySuccess = false;
+                    int retryCount = 0;
+                    const int maxRetries = 3;
+                    
+                    while (!retrySuccess && retryCount < maxRetries)
+                    {
+                        retryCount++;
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Tentativa {retryCount}/{maxRetries} de recriar banco...");
+                            
+                            // Criar novo scope e novo DbContext
+                            using (var retryScope = serviceProvider.CreateScope())
+                            {
+                                var retryDb = retryScope.ServiceProvider.GetRequiredService<DizimoDbContext>();
+                                retryDb.Database.EnsureCreated();
+                                retryDb.Database.Migrate();
+                                System.Diagnostics.Debug.WriteLine("Banco de dados recriado com sucesso após limpeza!");
+                                retrySuccess = true;
+                            }
+                        }
+                        catch (Exception retryEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Tentativa {retryCount} falhou: {retryEx.Message}");
+                            
+                            if (retryCount < maxRetries)
+                            {
+                                // Aguardar antes de tentar novamente
+                                Thread.Sleep(500);
+                                // Tentar limpar de novo
+                                CleanupCorruptedDatabase(dbPath);
+                                Thread.Sleep(500);
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine("Todas as tentativas de recriar banco falharam");
+                                throw;
+                            }
+                        }
+                    }
+                }
                 
                 // Inicializa o SessaoService com o IPreferencesService
                 var preferencesService = scope.ServiceProvider.GetRequiredService<IPreferencesService>();
                 SessaoService.Initialize(preferencesService);
             }
-            Ioc.Default.ConfigureServices(serviceProvider);
-            return serviceProvider;
+        }
+
+        /// <summary>
+        /// Verifica se a exceção é de banco de dados corrompido
+        /// </summary>
+        private static bool IsCorruptedDatabaseError(Exception? ex)
+        {
+            if (ex == null)
+                return false;
+                
+            var message = ex.Message ?? "";
+            var innerMessage = ex.InnerException?.Message ?? "";
+            
+            return message.Contains("database disk image is malformed") ||
+                   message.Contains("SQLite Error 11") ||
+                   message.Contains("SQLITE_CORRUPT") ||
+                   innerMessage.Contains("database disk image is malformed") ||
+                   innerMessage.Contains("SQLite Error 11");
+        }
+
+        /// <summary>
+        /// Remove arquivos corrompidos do SQLite (funciona em Windows e Linux)
+        /// </summary>
+        private static void CleanupCorruptedDatabase(string dbPath)
+        {
+            try
+            {
+                var dbDirectory = Path.GetDirectoryName(dbPath);
+                
+                if (string.IsNullOrEmpty(dbDirectory) || !Directory.Exists(dbDirectory))
+                {
+                    return;
+                }
+
+                // Arquivos de lock/cache do SQLite que podem estar corrompidos
+                var filesToDelete = new[]
+                {
+                    dbPath,                          // Arquivo principal
+                    dbPath + "-shm",                 // Shared memory
+                    dbPath + "-wal"                  // Write-ahead log
+                };
+
+                foreach (var file in filesToDelete)
+                {
+                    try
+                    {
+                        if (File.Exists(file))
+                        {
+                            File.Delete(file);
+                            System.Diagnostics.Debug.WriteLine($"Arquivo deletado: {file}");
+                            
+                            // Aguardar para garantir que o arquivo foi liberado
+                            Thread.Sleep(100);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Erro ao deletar {file}: {ex.Message}");
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine("Limpeza de banco corrompido concluída");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro durante limpeza do banco: {ex.Message}");
+            }
         }
         private async Task OnApplicationExitingAsync()
         {

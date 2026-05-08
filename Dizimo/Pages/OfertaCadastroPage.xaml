@@ -73,13 +73,22 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
 
                 <!-- Botões de Baixar Modelo e Importar (apenas em modo criação) -->
-                <Grid Grid.Row="0" Grid.ColumnSpan="3" ColumnSpacing="16" ColumnDefinitions="*,*" Margin="0,0,0,12" IsVisible="{Binding IsEditMode, Converter={StaticResource InvertedBoolConverter}}">
+                <Grid Grid.Row="0" Grid.ColumnSpan="12" ColumnSpacing="16" ColumnDefinitions="*,*" Margin="0,0,0,12" IsVisible="{Binding IsEditMode, Converter={StaticResource InvertedBoolConverter}}">
                     <Button Content="Baixar Planilha Modelo"
                             Command="{Binding BaixarModeloCommand}"
                             Classes="Primary"
@@ -95,53 +104,53 @@
                 </Grid>
 
                  <!-- Código do Dizimista -->
-                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Código Dizimista:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="1" Grid.Column="0" 
+                 <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Text="Código Dizimista:" FontWeight="Bold"/>
+                 <TextBox Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" 
                           Text="{Binding CodigoDizimista}" 
                           Margin="0,25,0,0"
                           GotFocus="OnCodigoGotFocus"
                           LostFocus="OnCodigoLostFocus"/>
 
                 <!-- Nome do Dizimista (desabilitado quando encontrado, habilitado quando permitir editar) -->
-                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="1" Text="Dizimista:" FontWeight="Bold"/>
-                <TextBox Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="1" 
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="10" Grid.Column="2" Text="Dizimista:" FontWeight="Bold"/>
+                <TextBox Grid.Row="1" Grid.ColumnSpan="10" Grid.Column="2" 
                          Text="{Binding NomeDizimista}" 
                          Margin="0,25,0,0"
                          IsEnabled="{Binding NomeDizimistaEditable, FallbackValue=False}"/>
 
                 <!-- Data -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Data:" FontWeight="Bold"/>
-                <CalendarDatePicker Grid.Row="2" Grid.Column="0" SelectedDate="{Binding DataOferta}" Margin="0,25,0,0"/>
+                <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="0" Text="Data:" FontWeight="Bold"/>
+                <CalendarDatePicker Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="0" SelectedDate="{Binding DataOferta}" Margin="0,25,0,0"/>
 
                  <!-- Valor -->
-                 <TextBlock Grid.Row="2" Grid.Column="1" Text="Valor:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="2" Grid.Column="1" 
+                 <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="4" Text="Valor:" FontWeight="Bold"/>
+                 <TextBox Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="4" 
                           Text="{Binding Valor}" 
                           Margin="0,25,0,0"
                           GotFocus="OnValorGotFocus"
                           LostFocus="OnValorLostFocus"/>
 
                 <!-- Tipo de Pagamento -->
-                <TextBlock Grid.Row="2" Grid.Column="2" Text="Tipo Pagamento:" FontWeight="Bold"/>
-                <ComboBox Grid.Row="2" Grid.Column="2" 
+                <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="8" Text="Tipo Pagamento:" FontWeight="Bold"/>
+                <ComboBox Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="8" 
                           ItemsSource="{Binding TiposPagamentoCollection}"
                           SelectedValue="{Binding TipoPagamento}"
                           Margin="0,25,0,0"/>
 
                 <!-- ===== Campos de Mês Único ===== -->
                 <!-- Mês de Referência (único) -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Mês de Referência:" FontWeight="Bold" 
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0" Text="Mês de Referência:" FontWeight="Bold" 
                            IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
-                <ComboBox Grid.Row="3" Grid.Column="0" 
+                <ComboBox Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0" 
                           ItemsSource="{Binding MesesNomesCollection}"
                           SelectedItem="{Binding MesNomeAtual}"
                           Margin="0,25,0,0"
                           IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
 
                 <!-- Ano de Referência (único) -->
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="Ano de Referência:" FontWeight="Bold" 
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="6" Text="Ano de Referência:" FontWeight="Bold" 
                            IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
-                <ComboBox Grid.Row="3" Grid.Column="1" 
+                <ComboBox Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="6" 
                           ItemsSource="{Binding AnosCollection}"
                           SelectedItem="{Binding AnoSelecionado}"
                           Margin="0,25,0,0"
@@ -149,44 +158,43 @@
 
                 <!-- ===== Campos de Range de Meses ===== -->
                 <!-- Mês Início Range -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Mês Início:" FontWeight="Bold" 
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="0" Text="Mês Início:" FontWeight="Bold" 
                            IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.Column="0" 
+                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="0" 
                           ItemsSource="{Binding MesesNomesCollection}"
                           SelectedItem="{Binding MesNomeAtual}"
                           Margin="0,25,0,0"
                           IsVisible="{Binding UsarRangoMeses}"/>
 
                 <!-- Ano Início Range -->
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="Ano Início:" FontWeight="Bold" 
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="3" Text="Ano Início:" FontWeight="Bold" 
                            IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.Column="1" 
+                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="3" 
                           ItemsSource="{Binding AnosCollection}"
                           SelectedItem="{Binding AnoSelecionado}"
                           Margin="0,25,0,0"
                           IsVisible="{Binding UsarRangoMeses}"/>
 
                 <!-- Mês Fim Range -->
-                <TextBlock Grid.Row="3" Grid.Column="2" Text="Mês Fim:" FontWeight="Bold" 
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="6" Text="Mês Fim:" FontWeight="Bold" 
                            IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.Column="2" 
+                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="6" 
                           ItemsSource="{Binding MesesNomesCollection}"
                           SelectedItem="{Binding MesNomeAtualFim}"
                           Margin="0,25,0,0"
                           IsVisible="{Binding UsarRangoMeses}"/>
-
-                <!-- Row para Ano Fim Range -->
-                <Grid Grid.Row="4" Grid.ColumnSpan="3" ColumnSpacing="12" ColumnDefinitions="*,*,*" IsVisible="{Binding UsarRangoMeses}">
-                    <!-- Ano Fim Range -->
-                    <StackPanel Grid.Column="2" Spacing="4">
-                        <TextBlock Text="Ano Fim:" FontWeight="Bold"/>
-                        <ComboBox ItemsSource="{Binding AnosCollection}"
-                                  SelectedItem="{Binding AnoSelecionadoFim}" />
-                    </StackPanel>
-                </Grid>
+                
+                <!-- Ano Fim Range -->
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="9" Text="Ano Fim:" FontWeight="Bold"
+                           IsVisible="{Binding UsarRangoMeses}"/>
+                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="9" 
+                          ItemsSource="{Binding AnosCollection}"
+                          SelectedItem="{Binding AnoSelecionadoFim}"
+                          Margin="0,25,0,0"
+                          IsVisible="{Binding UsarRangoMeses}"/>
 
                 <!-- Botão Salvar -->
-                <Button Grid.Column="0"  Grid.Row="7" Grid.ColumnSpan="3" 
+                <Button Grid.Column="0"  Grid.Row="7" Grid.ColumnSpan="12" 
                         Content="Salvar" 
                         Command="{Binding SalvarCommand}" 
                         Classes="Primary"
