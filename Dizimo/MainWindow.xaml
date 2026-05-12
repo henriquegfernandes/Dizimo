@@ -10,6 +10,7 @@
         Width="1200"
         Height="800"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="{DynamicResource ApplicationBackgroundBrush}">
 
     <Window.Resources>
