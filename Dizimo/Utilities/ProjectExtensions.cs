@@ -1,21 +1,20 @@
 using System.Diagnostics.CodeAnalysis;
 using Dizimo.Models;
 
-namespace Dizimo.Utilities
+namespace Dizimo.Utilities;
+
+/// <summary>
+///     Project Model Extensions
+/// </summary>
+public static class ProjectExtensions
 {
     /// <summary>
-    /// Project Model Extensions
+    ///     Check if the project is null or new.
     /// </summary>
-    public static class ProjectExtensions
+    /// <param name="project"></param>
+    /// <returns></returns>
+    public static bool IsNullOrNew([NotNullWhen(false)] this Project? project)
     {
-        /// <summary>
-        /// Check if the project is null or new.
-        /// </summary>
-        /// <param name="project"></param>
-        /// <returns></returns>
-        public static bool IsNullOrNew([NotNullWhen(false)] this Project? project)
-        {
-            return project is null || project.ID == 0;
-        }
+        return project is null || project.ID == 0;
     }
 }

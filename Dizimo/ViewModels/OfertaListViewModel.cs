@@ -1,165 +1,53 @@
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Domain.Entities;
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
-using Dizimo.Services;
 using Dizimo.Application.Reporting.Services;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Text;
-using System.Collections.Generic;
-using Dizimo.Domain.Models;
+using Dizimo.Domain.Entities;
+using Dizimo.Domain.Repositories;
 
 namespace Dizimo.ViewModels;
 
 public partial class OfertaListViewModel : ObservableObject, INavigationAware
 {
-    private readonly GetOfertaHandlers _getHandlers;
+    private const int TAMANHO_PAGINA = 20;
     private readonly DeleteOfertaHandler _deleteHandler;
     private readonly OfertaExcelService _excelService;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly INavigationService _navigationService;
     private readonly IFilterCacheService _filterCacheService;
+    private readonly GetOfertaHandlers _getHandlers;
+    private readonly INavigationService _navigationService;
+    private readonly IUnitOfWork _unitOfWork;
+    private bool _carregandoMais;
+
+    private DateTime? _filtroDataFim;
+
+    private DateTime? _filtroDataInicio;
+
+    private string _filtroNome = string.Empty;
+
+    private string _filtroTipoPagamento = "Todos";
 
 
     private ObservableCollection<Oferta> _ofertas = [];
-    public ObservableCollection<Oferta> Ofertas
-    {
-        get => _ofertas;
-        private set => SetProperty(ref _ofertas, value);
-    }
-
-    private string _filtroNome = string.Empty;
-    public string FiltroNome
-    {
-        get => _filtroNome;
-        set
-        {
-            if (SetProperty(ref _filtroNome, value))
-            {
-                ResetarPaginacao();
-                _ = CarregarOfertasAsync();
-            }
-        }
-    }
-
-    private DateTime? _filtroDataInicio = null;
-    public DateTime? FiltroDataInicio
-    {
-        get => _filtroDataInicio;
-        set 
-        { 
-            if (SetProperty(ref _filtroDataInicio, value))
-            {
-                ResetarPaginacao();
-                _ = CarregarOfertasAsync();
-            }
-        }
-    }
-
-    private DateTime? _filtroDataFim = null;
-    public DateTime? FiltroDataFim
-    {
-        get => _filtroDataFim;
-        set 
-        { 
-            if (SetProperty(ref _filtroDataFim, value))
-            {
-                ResetarPaginacao();
-                _ = CarregarOfertasAsync();
-            }
-        }
-    }
-
-    private Oferta? _selectedOferta;
-    public Oferta? SelectedOferta
-    {
-        get => _selectedOferta;
-        set => SetProperty(ref _selectedOferta, value);
-    }
-
-    private int _paginaAtual = 1;
-    private const int TAMANHO_PAGINA = 20;
-    private bool _carregandoMais = false;
-    private int _totalPaginas = 1;
-
-    private bool _temProxima = false;
-    public bool TemProxima
-    {
-        get => _temProxima;
-        private set => SetProperty(ref _temProxima, value);
-    }
-
-    private decimal _valorTotal;
-    public decimal ValorTotal
-    {
-        get => _valorTotal;
-        private set => SetProperty(ref _valorTotal, value);
-    }
-
-    private int _totalOfertas = 0;
-    public int TotalOfertas
-    {
-        get => _totalOfertas;
-        private set => SetProperty(ref _totalOfertas, value);
-    }
-
-    public string TextoResultados
-    {
-        get => $"{Ofertas.Count} de {TotalOfertas} resultados";
-    }
-
-    public List<string> TiposPagamento { get; } = [ "Todos", "PIX", "Dinheiro", "Cartão" ];
-
-    private string _filtroTipoPagamento = "Todos";
-    public string FiltroTipoPagamento
-    {
-        get => _filtroTipoPagamento;
-        set
-        {
-            if (SetProperty(ref _filtroTipoPagamento, value))
-            {
-                ResetarPaginacao();
-                _ = CarregarOfertasAsync();
-            }
-        }
-    }
 
     private ObservableCollection<Oferta> _ofertasSelecionadas = [];
-    public ObservableCollection<Oferta> OfertasSelecionadas
-    {
-        get => _ofertasSelecionadas;
-        set
-        {
-            _ofertasSelecionadas?.CollectionChanged -= OfertasSelecionadas_CollectionChanged;
-            SetProperty(ref _ofertasSelecionadas, value);
-            _ofertasSelecionadas?.CollectionChanged += OfertasSelecionadas_CollectionChanged;
-            OnPropertyChanged(nameof(OfertasSelecionadas));
-            OnPropertyChanged(nameof(OfertasSelecionadas.Count));
-            OnPropertyChanged(nameof(TextoBotaoSelecao));
-        }
-    }
 
-    public string TextoBotaoSelecao
-    {
-        get => OfertasSelecionadas.Count == Ofertas.Count ? "Limpar Seleção" : "Selecionar Todos";
-    }
+    private int _paginaAtual = 1;
 
-    public bool PodeSelecionar
-    {
-        get => Ofertas.Count > 0;
-    }
+    private Oferta? _selectedOferta;
 
-    private void OfertasSelecionadas_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-    {
-        OnPropertyChanged(nameof(OfertasSelecionadas));
-        OnPropertyChanged(nameof(OfertasSelecionadas.Count));
-        OnPropertyChanged(nameof(TextoBotaoSelecao));
-    }
+    private bool _temProxima;
+
+    private int _totalOfertas;
+    private int _totalPaginas = 1;
+
+    private decimal _valorTotal;
 
     public OfertaListViewModel(
         GetOfertaHandlers getHandlers,
@@ -176,14 +64,194 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _filterCacheService = filterCacheService ?? throw new ArgumentNullException(nameof(filterCacheService));
         Ofertas = [];
-        
+
         // Conectar o handler de CollectionChanged ao inicializar
         // Isso garante que toda vez que um checkbox for marcado/desmarcado, 
         // o TextoBotaoSelecao será reavaliado
         OfertasSelecionadas = [];
-        
+
         // NÃO inicializar os filtros aqui - deixar para OnNavigatedTo
         // para que o cache possa ser restaurado corretamente
+    }
+
+    public ObservableCollection<Oferta> Ofertas
+    {
+        get => _ofertas;
+        private set => SetProperty(ref _ofertas, value);
+    }
+
+    public string FiltroNome
+    {
+        get => _filtroNome;
+        set
+        {
+            if (SetProperty(ref _filtroNome, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
+        }
+    }
+
+    public DateTime? FiltroDataInicio
+    {
+        get => _filtroDataInicio;
+        set
+        {
+            if (SetProperty(ref _filtroDataInicio, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
+        }
+    }
+
+    public DateTime? FiltroDataFim
+    {
+        get => _filtroDataFim;
+        set
+        {
+            if (SetProperty(ref _filtroDataFim, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
+        }
+    }
+
+    public Oferta? SelectedOferta
+    {
+        get => _selectedOferta;
+        set => SetProperty(ref _selectedOferta, value);
+    }
+
+    public bool TemProxima
+    {
+        get => _temProxima;
+        private set => SetProperty(ref _temProxima, value);
+    }
+
+    public decimal ValorTotal
+    {
+        get => _valorTotal;
+        private set => SetProperty(ref _valorTotal, value);
+    }
+
+    public int TotalOfertas
+    {
+        get => _totalOfertas;
+        private set => SetProperty(ref _totalOfertas, value);
+    }
+
+    public string TextoResultados => $"{Ofertas.Count} de {TotalOfertas} resultados";
+
+    public List<string> TiposPagamento { get; } = ["Todos", "PIX", "Dinheiro", "Cartão"];
+
+    public string FiltroTipoPagamento
+    {
+        get => _filtroTipoPagamento;
+        set
+        {
+            if (SetProperty(ref _filtroTipoPagamento, value))
+            {
+                ResetarPaginacao();
+                _ = CarregarOfertasAsync();
+            }
+        }
+    }
+
+    public ObservableCollection<Oferta> OfertasSelecionadas
+    {
+        get => _ofertasSelecionadas;
+        set
+        {
+            _ofertasSelecionadas?.CollectionChanged -= OfertasSelecionadas_CollectionChanged;
+            SetProperty(ref _ofertasSelecionadas, value);
+            _ofertasSelecionadas?.CollectionChanged += OfertasSelecionadas_CollectionChanged;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OfertasSelecionadas.Count));
+            OnPropertyChanged(nameof(TextoBotaoSelecao));
+        }
+    }
+
+    public string TextoBotaoSelecao =>
+        OfertasSelecionadas.Count == Ofertas.Count ? "Limpar Seleção" : "Selecionar Todos";
+
+    public bool PodeSelecionar => Ofertas.Count > 0;
+
+    /// <summary>
+    ///     Implementação de INavigationAware - Recarrega ofertas quando volta para esta página
+    ///     Restaura os filtros do cache se não houver parâmetro clearCache
+    /// </summary>
+    public void OnNavigatedTo(NavigationParameters parameters)
+    {
+        // Se foi passado clearCache=true, limpar o cache e usar filtros padrão
+        if (parameters != null && parameters.TryGetValue("clearCache", out var clearCacheObj) &&
+            clearCacheObj is bool clearCache && clearCache)
+        {
+            _filterCacheService.ClearOfertaListFilters();
+            Debug.WriteLine("[Navigation] Cache de filtros foi limpo");
+
+            // Usar filtros padrão
+            var hoje = DateTime.Today;
+            _filtroDataInicio = hoje;
+            _filtroDataFim = hoje;
+            _filtroNome = string.Empty;
+            _filtroTipoPagamento = "Todos";
+        }
+        else
+        {
+            // Tentar restaurar os filtros do cache
+            var cachedFilters = _filterCacheService.GetOfertaListFilters();
+            if (cachedFilters.HasValue)
+            {
+                var (dataInicio, dataFim, nome, tipoPagamento) = cachedFilters.Value;
+
+                Debug.WriteLine("[Navigation] Restaurando filtros do cache");
+
+                // Restaurar os filtros
+                _filtroDataInicio = dataInicio;
+                _filtroDataFim = dataFim;
+                _filtroNome = nome;
+                _filtroTipoPagamento = tipoPagamento;
+            }
+            else
+            {
+                // Se não houver cache, usar filtros padrão
+                Debug.WriteLine("[Navigation] Sem cache, usando filtros padrão");
+                var hoje = DateTime.Today;
+                _filtroDataInicio = hoje;
+                _filtroDataFim = hoje;
+                _filtroNome = string.Empty;
+                _filtroTipoPagamento = "Todos";
+            }
+        }
+
+        // Notificar que as propriedades mudaram
+        OnPropertyChanged(nameof(FiltroDataInicio));
+        OnPropertyChanged(nameof(FiltroDataFim));
+        OnPropertyChanged(nameof(FiltroNome));
+        OnPropertyChanged(nameof(FiltroTipoPagamento));
+
+        // Agora carregar os dados com os filtros restaurados/padrão
+        _ = CarregarOfertasAsync();
+    }
+
+    /// <summary>
+    ///     Implementação de INavigationAware - Salva o estado ao sair da página
+    /// </summary>
+    public void OnNavigatedFrom()
+    {
+        // Salvar os filtros atuais no cache
+        _filterCacheService.SaveOfertaListFilters(FiltroDataInicio, FiltroDataFim, FiltroNome, FiltroTipoPagamento);
+        Debug.WriteLine("[Navigation] Filtros salvos no cache");
+    }
+
+    private void OfertasSelecionadas_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(OfertasSelecionadas));
+        OnPropertyChanged(nameof(OfertasSelecionadas.Count));
+        OnPropertyChanged(nameof(TextoBotaoSelecao));
     }
 
     private void ResetarPaginacao()
@@ -219,7 +287,7 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         try
         {
             var result = await _getHandlers.Handle(new GetAllOfertasPaginatedQuery(
-                _paginaAtual, 
+                _paginaAtual,
                 TAMANHO_PAGINA,
                 FiltroDataInicio,
                 FiltroDataFim,
@@ -229,10 +297,7 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             _totalPaginas = result.TotalPages;
             TotalOfertas = result.TotalCount;
 
-            foreach (var oferta in result.Items)
-            {
-                Ofertas.Add(oferta);
-            }
+            foreach (var oferta in result.Items) Ofertas.Add(oferta);
 
             OnPropertyChanged(nameof(TextoResultados));
             OnPropertyChanged(nameof(PodeSelecionar));
@@ -282,34 +347,35 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         try
         {
             _navigationService.Navigate("oferta-cadastro");
-            System.Diagnostics.Debug.WriteLine("[NAV] Navegado para Nova Oferta");
+            Debug.WriteLine("[NAV] Navegado para Nova Oferta");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao navegar para nova oferta: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao navegar para nova oferta: {ex.Message}");
         }
     }
 
-     [RelayCommand]
-     public async Task EditarOfertaAsync(Oferta oferta)
-     {
-         try
-         {
-             if (oferta != null)
-             {
-                 var parameters = new NavigationParameters();
-                 parameters.Add("id", oferta.Id);
-                 _navigationService.Navigate("oferta-cadastro", parameters);
-                 System.Diagnostics.Debug.WriteLine($"[NAV] Editando oferta: {oferta.Id}");
-             }
-         }
-         catch (Exception ex)
-         {
-             System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao editar oferta: {ex.Message}");
-         }
-         await Task.CompletedTask;
-     }
+    [RelayCommand]
+    public async Task EditarOfertaAsync(Oferta oferta)
+    {
+        try
+        {
+            if (oferta != null)
+            {
+                var parameters = new NavigationParameters();
+                parameters.Add("id", oferta.Id);
+                _navigationService.Navigate("oferta-cadastro", parameters);
+                Debug.WriteLine($"[NAV] Editando oferta: {oferta.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERRO] Erro ao editar oferta: {ex.Message}");
+        }
+
+        await Task.CompletedTask;
+    }
 
     [RelayCommand]
     public async Task ExcluirOfertaAsync(Oferta oferta)
@@ -323,7 +389,7 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao excluir: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao excluir: {ex.Message}");
         }
     }
 
@@ -331,11 +397,9 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
     public async Task ExcluirOfertasSelecionadasAsync()
     {
         if (OfertasSelecionadas.Count == 0) return;
-        
+
         foreach (var oferta in OfertasSelecionadas.ToList())
-        {
             await _deleteHandler.Handle(new DeleteOfertaCommand(oferta.Id));
-        }
         await CarregarOfertasAsync();
         OfertasSelecionadas.Clear();
     }
@@ -350,11 +414,9 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         else
         {
             OfertasSelecionadas.Clear();
-            foreach (var oferta in Ofertas)
-            {
-                OfertasSelecionadas.Add(oferta);
-            }
+            foreach (var oferta in Ofertas) OfertasSelecionadas.Add(oferta);
         }
+
         OnPropertyChanged(nameof(TextoBotaoSelecao));
     }
 
@@ -365,25 +427,26 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         {
             var todasOfertas = await _unitOfWork.Ofertas.GetAllAsync();
             var excelStream = await _excelService.ExportarAsync(
-                [..todasOfertas],
+                [.. todasOfertas],
                 FiltroDataInicio,
                 FiltroDataFim,
                 FiltroTipoPagamento,
                 FiltroNome);
             var fileName = $"ofertas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
+            if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
                     if (storageProvider != null)
                     {
-                        var file = await storageProvider.SaveFilePickerAsync(new()
+                        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                         {
                             Title = "Salvar Planilha de Ofertas",
                             DefaultExtension = "xlsx",
-                            FileTypeChoices = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                            FileTypeChoices = new[]
+                                { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
                             SuggestedFileName = fileName
                         });
 
@@ -391,11 +454,11 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
                         {
                             await using var fileStream = await file.OpenWriteAsync();
                             await fileStream.WriteAsync(excelStream.ToArray());
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {file.Path}");
-                            
+                            Debug.WriteLine($"[INFO] Arquivo exportado para: {file.Path}");
+
                             try
                             {
-                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                Process.Start(new ProcessStartInfo
                                 {
                                     FileName = file.Path.ToString(),
                                     UseShellExecute = true
@@ -403,24 +466,24 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
                             }
                             catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                                Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
                             }
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
+                            Debug.WriteLine("[INFO] Exportação cancelada pelo usuário");
                         }
+
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao usar file picker: {ex.Message}");
+                    Debug.WriteLine($"[ERRO] Erro ao usar file picker: {ex.Message}");
                 }
-            }
 
             // Fallback: salvar em Downloads (apenas se file picker não estiver disponível)
-            System.Diagnostics.Debug.WriteLine("[INFO] Usando fallback: salvando em Downloads");
+            Debug.WriteLine("[INFO] Usando fallback: salvando em Downloads");
             var downloadsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "Downloads");
@@ -431,11 +494,11 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
+            Debug.WriteLine($"[INFO] Arquivo exportado para: {filePath}");
 
             try
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = filePath,
                     UseShellExecute = true
@@ -443,12 +506,12 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao exportar: {ex.Message}");
         }
     }
 
@@ -457,7 +520,7 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
+            Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
 
             var excelStream = OfertaExcelService.GerarModelo();
             var fileName = "ofertas_modelo.xlsx";
@@ -472,11 +535,11 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStream.ToArray());
 
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
+            Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
         }
     }
 
@@ -485,14 +548,14 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
-            
+            Debug.WriteLine("[INFO] ImportarAsync iniciado");
+
             // This will need to be called from the View or through a service
             // that has access to the window context
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
         }
     }
 
@@ -521,7 +584,7 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             // Abrir arquivo automaticamente no navegador padrão
             try
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = tempPath,
                     UseShellExecute = true
@@ -529,23 +592,23 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao gerar relatório: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Carrega TODAS as ofertas com os filtros aplicados, mantendo a mesma ordem da paginação
+    ///     Carrega TODAS as ofertas com os filtros aplicados, mantendo a mesma ordem da paginação
     /// </summary>
     private async Task<List<Oferta>> CarregarTodasOfertasComFiltrosAsync()
     {
         var todasOfertas = new List<Oferta>();
-        int pageNumber = 1;
-        int totalPages = 1;
+        var pageNumber = 1;
+        var totalPages = 1;
 
         while (pageNumber <= totalPages)
         {
@@ -560,7 +623,6 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
             // Aplicar filtro de nome client-side se necessário
             var items = result.Items.AsEnumerable();
             if (!string.IsNullOrWhiteSpace(FiltroNome))
-            {
                 items = items.Where(o =>
                 {
                     var dizimista = _unitOfWork.Dizimistas.GetByIdAsync(o.DizimistaId).Result;
@@ -568,7 +630,6 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
                         dizimista.Nome.Contains(FiltroNome, StringComparison.OrdinalIgnoreCase) ||
                         dizimista.NumeroCadastro.ToString().Contains(FiltroNome));
                 });
-            }
 
             todasOfertas.AddRange(items);
             totalPages = result.TotalPages;
@@ -576,73 +637,5 @@ public partial class OfertaListViewModel : ObservableObject, INavigationAware
         }
 
         return todasOfertas;
-    }
-
-    /// <summary>
-    /// Implementação de INavigationAware - Recarrega ofertas quando volta para esta página
-    /// Restaura os filtros do cache se não houver parâmetro clearCache
-    /// </summary>
-    public void OnNavigatedTo(NavigationParameters parameters)
-    {
-        // Se foi passado clearCache=true, limpar o cache e usar filtros padrão
-        if (parameters != null && parameters.TryGetValue("clearCache", out var clearCacheObj) && 
-            clearCacheObj is bool clearCache && clearCache)
-        {
-            _filterCacheService.ClearOfertaListFilters();
-            System.Diagnostics.Debug.WriteLine("[Navigation] Cache de filtros foi limpo");
-            
-            // Usar filtros padrão
-            var hoje = DateTime.Today;
-            _filtroDataInicio = hoje;
-            _filtroDataFim = hoje;
-            _filtroNome = string.Empty;
-            _filtroTipoPagamento = "Todos";
-        }
-        else
-        {
-            // Tentar restaurar os filtros do cache
-            var cachedFilters = _filterCacheService.GetOfertaListFilters();
-            if (cachedFilters.HasValue)
-            {
-                var (dataInicio, dataFim, nome, tipoPagamento) = cachedFilters.Value;
-                
-                System.Diagnostics.Debug.WriteLine("[Navigation] Restaurando filtros do cache");
-                
-                // Restaurar os filtros
-                _filtroDataInicio = dataInicio;
-                _filtroDataFim = dataFim;
-                _filtroNome = nome;
-                _filtroTipoPagamento = tipoPagamento;
-            }
-            else
-            {
-                // Se não houver cache, usar filtros padrão
-                System.Diagnostics.Debug.WriteLine("[Navigation] Sem cache, usando filtros padrão");
-                var hoje = DateTime.Today;
-                _filtroDataInicio = hoje;
-                _filtroDataFim = hoje;
-                _filtroNome = string.Empty;
-                _filtroTipoPagamento = "Todos";
-            }
-        }
-        
-        // Notificar que as propriedades mudaram
-        OnPropertyChanged(nameof(FiltroDataInicio));
-        OnPropertyChanged(nameof(FiltroDataFim));
-        OnPropertyChanged(nameof(FiltroNome));
-        OnPropertyChanged(nameof(FiltroTipoPagamento));
-        
-        // Agora carregar os dados com os filtros restaurados/padrão
-        _ = CarregarOfertasAsync();
-    }
-
-    /// <summary>
-    /// Implementação de INavigationAware - Salva o estado ao sair da página
-    /// </summary>
-    public void OnNavigatedFrom()
-    {
-        // Salvar os filtros atuais no cache
-        _filterCacheService.SaveOfertaListFilters(FiltroDataInicio, FiltroDataFim, FiltroNome, FiltroTipoPagamento);
-        System.Diagnostics.Debug.WriteLine("[Navigation] Filtros salvos no cache");
     }
 }

@@ -1,6 +1,7 @@
+using System.Diagnostics;
+using System.Text;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using System.Text;
 
 namespace Dizimo.Application.Reporting.Services;
 
@@ -8,9 +9,13 @@ public class DizimistaPdfService
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    public DizimistaPdfService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    public DizimistaPdfService(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
-    public async Task<MemoryStream> ImprimirAsync(List<Dizimista>? dizimistas = null, string? filtroNome = null, bool? apenasAtivos = null)
+    public async Task<MemoryStream> ImprimirAsync(List<Dizimista>? dizimistas = null, string? filtroNome = null,
+        bool? apenasAtivos = null)
     {
         // Se nenhuma lista for passada, busca todos os dizimistas
         if (dizimistas == null)
@@ -24,17 +29,12 @@ public class DizimistaPdfService
 
         // Filtro de nome
         if (!string.IsNullOrWhiteSpace(filtroNome))
-        {
             dizimistasFiltrados = dizimistasFiltrados.Where(d =>
                 d.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
                 d.NumeroCadastro.ToString().Contains(filtroNome));
-        }
 
         // Filtro de status
-        if (apenasAtivos.HasValue)
-        {
-            dizimistasFiltrados = dizimistasFiltrados.Where(d => d.Ativo == apenasAtivos.Value);
-        }
+        if (apenasAtivos.HasValue) dizimistasFiltrados = dizimistasFiltrados.Where(d => d.Ativo == apenasAtivos.Value);
 
         dizimistas = dizimistasFiltrados.ToList();
 
@@ -61,13 +61,15 @@ public class DizimistaPdfService
         sb.AppendLine("body { font-family: Arial, sans-serif; margin: 20px; }");
         sb.AppendLine("h1 { text-align: center; color: #333; margin-bottom: 30px; }");
         sb.AppendLine("table { width: 100%; border-collapse: collapse; margin-top: 20px; }");
-        sb.AppendLine("th { background-color: #d3d3d3; padding: 10px; border: 1px solid #999; text-align: left; font-weight: bold; }");
+        sb.AppendLine(
+            "th { background-color: #d3d3d3; padding: 10px; border: 1px solid #999; text-align: left; font-weight: bold; }");
         sb.AppendLine("td { padding: 8px; border: 1px solid #ddd; }");
         sb.AppendLine("tr:nth-child(even) { background-color: #f9f9f9; }");
         sb.AppendLine(".text-center { text-align: center; }");
         sb.AppendLine(".status-ativo { color: green; font-weight: bold; }");
         sb.AppendLine(".status-inativo { color: red; font-weight: bold; }");
-        sb.AppendLine(".summary-container { margin-top: 40px; padding: 20px; background-color: #e3f2fd; border: 2px solid #2196F3; border-radius: 5px; }");
+        sb.AppendLine(
+            ".summary-container { margin-top: 40px; padding: 20px; background-color: #e3f2fd; border: 2px solid #2196F3; border-radius: 5px; }");
         sb.AppendLine(".summary-container h2 { text-align: center; color: #333; margin-bottom: 20px; }");
         sb.AppendLine(".summary-content { text-align: center; }");
         sb.AppendLine(".summary-content p { margin: 10px 0; font-size: 16px; font-weight: bold; }");
@@ -116,7 +118,7 @@ public class DizimistaPdfService
         sb.AppendLine("<h2>📋 Resumo Final</h2>");
         sb.AppendLine("<div class='summary-content'>");
         sb.AppendLine($"<p>Total de dizimistas: {dizimistas.Count}</p>");
-        sb.AppendLine($"<div class='summary-stats'>");
+        sb.AppendLine("<div class='summary-stats'>");
         sb.AppendLine($"  <p>✓ Ativos: {dizimistas.Count(d => d.Ativo)}</p>");
         sb.AppendLine($"  <p>✗ Inativos: {dizimistas.Count(d => !d.Ativo)}</p>");
         sb.AppendLine("</div>");
@@ -137,7 +139,7 @@ public class DizimistaPdfService
     private MemoryStream ConvertHtmlToPdf(string html)
     {
         var stream = new MemoryStream();
-        
+
         try
         {
             var htmlBytes = Encoding.UTF8.GetBytes(html);
@@ -146,11 +148,10 @@ public class DizimistaPdfService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Erro ao gerar PDF: {ex.Message}");
+            Debug.WriteLine($"Erro ao gerar PDF: {ex.Message}");
             stream.Position = 0;
         }
 
         return stream;
     }
 }
-

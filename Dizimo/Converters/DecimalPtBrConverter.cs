@@ -1,12 +1,11 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters;
 
 /// <summary>
-/// DEPRECATED: Use DecimalFormatterConverter com ConverterParameter="N2"
-/// Mantido por compatibilidade com código legado
+///     DEPRECATED: Use DecimalFormatterConverter com ConverterParameter="N2"
+///     Mantido por compatibilidade com código legado
 /// </summary>
 [Obsolete("Use DecimalFormatterConverter with ConverterParameter='N2' instead.", false)]
 public class DecimalPtBrConverter : IValueConverter
@@ -33,11 +32,9 @@ public class DecimalPtBrConverter : IValueConverter
         if (value is string stringValue)
         {
             var ptBr = new CultureInfo("pt-BR");
-            if (decimal.TryParse(stringValue, NumberStyles.Number, ptBr, out var result))
-            {
-                return result;
-            }
+            if (decimal.TryParse(stringValue, NumberStyles.Number, ptBr, out var result)) return result;
         }
+
         return 0m;
     }
 }

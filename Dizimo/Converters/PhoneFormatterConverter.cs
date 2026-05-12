@@ -10,7 +10,7 @@ public class PhoneFormatterConverter : IValueConverter
         if (value is not string phone || string.IsNullOrWhiteSpace(phone))
             return string.Empty;
 
-        // Remove caracteres não numéricos
+        // Remove caracteres nï¿½o numï¿½ricos
         var cleaned = new string(phone.Where(char.IsDigit).ToArray());
 
         if (cleaned.Length == 0)
@@ -19,7 +19,7 @@ public class PhoneFormatterConverter : IValueConverter
         // Formatar: (99) 9999-9999 ou (99) 99999-9999
         if (cleaned.Length == 10)
             return $"({cleaned.Substring(0, 2)}) {cleaned.Substring(2, 4)}-{cleaned.Substring(6)}";
-        
+
         if (cleaned.Length == 11)
             return $"({cleaned.Substring(0, 2)}) {cleaned.Substring(2, 5)}-{cleaned.Substring(7)}";
 
@@ -31,7 +31,7 @@ public class PhoneFormatterConverter : IValueConverter
         if (value is not string formatted)
             return string.Empty;
 
-        // Remove caracteres não numéricos
+        // Remove caracteres nï¿½o numï¿½ricos
         return new string(formatted.Where(char.IsDigit).ToArray());
     }
 }

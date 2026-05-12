@@ -1,22 +1,24 @@
+using Dizimo.Domain.Repositories;
+using Dizimo.Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Dizimo.Domain.Repositories;
-using Microsoft.Data.Sqlite;
 
 namespace Dizimo.Infrastructure.Backup.Services;
 
 /// <summary>
-/// Serviço de backup local que gerencia operações de backup e restauração do banco de dados.
-/// Implementa operações seguras com tratamento de locks do Windows e retry automático.
-/// Segue Clean Architecture com injeção de dependências e separação de responsabilidades.
+///     Serviço de backup local que gerencia operações de backup e restauração do banco de dados.
+///     Implementa operações seguras com tratamento de locks do Windows e retry automático.
+///     Segue Clean Architecture com injeção de dependências e separação de responsabilidades.
 /// </summary>
 public class LocalBackupService
 {
     private readonly string _dbFilePath;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IBackupPreferencesProvider _preferencesProvider;
     private readonly IFileOperationService _fileOperationService;
     private readonly ILogger<LocalBackupService> _logger;
+    private readonly IBackupPreferencesProvider _preferencesProvider;
+    private readonly IServiceProvider _serviceProvider;
     private string _backupFolderPath;
 
     public LocalBackupService(
@@ -36,18 +38,7 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Obtém o caminho padrão para backups.
-    /// </summary>
-    private static string GetDefaultBackupPath()
-    {
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            BackupServiceConfiguration.BackupFolderName,
-            BackupServiceConfiguration.BackupSubfolderName);
-    }
-
-    /// <summary>
-    /// Obtém ou define o caminho da pasta de backup.
+    ///     Obtém ou define o caminho da pasta de backup.
     /// </summary>
     public string BackupFolderPath
     {
@@ -63,14 +54,25 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Verifica se um caminho de backup diferente do padrão foi configurado.
+    ///     Verifica se um caminho de backup diferente do padrão foi configurado.
     /// </summary>
     public bool IsBackupFolderConfigured =>
-        !string.IsNullOrEmpty(_backupFolderPath) && 
+        !string.IsNullOrEmpty(_backupFolderPath) &&
         !_backupFolderPath.Equals(GetDefaultBackupPath(), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Define o caminho da pasta de backup.
+    ///     Obtém o caminho padrão para backups.
+    /// </summary>
+    private static string GetDefaultBackupPath()
+    {
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            BackupServiceConfiguration.BackupFolderName,
+            BackupServiceConfiguration.BackupSubfolderName);
+    }
+
+    /// <summary>
+    ///     Define o caminho da pasta de backup.
     /// </summary>
     public void SetBackupFolder(string folderPath)
     {
@@ -78,7 +80,7 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Realiza um backup do banco de dados para a pasta configurada.
+    ///     Realiza um backup do banco de dados para a pasta configurada.
     /// </summary>
     public async Task BackupAsync()
     {
@@ -86,8 +88,8 @@ public class LocalBackupService
         {
             EnsureBackupFolderExists();
 
-            string backupFilePath = GenerateBackupFilePath();
-            
+            var backupFilePath = GenerateBackupFilePath();
+
             _logger.LogInformation("Iniciando backup para: {FilePath}", backupFilePath);
 
             await PrepareForFileOperationAsync();
@@ -103,13 +105,13 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Restaura o banco de dados a partir do backup mais recente.
+    ///     Restaura o banco de dados a partir do backup mais recente.
     /// </summary>
     public async Task RestoreAsync()
     {
         try
         {
-            string? latestBackupFile = FindLatestBackupFile();
+            var latestBackupFile = FindLatestBackupFile();
 
             if (string.IsNullOrEmpty(latestBackupFile))
             {
@@ -133,7 +135,7 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Restaura o banco de dados a partir de um arquivo de backup específico.
+    ///     Restaura o banco de dados a partir de um arquivo de backup específico.
     /// </summary>
     public async Task RestoreFromFileAsync(string backupFilePath)
     {
@@ -163,7 +165,7 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Prepara o sistemas para operações de arquivo liberando conexões de banco.
+    ///     Prepara o sistemas para operações de arquivo liberando conexões de banco.
     /// </summary>
     private async Task PrepareForFileOperationAsync()
     {
@@ -173,14 +175,14 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Limpa o DbContext e desabilita todas as conexões SQLite ativas.
+    ///     Limpa o DbContext e desabilita todas as conexões SQLite ativas.
     /// </summary>
     private async Task ClearDbContextAsync()
     {
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            
+
             // Limpar através do UnitOfWork
             var unitOfWork = scope.ServiceProvider.GetService(typeof(IUnitOfWork)) as IUnitOfWork;
             if (unitOfWork != null)
@@ -190,7 +192,7 @@ public class LocalBackupService
             }
 
             // Limpar DbContext diretamente como backup
-            var dbContext = scope.ServiceProvider.GetService(typeof(Persistence.DizimoDbContext)) as Persistence.DizimoDbContext;
+            var dbContext = scope.ServiceProvider.GetService(typeof(DizimoDbContext)) as DizimoDbContext;
             if (dbContext != null)
             {
                 DetachAllEntries(dbContext);
@@ -209,18 +211,15 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Desanexada todas as entidades rastreadas no DbContext.
+    ///     Desanexada todas as entidades rastreadas no DbContext.
     /// </summary>
-    private static void DetachAllEntries(Persistence.DizimoDbContext dbContext)
+    private static void DetachAllEntries(DizimoDbContext dbContext)
     {
-        foreach (var entry in dbContext.ChangeTracker.Entries())
-        {
-            entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-        }
+        foreach (var entry in dbContext.ChangeTracker.Entries()) entry.State = EntityState.Detached;
     }
 
     /// <summary>
-    /// Força coleta de lixo para liberar handles de arquivo.
+    ///     Força coleta de lixo para liberar handles de arquivo.
     /// </summary>
     private static void ForceGarbageCollection()
     {
@@ -230,7 +229,7 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Garante que a pasta de backup existe.
+    ///     Garante que a pasta de backup existe.
     /// </summary>
     private void EnsureBackupFolderExists()
     {
@@ -242,7 +241,7 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Encontra o arquivo de backup mais recente.
+    ///     Encontra o arquivo de backup mais recente.
     /// </summary>
     private string? FindLatestBackupFile()
     {
@@ -252,12 +251,13 @@ public class LocalBackupService
     }
 
     /// <summary>
-    /// Gera o caminho completo para um novo arquivo de backup.
+    ///     Gera o caminho completo para um novo arquivo de backup.
     /// </summary>
     private string GenerateBackupFilePath()
     {
-        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string backupFileName = $"{BackupServiceConfiguration.BackupFilePrefix}{timestamp}{BackupServiceConfiguration.BackupFileExtension}";
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var backupFileName =
+            $"{BackupServiceConfiguration.BackupFilePrefix}{timestamp}{BackupServiceConfiguration.BackupFileExtension}";
         return Path.Combine(BackupFolderPath, backupFileName);
     }
 }

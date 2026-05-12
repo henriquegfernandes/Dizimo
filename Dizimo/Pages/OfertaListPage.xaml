@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -9,9 +10,7 @@
              x:DataType="vm:OfertaListViewModel">
     <UserControl.Resources>
         <ResourceDictionary>
-            <local:NullOrEmptyToBoolConverter x:Key="NullOrEmptyToBoolConverter" />
             <local:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
-            <local:MonthNumberToNameConverter x:Key="MonthNumberToNameConverter" />
             <local:DecimalFormatterConverter x:Key="DecimalFormatterConverter" />
             <local:DizimistaIdToNomeConverter x:Key="DizimistaIdToNomeConverter" />
             <local:MesAnoToStringConverter x:Key="MesAnoToStringConverter" />
@@ -22,9 +21,9 @@
         <ScrollViewer>
             <StackPanel Spacing="16" Margin="16">
                 <StackPanel Margin="16" Spacing="12">
-                    <TextBlock Text="Gerenciamento de Ofertas" 
-                               FontSize="24" 
-                               FontWeight="Bold" 
+                    <TextBlock Text="Gerenciamento de Ofertas"
+                               FontSize="24"
+                               FontWeight="Bold"
                                Foreground="{DynamicResource BrushPrimary}" />
                     <!-- Filtro unificado, data e tipo de pagamento -->
                     <Grid ColumnSpacing="16" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
@@ -35,52 +34,52 @@
                         <CalendarDatePicker SelectedDate="{Binding FiltroDataFim}"
                                             Grid.Column="2"
                                             VerticalAlignment="Center" />
-                        <TextBox PlaceholderText="Buscar por nome ou código do dizimista" 
-                                Text="{Binding FiltroNome}" 
-                                Grid.Column="3"
-                                VerticalAlignment="Center"
-                                KeyDown="OnFiltroKeyDown"
-                                LostFocus="OnFiltroLostFocus" />
+                        <TextBox PlaceholderText="Buscar por nome ou código do dizimista"
+                                 Text="{Binding FiltroNome}"
+                                 Grid.Column="3"
+                                 VerticalAlignment="Center"
+                                 KeyDown="OnFiltroKeyDown"
+                                 LostFocus="OnFiltroLostFocus" />
                         <!-- ComboBox para tipo de pagamento -->
                         <ComboBox Grid.Column="4"
-                                 ItemsSource="{Binding TiposPagamento}"
-                                 SelectedItem="{Binding FiltroTipoPagamento, Mode=TwoWay}"
-                                 VerticalAlignment="Center" />
+                                  ItemsSource="{Binding TiposPagamento}"
+                                  SelectedItem="{Binding FiltroTipoPagamento, Mode=TwoWay}"
+                                  VerticalAlignment="Center" />
                         <Button Grid.Column="5"
-                               Classes="Secondary"
-                               Command="{Binding AplicarFiltrosCommand}" 
-                               Content="Filtrar"
-                               Padding="12"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               CornerRadius="6" />
+                                Classes="Secondary"
+                                Command="{Binding AplicarFiltrosCommand}"
+                                Content="Filtrar"
+                                Padding="12"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                CornerRadius="6" />
                         <Button Grid.Column="6"
-                               Classes="Secondary"
-                               Command="{Binding LimparFiltrosCommand}" 
-                               Content="Limpar"
-                               Padding="12"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               CornerRadius="6" />
+                                Classes="Secondary"
+                                Command="{Binding LimparFiltrosCommand}"
+                                Content="Limpar"
+                                Padding="12"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                CornerRadius="6" />
                     </Grid>
                     <!-- Linha de botões de exportação/impressão -->
                     <Grid ColumnSpacing="16" ColumnDefinitions="*,*">
                         <Button Classes="Primary"
-                               Content="Exportar"
-                               Command="{Binding ExportarCommand}" 
-                               CornerRadius="8"
-                               Padding="10"
-                               Grid.Column="0"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                                Content="Exportar"
+                                Command="{Binding ExportarCommand}"
+                                CornerRadius="8"
+                                Padding="10"
+                                Grid.Column="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
                         <Button Classes="Primary"
-                               Content="Imprimir"
-                               Command="{Binding ImprimirCommand}" 
-                               CornerRadius="8"
-                               Padding="10"
-                               Grid.Column="1"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                                Content="Imprimir"
+                                Command="{Binding ImprimirCommand}"
+                                CornerRadius="8"
+                                Padding="10"
+                                Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
                     </Grid>
                     <!-- Linha de título da lista -->
                     <Grid ColumnSpacing="16" ColumnDefinitions="1*,2*,3*,2*,2*,2*,Auto,Auto">
@@ -95,44 +94,51 @@
                     </Grid>
                     <!-- Lista paginada com ItemsControl -->
                     <ItemsControl x:Name="OfertasCollectionView"
-                                 ItemsSource="{Binding Ofertas}"
-                                 Margin="0,0,0,8">
+                                  ItemsSource="{Binding Ofertas}"
+                                  Margin="0,0,0,8">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="domain:Oferta">
                                 <Grid ColumnSpacing="16" ColumnDefinitions="1*,2*,3*,2*,2*,2*,Auto,Auto" Margin="0,8">
                                     <!-- Checkbox para seleção -->
                                     <CheckBox Grid.Column="0"
-                                             behaviors:CheckBoxSelectionBehavior.Item="{Binding}"
-                                             behaviors:CheckBoxSelectionBehavior.SelectedItems="{Binding $parent[ItemsControl].DataContext.OfertasSelecionadas}"
-                                             VerticalAlignment="Center"
-                                             HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding Data, Converter={StaticResource DatePtBrConverter}}" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding DizimistaId, Converter={StaticResource DizimistaIdToNomeConverter}}" Grid.Column="2" TextAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Valor, Converter={StaticResource DecimalFormatterConverter}}" Grid.Column="3" TextAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding ., Converter={StaticResource MesAnoToStringConverter}}" Grid.Column="4" TextAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding TipoPagamento}" Grid.Column="5" TextAlignment="Center" VerticalAlignment="Center" />
+                                              behaviors:CheckBoxSelectionBehavior.Item="{Binding}"
+                                              behaviors:CheckBoxSelectionBehavior.SelectedItems="{Binding $parent[ItemsControl].DataContext.OfertasSelecionadas}"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding Data, Converter={StaticResource DatePtBrConverter}}"
+                                               Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Text="{Binding DizimistaId, Converter={StaticResource DizimistaIdToNomeConverter}}"
+                                        Grid.Column="2" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Text="{Binding Valor, Converter={StaticResource DecimalFormatterConverter}}"
+                                        Grid.Column="3" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding ., Converter={StaticResource MesAnoToStringConverter}}"
+                                               Grid.Column="4" TextAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding TipoPagamento}" Grid.Column="5" TextAlignment="Center"
+                                               VerticalAlignment="Center" />
                                     <!-- Botão de editar com ícone de lápis -->
                                     <Button Grid.Column="6"
-                                           Command="{Binding $parent[ItemsControl].DataContext.EditarOfertaCommand}"
-                                           CommandParameter="{Binding}"
-                                           Padding="8,4"
-                                           CornerRadius="6"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           ToolTip.Tip="Editar"
-                                           Classes="Primary">
+                                            Command="{Binding $parent[ItemsControl].DataContext.EditarOfertaCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="8,4"
+                                            CornerRadius="6"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Editar"
+                                            Classes="Primary">
                                         <TextBlock Text="✏️" FontSize="14" Foreground="White" />
                                     </Button>
                                     <!-- Botão de visualizar com ícone de olho -->
                                     <Button Grid.Column="7"
-                                           Command="{Binding $parent[ItemsControl].DataContext.ExcluirOfertaCommand}"
-                                           CommandParameter="{Binding}"
-                                           Padding="8,4"
-                                           CornerRadius="6"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           ToolTip.Tip="Excluir"
-                                           Classes="Primary">
+                                            Command="{Binding $parent[ItemsControl].DataContext.ExcluirOfertaCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="8,4"
+                                            CornerRadius="6"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Excluir"
+                                            Classes="Primary">
                                         <TextBlock Text="🗑" FontSize="14" Foreground="White" />
                                     </Button>
                                 </Grid>
@@ -140,14 +146,14 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <!-- Linha de resultados -->
-                    <TextBlock Text="{Binding TextoResultados}" 
-                              HorizontalAlignment="Center"
-                              TextAlignment="Center"
-                              FontWeight="Bold"
-                              Margin="0,8" />
+                    <TextBlock Text="{Binding TextoResultados}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               FontWeight="Bold"
+                               Margin="0,8" />
                     <!-- Botão Carregar Mais -->
                     <Button Classes="Primary"
-                            Content="Carregar Mais" 
+                            Content="Carregar Mais"
                             Command="{Binding CarregarMaisOfertasCommand}"
                             IsVisible="{Binding TemProxima}"
                             Margin="0,12,0,8"
@@ -158,46 +164,48 @@
                         <TextBlock Text="" Grid.Column="0" />
                         <TextBlock Text="" Grid.Column="1" />
                         <TextBlock Text="TOTAL" Grid.Column="2" FontWeight="Bold" TextAlignment="Center" />
-                        <TextBlock Text="{Binding ValorTotal, Converter={StaticResource DecimalFormatterConverter}}" Grid.Column="3" FontWeight="Bold" TextAlignment="Center" />
+                        <TextBlock Text="{Binding ValorTotal, Converter={StaticResource DecimalFormatterConverter}}"
+                                   Grid.Column="3" FontWeight="Bold" TextAlignment="Center" />
                         <TextBlock Text="" Grid.Column="4" />
                         <TextBlock Text="" Grid.Column="5" />
                         <TextBlock Text="" Grid.Column="6" />
                         <TextBlock Text="" Grid.Column="7" />
                         <TextBlock Text="" Grid.Column="8" />
                     </Grid>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,8,0,0">
-                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,8,0,0" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
         <!-- Botões flutuantes de ação em massa - Centralizados -->
-        <Grid ColumnSpacing="12" ColumnDefinitions="Auto,Auto" VerticalAlignment="Bottom" HorizontalAlignment="Center" IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}" Margin="0,0,0,24" ZIndex="100">
+        <Grid ColumnSpacing="12" ColumnDefinitions="Auto,Auto" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+              IsVisible="{Binding OfertasSelecionadas.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}}"
+              Margin="0,0,0,24" ZIndex="100">
             <Button Content="{Binding TextoBotaoSelecao}"
-                   Classes="Primary"
-                   Command="{Binding SelecionarTodosCommand}"
-                   Padding="12"
-                   CornerRadius="8"
-                   Grid.Column="0"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
+                    Classes="Primary"
+                    Command="{Binding SelecionarTodosCommand}"
+                    Padding="12"
+                    CornerRadius="8"
+                    Grid.Column="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
             <!-- Botão flutuante de excluir -->
-            <Button Content="Excluir" 
-               Classes="Primary"
-               Command="{Binding ExcluirOfertasSelecionadasCommand}" 
-               Padding="12"
-               CornerRadius="8"
-               Grid.Column="1"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
+            <Button Content="Excluir"
+                    Classes="Primary"
+                    Command="{Binding ExcluirOfertasSelecionadasCommand}"
+                    Padding="12"
+                    CornerRadius="8"
+                    Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
         </Grid>
         <!-- Botão flutuante de adicionar oferta -->
         <Button Classes="Floating"
-            Command="{Binding NovaOfertaCommand}"
-            IsEnabled="True"
-            Content="➕"
-            VerticalAlignment="Bottom"
-            HorizontalAlignment="Right"
-            Margin="24" 
-            ToolTip.Tip="Adicionar" />
+                Command="{Binding NovaOfertaCommand}"
+                IsEnabled="True"
+                Content="➕"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Right"
+                Margin="24"
+                ToolTip.Tip="Adicionar" />
     </Grid>
 </UserControl>

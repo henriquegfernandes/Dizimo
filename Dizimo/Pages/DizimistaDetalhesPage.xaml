@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -12,65 +13,76 @@
     <Grid RowDefinitions="Auto,*">
         <!-- Barra de navegação customizada -->
         <Grid Grid.Row="0" Margin="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-             <!-- Botão de voltar -->
-             <Button Grid.Column="0" 
-                     Content="Voltar"
-                     Command="{Binding VoltarCommand}"
-                     Classes="Secondary"
-                     HorizontalAlignment="Left"
-                     VerticalAlignment="Center" />
-             
-             <!-- Título centralizado -->
-             <TextBlock Grid.Column="1" 
-                    Text="Detalhes do Dizimista" 
-                    FontSize="20"
-                    FontWeight="Bold"
-                    HorizontalAlignment="Center"
+            <!-- Botão de voltar -->
+            <Button Grid.Column="0"
+                    Content="Voltar"
+                    Command="{Binding VoltarCommand}"
+                    Classes="Secondary"
+                    HorizontalAlignment="Left"
                     VerticalAlignment="Center" />
-             
-             <!-- Botão de excluir -->
-             <Button Grid.Column="2" 
-                     Content="Excluir"
-                     Command="{Binding ExcluirCommand}"
-                     Classes="Danger"
-                     HorizontalAlignment="Right"
-                     VerticalAlignment="Center" />
+
+            <!-- Título centralizado -->
+            <TextBlock Grid.Column="1"
+                       Text="Detalhes do Dizimista"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+
+            <!-- Botão de excluir -->
+            <Button Grid.Column="2"
+                    Content="Excluir"
+                    Command="{Binding ExcluirCommand}"
+                    Classes="Danger"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center" />
         </Grid>
 
         <!-- Conteúdo da página -->
         <ScrollViewer Grid.Row="1">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="2*,2*" RowSpacing="10" Margin="20">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="2*,2*"
+                  RowSpacing="10" Margin="20">
                 <!-- Número de Cadastro -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Nº Cadastro:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Dizimista.NumeroCadastro}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Nº Cadastro:" FontWeight="Bold"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Dizimista.NumeroCadastro}"
+                           VerticalAlignment="Center" />
 
                 <!-- Nome -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Nome:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Dizimista.Nome}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Nome:" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Dizimista.Nome}" VerticalAlignment="Center" />
 
                 <!-- Data de Nascimento -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Data Nascimento:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Dizimista.DataNascimento, Converter={StaticResource DatePtBrConverter}}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Data Nascimento:" FontWeight="Bold"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Grid.Column="1"
+                           Text="{Binding Dizimista.DataNascimento, Converter={StaticResource DatePtBrConverter}}"
+                           VerticalAlignment="Center" />
 
                 <!-- Telefone -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Telefone:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TelefoneFormatado}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Telefone:" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TelefoneFormatado}" VerticalAlignment="Center" />
 
                 <!-- WhatsApp -->
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="WhatsApp:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WhatsappFormatado}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="WhatsApp:" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WhatsappFormatado}" VerticalAlignment="Center" />
 
                 <!-- Endereço -->
-                <TextBlock Grid.Row="5" Grid.Column="0" Text="Endereço:" FontWeight="Bold" VerticalAlignment="Top" Margin="0,5,0,0"/>
-                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding EnderecoCompleto}" VerticalAlignment="Top" Margin="0,5,0,0"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Endereço:" FontWeight="Bold" VerticalAlignment="Top"
+                           Margin="0,5,0,0" />
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding EnderecoCompleto}" VerticalAlignment="Top"
+                           Margin="0,5,0,0" />
 
                 <!-- Última Oferta -->
-                <TextBlock Grid.Row="6" Grid.Column="0" Text="Última oferta:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding UltimaOferta}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Última oferta:" FontWeight="Bold"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding UltimaOferta}" VerticalAlignment="Center" />
 
                 <!-- Status -->
-                <TextBlock Grid.Row="7" Grid.Column="0" Text="Status:" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Dizimista.Ativo, Converter={StaticResource BoolToTextConverter}}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Status:" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="7" Grid.Column="1"
+                           Text="{Binding Dizimista.Ativo, Converter={StaticResource BoolToTextConverter}}"
+                           VerticalAlignment="Center" />
 
                 <!-- Botão Editar -->
                 <Button Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
@@ -79,7 +91,7 @@
                         Classes="Primary"
                         Width="150"
                         HorizontalAlignment="Center"
-                        Margin="0,20,0,0"/>
+                        Margin="0,20,0,0" />
             </Grid>
         </ScrollViewer>
     </Grid>

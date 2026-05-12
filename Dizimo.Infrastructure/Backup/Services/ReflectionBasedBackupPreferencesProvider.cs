@@ -3,16 +3,16 @@
 namespace Dizimo.Infrastructure.Backup.Services;
 
 /// <summary>
-/// Adaptador para o PreferencesService usando reflection.
-/// Esta é uma implementação de ponte que permite usar a interface IBackupPreferencesProvider
-/// com o PreferencesService antigo, sem modificá-lo.
-/// Uma refatoração futura deveria injetar PreferencesService diretamente.
+///     Adaptador para o PreferencesService usando reflection.
+///     Esta é uma implementação de ponte que permite usar a interface IBackupPreferencesProvider
+///     com o PreferencesService antigo, sem modificá-lo.
+///     Uma refatoração futura deveria injetar PreferencesService diretamente.
 /// </summary>
 public class ReflectionBasedBackupPreferencesProvider : IBackupPreferencesProvider
 {
-    private readonly object? _preferencesService;
-    private readonly ILogger<ReflectionBasedBackupPreferencesProvider> _logger;
     private const string PreferencesKey = "BackupFolderPath";
+    private readonly ILogger<ReflectionBasedBackupPreferencesProvider> _logger;
+    private readonly object? _preferencesService;
 
     public ReflectionBasedBackupPreferencesProvider(
         object? preferencesService,
@@ -23,7 +23,7 @@ public class ReflectionBasedBackupPreferencesProvider : IBackupPreferencesProvid
     }
 
     /// <summary>
-    /// Obtém o caminho da pasta de backup usando reflection.
+    ///     Obtém o caminho da pasta de backup usando reflection.
     /// </summary>
     public string? GetBackupFolderPath()
     {
@@ -49,7 +49,7 @@ public class ReflectionBasedBackupPreferencesProvider : IBackupPreferencesProvid
     }
 
     /// <summary>
-    /// Define o caminho da pasta de backup usando reflection.
+    ///     Define o caminho da pasta de backup usando reflection.
     /// </summary>
     public void SetBackupFolderPath(string folderPath)
     {
@@ -75,4 +75,3 @@ public class ReflectionBasedBackupPreferencesProvider : IBackupPreferencesProvid
             BackupServiceConfiguration.BackupSubfolderName);
     }
 }
-

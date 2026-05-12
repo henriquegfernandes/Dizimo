@@ -1,44 +1,45 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              x:Class="Dizimo.Pages.LoginPage"
              x:DataType="vm:LoginViewModel">
-    
+
     <UserControl.Resources>
     </UserControl.Resources>
 
     <StackPanel Margin="16" VerticalAlignment="Center" Spacing="10" Width="500" HorizontalAlignment="Center">
-        <Image Source="avares://Dizimo/Resources/Images/dizimologo.png" 
-               Height="240" Width="240" 
+        <Image Source="avares://Dizimo/Resources/Images/dizimologo.png"
+               Height="240" Width="240"
                HorizontalAlignment="Center" />
-        
+
         <!-- Título -->
-        <TextBlock 
-            Text="Acesso ao Sistema" 
-            FontSize="28" 
+        <TextBlock
+            Text="Acesso ao Sistema"
+            FontSize="28"
             FontWeight="Bold"
             HorizontalAlignment="Center"
             Foreground="{DynamicResource BrushPrimary}" />
 
-        <TextBlock 
-            Text="Faça login para continuar" 
+        <TextBlock
+            Text="Faça login para continuar"
             FontSize="14"
             HorizontalAlignment="Center"
             Foreground="{DynamicResource BrushTextSecondary}"
             Opacity="0.7"
             TextAlignment="Center"
             Margin="0,0,0,15" />
-        
+
         <!-- Usuário -->
         <StackPanel Spacing="5">
-            <TextBlock 
+            <TextBlock
                 Text="Usuário"
                 FontSize="12"
                 FontWeight="Bold" />
-            
+
             <TextBox x:Name="LoginTextBox"
-                     PlaceholderText="Digite seu usuário" 
+                     PlaceholderText="Digite seu usuário"
                      Text="{Binding Login}"
                      Background="{DynamicResource BrushBackgroundPrimary}"
                      Foreground="{DynamicResource BrushTextPrimary}"
@@ -48,16 +49,16 @@
                      Height="40"
                      KeyDown="OnLoginKeyDown" />
         </StackPanel>
-        
+
         <!-- Senha -->
         <StackPanel Spacing="5" Margin="0,10,0,0">
-            <TextBlock 
+            <TextBlock
                 Text="Senha"
                 FontSize="12"
                 FontWeight="Bold" />
-            
+
             <TextBox x:Name="SenhaTextBox"
-                     PlaceholderText="Digite sua senha" 
+                     PlaceholderText="Digite sua senha"
                      Text="{Binding Senha}"
                      PasswordChar="*"
                      Background="{DynamicResource BrushBackgroundPrimary}"
@@ -68,18 +69,18 @@
                      Height="40"
                      KeyDown="OnSenhaKeyDown" />
         </StackPanel>
-        
+
         <!-- Mensagem de Erro -->
-        <TextBlock Text="Login ou senha inválidos." 
-                   IsVisible="{Binding IsLoginFailed}" 
+        <TextBlock Text="Login ou senha inválidos."
+                   IsVisible="{Binding IsLoginFailed}"
                    Foreground="{StaticResource ColorError}"
                    FontSize="12"
                    Margin="0,10,0,0"
                    TextAlignment="Center" />
-        
+
         <!-- Botão Entrar -->
         <Button Classes="Primary"
-                Content="Entrar" 
+                Content="Entrar"
                 Command="{Binding LoginCommand}"
                 Height="40"
                 Margin="0,15,0,0"

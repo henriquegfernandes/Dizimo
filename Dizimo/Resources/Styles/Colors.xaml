@@ -1,23 +1,24 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
+
     <!-- ========================================
          CORES DA APLICAÇÃO - SISTEMA DE DESIGN
          ======================================== -->
-    
+
     <!-- CORES PRIMÁRIAS E SECUNDÁRIAS -->
     <Color x:Key="ColorPrimary">#FF0000</Color>
     <Color x:Key="ColorSecondary">#FFFFFF</Color>
-    
-     <!-- VARIAÇÕES DE CORES PRIMÁRIAS -->
+
+    <!-- VARIAÇÕES DE CORES PRIMÁRIAS -->
     <Color x:Key="ColorPrimaryDark">#CC0000</Color>
     <Color x:Key="ColorPrimaryLight">#FF4444</Color>
     <Color x:Key="ColorPrimaryVariant">#BB0000</Color>
-    
+
     <!-- BRUSHES PARA CORES PRIMÁRIAS -->
     <SolidColorBrush x:Key="BrushPrimaryDark" Color="{StaticResource ColorPrimaryDark}" />
-    
+
     <!-- TONS DE CINZA -->
     <Color x:Key="ColorGray50">#FAFAFA</Color>
     <Color x:Key="ColorGray100">#F5F5F5</Color>
@@ -29,47 +30,47 @@
     <Color x:Key="ColorGray700">#616161</Color>
     <Color x:Key="ColorGray800">#424242</Color>
     <Color x:Key="ColorGray900">#212121</Color>
-    
+
     <!-- CORES SEMÂNTICAS -->
     <Color x:Key="ColorSuccess">#4CAF50</Color>
     <Color x:Key="ColorWarning">#FF9800</Color>
     <Color x:Key="ColorError">#F44336</Color>
     <Color x:Key="ColorInfo">#2196F3</Color>
-    
+
     <!-- ========================================
          TEMA CLARO (Light Theme)
          ======================================== -->
-    
+
     <!-- Superfícies -->
     <Color x:Key="LightBackgroundPrimary">#FFFFFF</Color>
     <Color x:Key="LightBackgroundSecondary">#F5F5F5</Color>
     <Color x:Key="LightBackgroundTertiary">#EEEEEE</Color>
-    
+
     <!-- Texto -->
     <Color x:Key="LightTextPrimary">#212121</Color>
     <Color x:Key="LightTextSecondary">#666666</Color>
     <Color x:Key="LightTextTertiary">#999999</Color>
-    
+
     <!-- Bordas e Separadores -->
     <Color x:Key="LightBorder">#E0E0E0</Color>
     <Color x:Key="LightDivider">#EEEEEE</Color>
-    
+
     <!-- ========================================
          TEMA ESCURO (Dark Theme)
          ======================================== -->
-    
+
     <!-- Superfícies -->
     <Color x:Key="DarkBackgroundPrimary">#121212</Color>
     <Color x:Key="DarkBackgroundSecondary">#1E1E1E</Color>
     <Color x:Key="DarkBackgroundTertiary">#2C2C2C</Color>
-    
+
     <!-- Texto -->
     <Color x:Key="DarkTextPrimary">#FFFFFF</Color>
     <Color x:Key="DarkTextSecondary">#B3B3B3</Color>
     <Color x:Key="DarkTextTertiary">#808080</Color>
-    
+
     <!-- Bordas e Separadores -->
     <Color x:Key="DarkBorder">#383838</Color>
     <Color x:Key="DarkDivider">#2C2C2C</Color>
-    
+
 </ResourceDictionary>

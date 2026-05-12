@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
+
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -18,4 +19,3 @@
     <!-- ContentControl para exibir conteúdo dinâmico -->
     <ContentControl Content="{Binding CurrentView, Converter={StaticResource ViewModelToViewConverter}}" />
 </Window>
-

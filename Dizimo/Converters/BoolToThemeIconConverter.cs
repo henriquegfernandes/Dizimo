@@ -1,5 +1,5 @@
-using Avalonia.Data.Converters;
 using System.Globalization;
+using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters;
 
@@ -7,10 +7,7 @@ public class BoolToThemeIconConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
-        if (value is bool isDarkTheme)
-        {
-            return isDarkTheme ? "🌙" : "☀️";
-        }
+        if (value is bool isDarkTheme) return isDarkTheme ? "🌙" : "☀️";
 
         return "☀️";
     }
@@ -20,4 +17,3 @@ public class BoolToThemeIconConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-

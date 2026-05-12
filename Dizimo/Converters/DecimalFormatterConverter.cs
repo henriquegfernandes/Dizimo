@@ -1,15 +1,14 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters;
 
 /// <summary>
-/// Converter genérico para formatar valores decimais em diferentes formatos
-/// Usar ConverterParameter para escolher:
-/// - "N2" : Número com 2 casas decimais (100.50 → "100,50")
-/// - "C" : Moeda (100.50 → "R$ 100,50")
-/// Padrão: "N2" (número com 2 casas)
+///     Converter genérico para formatar valores decimais em diferentes formatos
+///     Usar ConverterParameter para escolher:
+///     - "N2" : Número com 2 casas decimais (100.50 → "100,50")
+///     - "C" : Moeda (100.50 → "R$ 100,50")
+///     Padrão: "N2" (número com 2 casas)
 /// </summary>
 public class DecimalFormatterConverter : IValueConverter
 {
@@ -36,4 +35,3 @@ public class DecimalFormatterConverter : IValueConverter
         return decimal.TryParse(stringValue, NumberStyles.Number, ptBr, out var result) ? result : 0m;
     }
 }
-

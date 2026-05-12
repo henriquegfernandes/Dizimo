@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Dizimo.Domain.Entities;
@@ -9,18 +8,19 @@ public class MesAnoToStringConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        // Este converter esperará receber a entidade Oferta completa
+        // Este converter esperarï¿½ receber a entidade Oferta completa
         if (value is Oferta oferta)
         {
             var cultureInfo = new CultureInfo("pt-BR");
             var date = new DateTime(2024, oferta.MesReferencia, 1);
-            string mesNome = date.ToString("MMMM", cultureInfo);
-            
-            // Converter para Title Case (primeira letra maiúscula)
-            mesNome = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(mesNome);
-            
+            var mesNome = date.ToString("MMMM", cultureInfo);
+
+            // Converter para Title Case (primeira letra maiï¿½scula)
+            mesNome = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(mesNome);
+
             return $"{mesNome}/{oferta.AnoReferencia}";
         }
+
         return string.Empty;
     }
 

@@ -1,14 +1,17 @@
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Commands;
-using System.Threading.Tasks;
 using Dizimo.Domain.Entities;
+using Dizimo.Domain.Repositories;
 
 namespace Dizimo.Application.Ofertas.Handlers;
 
 public class UpdateOfertaHandler
 {
     private readonly IUnitOfWork _unitOfWork;
-    public UpdateOfertaHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public UpdateOfertaHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task Handle(UpdateOfertaCommand command)
     {

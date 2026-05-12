@@ -1,11 +1,13 @@
-using Avalonia.Controls;
+using System.Diagnostics;
 using Avalonia.Markup.Xaml;
+
 namespace Dizimo.Pages;
-public partial class DizimistaDetalhesPage : UserControl
+
+public class DizimistaDetalhesPage : UserControl
 {
     public DizimistaDetalhesPage()
     {
         AvaloniaXamlLoader.Load(this);
-        System.Diagnostics.Debug.WriteLine("[INFO] DizimistaDetalhesPage inicializado");
+        Debug.WriteLine("[INFO] DizimistaDetalhesPage inicializado");
     }
 }

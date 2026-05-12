@@ -1,26 +1,41 @@
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Services;
 using Dizimo.Infrastructure.Backup.Services;
 
 namespace Dizimo.ViewModels;
 
 public partial class LocalBackupViewModel : ObservableObject
 {
+    private const string AutoBackupEnabledKey = "AutoBackupEnabled";
+    private readonly IAuthenticationService _authenticationService;
     private readonly LocalBackupService _backupService;
     private readonly IDialogService _dialogService;
-    private readonly IAuthenticationService _authenticationService;
     private readonly IPreferencesService? _preferencesService;
-    private const string AutoBackupEnabledKey = "AutoBackupEnabled";
+
+    private bool _isAutoBackupEnabled;
 
     private string? backupFolderPath;
+
+    public LocalBackupViewModel(LocalBackupService backupService, IDialogService? dialogService = null,
+        IAuthenticationService? authenticationService = null, IPreferencesService? preferencesService = null)
+    {
+        _backupService = backupService;
+        _dialogService = dialogService ?? new DialogService();
+        _authenticationService = authenticationService ??
+                                 throw new ArgumentNullException(nameof(authenticationService),
+                                     "IAuthenticationService é obrigatório");
+        _preferencesService = preferencesService;
+        LoadBackupFolderPath();
+        LoadAutoBackupPreference();
+    }
+
     public string? BackupFolderPath
     {
         get => backupFolderPath;
         set => SetProperty(ref backupFolderPath, value);
     }
 
-    private bool _isAutoBackupEnabled = false;
     public bool IsAutoBackupEnabled
     {
         get => _isAutoBackupEnabled;
@@ -34,24 +49,15 @@ public partial class LocalBackupViewModel : ObservableObject
         }
     }
 
-    public LocalBackupViewModel(LocalBackupService backupService, IDialogService? dialogService = null, IAuthenticationService? authenticationService = null, IPreferencesService? preferencesService = null)
-    {
-        _backupService = backupService;
-        _dialogService = dialogService ?? new DialogService();
-        _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService), "IAuthenticationService é obrigatório");
-        _preferencesService = preferencesService;
-        LoadBackupFolderPath();
-        LoadAutoBackupPreference();
-    }
-
     /// <summary>
-    /// Define o callback a ser executado após restauração bem-sucedida (DEPRECATED - usar IAuthenticationService)
+    ///     Define o callback a ser executado após restauração bem-sucedida (DEPRECATED - usar IAuthenticationService)
     /// </summary>
     public void SetOnRestoreSuccess(Func<Task> onRestoreSuccess)
     {
         // Este método mantém compatibilidade com código legado
         // A configuração real é feita via IAuthenticationService no AppRootViewModel
-        System.Diagnostics.Debug.WriteLine("[AUTH] SetOnRestoreSuccess (deprecated) chamado - use IAuthenticationService.SetOnLogoutComplete");
+        Debug.WriteLine(
+            "[AUTH] SetOnRestoreSuccess (deprecated) chamado - use IAuthenticationService.SetOnLogoutComplete");
     }
 
     private void LoadBackupFolderPath()
@@ -65,7 +71,7 @@ public partial class LocalBackupViewModel : ObservableObject
         {
             _isAutoBackupEnabled = _preferencesService.Get(AutoBackupEnabledKey, false);
             OnPropertyChanged(nameof(IsAutoBackupEnabled));
-            System.Diagnostics.Debug.WriteLine($"[BACKUP] Preferência de backup automático carregada: {_isAutoBackupEnabled}");
+            Debug.WriteLine($"[BACKUP] Preferência de backup automático carregada: {_isAutoBackupEnabled}");
         }
     }
 
@@ -74,14 +80,13 @@ public partial class LocalBackupViewModel : ObservableObject
         if (_preferencesService != null)
         {
             _preferencesService.Set(AutoBackupEnabledKey, value);
-            System.Diagnostics.Debug.WriteLine($"[BACKUP] Preferência de backup automático salva: {value}");
+            Debug.WriteLine($"[BACKUP] Preferência de backup automático salva: {value}");
         }
     }
 
     private async Task OnAutoBackupToggleAsync(bool enabled)
     {
         if (enabled)
-        {
             await _dialogService.ShowAlertAsync(
                 "Backup Automático Ativado",
                 "✓ Backup automático foi ativado!\n\n" +
@@ -89,14 +94,13 @@ public partial class LocalBackupViewModel : ObservableObject
                 $"{_backupService.BackupFolderPath}\n\n" +
                 "O backup será feito de forma silenciosa, sem interromper o fechamento do app."
             );
-        }
     }
 
     [RelayCommand]
     public async Task EscolherPastaAsync()
     {
-        System.Diagnostics.Debug.WriteLine("[NAV] Escolher pasta de backup");
-        
+        Debug.WriteLine("[NAV] Escolher pasta de backup");
+
         try
         {
             var selectedPath = await _dialogService.ShowFolderPickerAsync(
@@ -113,7 +117,7 @@ public partial class LocalBackupViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERROR] Erro ao escolher pasta: {ex.Message}");
+            Debug.WriteLine($"[ERROR] Erro ao escolher pasta: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Erro ao escolher pasta: {ex.Message}");
         }
     }
@@ -146,7 +150,7 @@ public partial class LocalBackupViewModel : ObservableObject
 
             if (string.IsNullOrEmpty(selectedFile))
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Restauração cancelada pelo usuário");
+                Debug.WriteLine("[INFO] Restauração cancelada pelo usuário");
                 return;
             }
 
@@ -164,44 +168,45 @@ public partial class LocalBackupViewModel : ObservableObject
 
             if (!confirmed)
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Restauração cancelada pelo usuário na confirmação");
+                Debug.WriteLine("[INFO] Restauração cancelada pelo usuário na confirmação");
                 return;
             }
 
             // Restaura o banco de dados
-            System.Diagnostics.Debug.WriteLine("[INFO] Iniciando restauração do banco...");
+            Debug.WriteLine("[INFO] Iniciando restauração do banco...");
             await _backupService.RestoreFromFileAsync(selectedFile);
-            System.Diagnostics.Debug.WriteLine("[INFO] Banco restaurado com sucesso");
+            Debug.WriteLine("[INFO] Banco restaurado com sucesso");
 
             // Aguardar para garantir limpeza completa
             await Task.Delay(1000);
 
             // Mostra sucesso
-            await _dialogService.ShowAlertAsync("Sucesso", "Restauração realizada com sucesso! O aplicativo será encerrado e reiniciado.");
-            System.Diagnostics.Debug.WriteLine("[INFO] Dialogo de sucesso exibido");
+            await _dialogService.ShowAlertAsync("Sucesso",
+                "Restauração realizada com sucesso! O aplicativo será encerrado e reiniciado.");
+            Debug.WriteLine("[INFO] Dialogo de sucesso exibido");
 
             // Aguardar mais um pouco
             await Task.Delay(500);
 
             // Reiniciar a aplicação completamente
-            System.Diagnostics.Debug.WriteLine("[INFO] Encerrando aplicação para reiniciar...");
-            
+            Debug.WriteLine("[INFO] Encerrando aplicação para reiniciar...");
+
             // Limpar a sessão do usuário ANTES de sair
             SessaoService.Logout();
-            System.Diagnostics.Debug.WriteLine("[AUTH] Sessão do usuário limpa");
-            
-            var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+            Debug.WriteLine("[AUTH] Sessão do usuário limpa");
+
+            var currentProcess = Process.GetCurrentProcess();
             var exePath = currentProcess.MainModule?.FileName;
-            
+
             if (!string.IsNullOrEmpty(exePath))
             {
                 // Iniciar nova instância
-                System.Diagnostics.Process.Start(exePath);
-                System.Diagnostics.Debug.WriteLine($"[INFO] Nova instância iniciada: {exePath}");
+                Process.Start(exePath);
+                Debug.WriteLine($"[INFO] Nova instância iniciada: {exePath}");
             }
-            
+
             // Encerrar aplicação atual
-            System.Diagnostics.Debug.WriteLine("[INFO] Encerrando aplicação atual...");
+            Debug.WriteLine("[INFO] Encerrando aplicação atual...");
             Environment.Exit(0);
         }
         catch (FileNotFoundException ex)
@@ -210,7 +215,7 @@ public partial class LocalBackupViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERROR] Erro ao restaurar backup: {ex.Message}");
+            Debug.WriteLine($"[ERROR] Erro ao restaurar backup: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Erro ao restaurar backup: {ex.Message}");
         }
     }

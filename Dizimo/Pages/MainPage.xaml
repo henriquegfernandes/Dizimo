@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
-            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-            xmlns:viewModels="clr-namespace:Dizimo.ViewModels"
-            xmlns:converters="clr-namespace:Dizimo.Converters"
-            xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
-            x:Class="Dizimo.Pages.MainPage"
-            x:DataType="viewModels:MainPageViewModel">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Dizimo.ViewModels"
+             xmlns:converters="clr-namespace:Dizimo.Converters"
+             xmlns:controls="clr-namespace:Dizimo.Pages.Controls"
+             x:Class="Dizimo.Pages.MainPage"
+             x:DataType="viewModels:MainPageViewModel">
 
     <UserControl.Resources>
         <ResourceDictionary>
             <converters:StringToMesVisibilityConverter x:Key="StringToMesVisibilityConverter" />
-            <converters:IntToIndexConverter x:Key="IntToIndexConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid RowDefinitions="*" ColumnDefinitions="*" 
-          HorizontalAlignment="Stretch" 
+    <Grid RowDefinitions="*" ColumnDefinitions="*"
+          HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
         <ScrollViewer Grid.Row="0" Grid.Column="0" Padding="0,0,0,40">
             <StackPanel Spacing="16" Margin="16">
                 <StackPanel Margin="16" Spacing="12">
                     <!-- Seção Principal -->
                     <TextBlock Text="Visão Geral"
-                               FontSize="24" 
-                               FontWeight="Bold" 
+                               FontSize="24"
+                               FontWeight="Bold"
                                Foreground="{DynamicResource BrushPrimary}"
                                Margin="0,0,0,8" />
                     <!-- Seção: Gráfico de Dizimistas -->
@@ -31,33 +31,44 @@
                                FontSize="18"
                                FontWeight="Bold" />
                     <!-- Card Gráfico de Donut -->
-                    <Border BorderThickness="1" CornerRadius="10" Padding="16" Background="{DynamicResource BrushBackgroundSecondary}">
+                    <Border BorderThickness="1" CornerRadius="10" Padding="16"
+                            Background="{DynamicResource BrushBackgroundSecondary}">
                         <StackPanel Spacing="10" HorizontalAlignment="Center">
                             <controls:PieChartControl Datas="{Binding DadosGrafico}" />
                         </StackPanel>
                     </Border>
 
                     <!-- Legenda das cores em Grid 2x2 -->
-                    <Border BorderThickness="1" CornerRadius="8" Background="{DynamicResource BrushBackgroundSecondary}" Padding="16" BorderBrush="{DynamicResource BrushBorder}">
-                        <Grid ColumnDefinitions="*,*" 
-                              RowDefinitions="Auto,Auto" 
-                              ColumnSpacing="20" 
+                    <Border BorderThickness="1" CornerRadius="8"
+                            Background="{DynamicResource BrushBackgroundSecondary}" Padding="16"
+                            BorderBrush="{DynamicResource BrushBorder}">
+                        <Grid ColumnDefinitions="*,*"
+                              RowDefinitions="Auto,Auto"
+                              ColumnSpacing="20"
                               RowSpacing="12">
-                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="10"
+                                        VerticalAlignment="Center">
                                 <Rectangle Fill="#22C55E" Width="16" Height="16" />
-                                <TextBlock Text="Últimos 2 meses" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" />
+                                <TextBlock Text="Últimos 2 meses" VerticalAlignment="Center" FontSize="13"
+                                           FontWeight="Medium" />
                             </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+                                        VerticalAlignment="Center">
                                 <Rectangle Fill="#FBBF24" Width="16" Height="16" />
-                                <TextBlock Text="2-6 meses" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" />
+                                <TextBlock Text="2-6 meses" VerticalAlignment="Center" FontSize="13"
+                                           FontWeight="Medium" />
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="10"
+                                        VerticalAlignment="Center">
                                 <Rectangle Fill="#F97316" Width="16" Height="16" />
-                                <TextBlock Text="6-12 meses" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" />
+                                <TextBlock Text="6-12 meses" VerticalAlignment="Center" FontSize="13"
+                                           FontWeight="Medium" />
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+                                        VerticalAlignment="Center">
                                 <Rectangle Fill="#EF4444" Width="16" Height="16" />
-                                <TextBlock Text="Mais de 1 ano" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" />
+                                <TextBlock Text="Mais de 1 ano" VerticalAlignment="Center" FontSize="13"
+                                           FontWeight="Medium" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -65,24 +76,24 @@
                     <!-- Seção: Aniversariantes -->
                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto" ColumnSpacing="10">
                         <TextBlock Grid.Column="0"
-                            Text="Aniversariantes" 
-                            FontSize="18"
-                            FontWeight="Bold"
-                            VerticalAlignment="Center" />
+                                   Text="Aniversariantes"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                             <Button Content="{Binding TextoBotaoAlternarVisualizacao, FallbackValue='Visualizar Mês'}"
+                            <Button Content="{Binding TextoBotaoAlternarVisualizacao, FallbackValue='Visualizar Mês'}"
                                     Command="{Binding AlternarVisualizacaoCommand}"
                                     Classes="Primary"
                                     Padding="12,8"
                                     FontSize="12"
                                     CornerRadius="5" />
-                             <Button Content="Exportar"
+                            <Button Content="Exportar"
                                     Command="{Binding ExportarAniversariantesCommand}"
                                     Classes="Primary"
                                     Padding="12,8"
                                     FontSize="12"
                                     CornerRadius="5" />
-                             <Button Content="Imprimir"
+                            <Button Content="Imprimir"
                                     Command="{Binding ImprimirAniversariantesCommand}"
                                     Classes="Primary"
                                     Padding="12,8"
@@ -95,18 +106,18 @@
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10"
                           IsVisible="{Binding VisualizacaoAtual, Converter={StaticResource StringToMesVisibilityConverter}}">
                         <TextBlock Grid.Column="0"
-                            Text="Selecionar Mês:"
-                            VerticalAlignment="Center"
-                            FontWeight="Bold"
-                            FontSize="14" />
+                                   Text="Selecionar Mês:"
+                                   VerticalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="14" />
                         <ComboBox Grid.Column="1"
-                            ItemsSource="{Binding MesesDisponiveis}"
-                            SelectedIndex="{Binding IndiceMesSelecionado, Mode=TwoWay}"
-                            HorizontalAlignment="Stretch"
-                            Padding="8,4"
-                            FontSize="12"
-                            Height="40"
-                            MinWidth="150">
+                                  ItemsSource="{Binding MesesDisponiveis}"
+                                  SelectedIndex="{Binding IndiceMesSelecionado, Mode=TwoWay}"
+                                  HorizontalAlignment="Stretch"
+                                  Padding="8,4"
+                                  FontSize="12"
+                                  Height="40"
+                                  MinWidth="150">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}" Padding="4,2" />
@@ -121,18 +132,20 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Spacing="0">
-                                        <Grid Margin="15" RowDefinitions="Auto" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <Grid Margin="15" RowDefinitions="Auto" ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="10">
                                             <StackPanel Grid.Column="0" Spacing="4">
                                                 <TextBlock Text="{Binding Nome}" FontWeight="Bold" FontSize="14" />
-                                                <TextBlock Text="{Binding DataNascimento, StringFormat='Aniversário: {0:dd/MM}'}"
-                                                        FontSize="12"
-                                                        Foreground="{DynamicResource BrushTextSecondary}" />
+                                                <TextBlock
+                                                    Text="{Binding DataNascimento, StringFormat='Aniversário: {0:dd/MM}'}"
+                                                    FontSize="12"
+                                                    Foreground="{DynamicResource BrushTextSecondary}" />
                                             </StackPanel>
                                             <TextBlock Grid.Column="1"
-                                                    Text="{Binding NumeroCadastro, StringFormat='#{0}'}"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="12"
-                                                    FontWeight="Bold" />
+                                                       Text="{Binding NumeroCadastro, StringFormat='#{0}'}"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="12"
+                                                       FontWeight="Bold" />
                                         </Grid>
                                         <Rectangle Height="1" Fill="{DynamicResource BrushDivider}" Margin="0" />
                                     </StackPanel>

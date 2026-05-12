@@ -1,5 +1,4 @@
 using Dizimo.Domain.Entities;
-using System;
 
 namespace Dizimo.Application.Dizimistas.Commands;
 
@@ -26,4 +25,5 @@ public record UpdateDizimistaCommand(
 );
 
 public record DeleteDizimistaCommand(Guid Id);
+
 public record InativarDizimistaCommand(Guid Id);

@@ -3,8 +3,8 @@
 namespace Dizimo.Infrastructure.Backup.Services;
 
 /// <summary>
-/// Implementação de operações de arquivo com retry automático.
-/// Encapsula toda a lógica de cópia e substituição de arquivo com tratamento de locks do Windows.
+///     Implementação de operações de arquivo com retry automático.
+///     Encapsula toda a lógica de cópia e substituição de arquivo com tratamento de locks do Windows.
 /// </summary>
 public class FileOperationService : IFileOperationService
 {
@@ -16,7 +16,7 @@ public class FileOperationService : IFileOperationService
     }
 
     /// <summary>
-    /// Copia um arquivo com retry automático para lidar com locks do Windows.
+    ///     Copia um arquivo com retry automático para lidar com locks do Windows.
     /// </summary>
     public async Task CopyFileAsync(string sourcePath, string destinationPath, FileShare shareMode)
     {
@@ -25,10 +25,9 @@ public class FileOperationService : IFileOperationService
         if (string.IsNullOrWhiteSpace(destinationPath))
             throw new ArgumentNullException(nameof(destinationPath));
 
-        int retryDelay = BackupServiceConfiguration.InitialRetryDelayMs;
+        var retryDelay = BackupServiceConfiguration.InitialRetryDelayMs;
 
-        for (int attempt = 0; attempt < BackupServiceConfiguration.MaxRetries; attempt++)
-        {
+        for (var attempt = 0; attempt < BackupServiceConfiguration.MaxRetries; attempt++)
             try
             {
                 using var sourceStream = new FileStream(
@@ -48,14 +47,15 @@ public class FileOperationService : IFileOperationService
                     FileOptions.SequentialScan);
 
                 await sourceStream.CopyToAsync(destinationStream, BackupServiceConfiguration.CopyBufferSize);
-                
+
                 _logger.LogInformation("Arquivo copiado com sucesso: {FilePath} -> {Destination} (tentativa {Attempt})",
                     sourcePath, destinationPath, attempt + 1);
                 return;
             }
             catch (IOException ex) when (attempt < BackupServiceConfiguration.MaxRetries - 1)
             {
-                _logger.LogWarning("Tentativa {Attempt}/{MaxRetries} de cópia falhou: {Message}. Aguardando {DelayMs}ms...",
+                _logger.LogWarning(
+                    "Tentativa {Attempt}/{MaxRetries} de cópia falhou: {Message}. Aguardando {DelayMs}ms...",
                     attempt + 1, BackupServiceConfiguration.MaxRetries, ex.Message, retryDelay);
 
                 await Task.Delay(retryDelay);
@@ -66,11 +66,10 @@ public class FileOperationService : IFileOperationService
                 _logger.LogError("Falha final ao copiar arquivo: {Message}", ex.Message);
                 throw;
             }
-        }
     }
 
     /// <summary>
-    /// Substitui um arquivo com outro de forma atômica, com retry automático.
+    ///     Substitui um arquivo com outro de forma atômica, com retry automático.
     /// </summary>
     public async Task ReplaceFileAsync(string sourcePath, string destinationPath)
     {
@@ -79,26 +78,26 @@ public class FileOperationService : IFileOperationService
         if (string.IsNullOrWhiteSpace(destinationPath))
             throw new ArgumentNullException(nameof(destinationPath));
 
-        string backupPath = destinationPath + BackupServiceConfiguration.BackupFileBackupSuffix;
-        int retryDelay = BackupServiceConfiguration.InitialRetryDelayMs;
+        var backupPath = destinationPath + BackupServiceConfiguration.BackupFileBackupSuffix;
+        var retryDelay = BackupServiceConfiguration.InitialRetryDelayMs;
 
-        for (int attempt = 0; attempt < BackupServiceConfiguration.MaxRetries; attempt++)
-        {
+        for (var attempt = 0; attempt < BackupServiceConfiguration.MaxRetries; attempt++)
             try
             {
                 CleanupBackupFile(backupPath);
-                
-                File.Replace(sourcePath, destinationPath, backupPath, ignoreMetadataErrors: true);
-                
+
+                File.Replace(sourcePath, destinationPath, backupPath, true);
+
                 _logger.LogInformation("Arquivo substituído com sucesso: {FilePath} (tentativa {Attempt})",
                     destinationPath, attempt + 1);
-                
+
                 CleanupBackupFile(backupPath);
                 return;
             }
             catch (IOException ex) when (attempt < BackupServiceConfiguration.MaxRetries - 1)
             {
-                _logger.LogWarning("Tentativa {Attempt}/{MaxRetries} de substituição falhou: {Message}. Aguardando {DelayMs}ms...",
+                _logger.LogWarning(
+                    "Tentativa {Attempt}/{MaxRetries} de substituição falhou: {Message}. Aguardando {DelayMs}ms...",
                     attempt + 1, BackupServiceConfiguration.MaxRetries, ex.Message, retryDelay);
 
                 await Task.Delay(retryDelay);
@@ -109,11 +108,10 @@ public class FileOperationService : IFileOperationService
                 _logger.LogError("Falha final ao substituir arquivo: {Message}", ex.Message);
                 throw;
             }
-        }
     }
 
     /// <summary>
-    /// Remove arquivos auxiliares do SQLite.
+    ///     Remove arquivos auxiliares do SQLite.
     /// </summary>
     public void CleanupAuxiliaryFiles(string databaseFilePath)
     {
@@ -122,9 +120,8 @@ public class FileOperationService : IFileOperationService
 
         foreach (var suffix in BackupServiceConfiguration.SqliteAuxiliaryFileSuffixes)
         {
-            string auxiliaryFilePath = databaseFilePath + suffix;
+            var auxiliaryFilePath = databaseFilePath + suffix;
             if (File.Exists(auxiliaryFilePath))
-            {
                 try
                 {
                     File.Delete(auxiliaryFilePath);
@@ -134,7 +131,6 @@ public class FileOperationService : IFileOperationService
                     _logger.LogWarning("Erro ao deletar arquivo auxiliar {FilePath}: {Message}",
                         auxiliaryFilePath, ex.Message);
                 }
-            }
         }
     }
 
@@ -142,10 +138,7 @@ public class FileOperationService : IFileOperationService
     {
         try
         {
-            if (File.Exists(backupPath))
-            {
-                File.Delete(backupPath);
-            }
+            if (File.Exists(backupPath)) File.Delete(backupPath);
         }
         catch
         {
@@ -153,4 +146,3 @@ public class FileOperationService : IFileOperationService
         }
     }
 }
-

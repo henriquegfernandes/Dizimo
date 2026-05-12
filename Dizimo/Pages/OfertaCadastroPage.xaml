@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
              x:Class="Dizimo.Pages.OfertaCadastroPage"
              x:DataType="vm:OfertaCadastroViewModel">
-    <Grid RowDefinitions="Auto,Auto,*" 
-          HorizontalAlignment="Stretch" 
+    <Grid RowDefinitions="Auto,Auto,*"
+          HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
         <!-- Barra de navegação customizada -->
         <Grid Grid.Row="0" Margin="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
             <!-- Botão de voltar -->
-            <Button Grid.Column="0" 
+            <Button Grid.Column="0"
                     Content="Voltar"
                     Command="{Binding VoltarCommand}"
                     Classes="Secondary"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center" />
-            
+
             <!-- Título centralizado -->
-            <TextBlock Grid.Column="1" 
-                   Text="Cadastro de Oferta" 
-                   FontSize="20"
-                   FontWeight="Bold"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
-            
+            <TextBlock Grid.Column="1"
+                       Text="Cadastro de Oferta"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+
             <!-- Botão de excluir à direita (visível apenas em modo edição) -->
             <Button Grid.Column="2"
                     Content="Excluir"
@@ -36,24 +37,24 @@
         </Grid>
 
         <!-- Panel com RadioButtons para seleção de tipo de mês (visível apenas em modo criação) -->
-        <Border Grid.Row="1" 
+        <Border Grid.Row="1"
                 Background="{DynamicResource BrushBackgroundSecondary}"
                 BorderBrush="{DynamicResource BrushBorder}"
                 BorderThickness="0,1,0,1"
                 Padding="16,12"
                 IsVisible="{Binding IsEditMode, Converter={StaticResource InvertedBoolConverter}}">
             <StackPanel Orientation="Horizontal" Spacing="24" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <RadioButton Content="Mês Único" 
+                <RadioButton Content="Mês Único"
                              IsChecked="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"
                              GroupName="TipoMes" />
-                <RadioButton Content="Vários Meses" 
+                <RadioButton Content="Vários Meses"
                              IsChecked="{Binding UsarRangoMeses}"
                              GroupName="TipoMes" />
             </StackPanel>
         </Border>
 
         <!-- Conteúdo da página -->
-        <ScrollViewer Grid.Row="2" 
+        <ScrollViewer Grid.Row="2"
                       Margin="16,12"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto"
@@ -62,145 +63,152 @@
 
                 <!-- Formulário -->
                 <Grid RowSpacing="12" ColumnSpacing="12" Margin="0,0,0,20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
-                </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- Botões de Baixar Modelo e Importar (apenas em modo criação) -->
-                <Grid Grid.Row="0" Grid.ColumnSpan="12" ColumnSpacing="16" ColumnDefinitions="*,*" Margin="0,0,0,12" IsVisible="{Binding IsEditMode, Converter={StaticResource InvertedBoolConverter}}">
-                    <Button Content="Baixar Planilha Modelo"
-                            Command="{Binding BaixarModeloCommand}"
+                    <!-- Botões de Baixar Modelo e Importar (apenas em modo criação) -->
+                    <Grid Grid.Row="0" Grid.ColumnSpan="12" ColumnSpacing="16" ColumnDefinitions="*,*"
+                          Margin="0,0,0,12"
+                          IsVisible="{Binding IsEditMode, Converter={StaticResource InvertedBoolConverter}}">
+                        <Button Content="Baixar Planilha Modelo"
+                                Command="{Binding BaixarModeloCommand}"
+                                Classes="Primary"
+                                Grid.Column="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        <Button Content="Importar Planilha"
+                                Command="{Binding ImportarCommand}"
+                                Classes="Primary"
+                                Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Código do Dizimista -->
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Text="Código Dizimista:"
+                               FontWeight="Bold" />
+                    <TextBox Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0"
+                             Text="{Binding CodigoDizimista}"
+                             Margin="0,25,0,0"
+                             GotFocus="OnCodigoGotFocus"
+                             LostFocus="OnCodigoLostFocus" />
+
+                    <!-- Nome do Dizimista (desabilitado quando encontrado, habilitado quando permitir editar) -->
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="10" Grid.Column="2" Text="Dizimista:" FontWeight="Bold" />
+                    <TextBox Grid.Row="1" Grid.ColumnSpan="10" Grid.Column="2"
+                             Text="{Binding NomeDizimista}"
+                             Margin="0,25,0,0"
+                             IsEnabled="{Binding NomeDizimistaEditable, FallbackValue=False}" />
+
+                    <!-- Data -->
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="0" Text="Data:" FontWeight="Bold" />
+                    <CalendarDatePicker Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="0"
+                                        SelectedDate="{Binding DataOferta}" Margin="0,25,0,0" />
+
+                    <!-- Valor -->
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="4" Text="Valor:" FontWeight="Bold" />
+                    <TextBox Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="4"
+                             Text="{Binding Valor}"
+                             Margin="0,25,0,0"
+                             GotFocus="OnValorGotFocus"
+                             LostFocus="OnValorLostFocus" />
+
+                    <!-- Tipo de Pagamento -->
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="8" Text="Tipo Pagamento:"
+                               FontWeight="Bold" />
+                    <ComboBox Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="8"
+                              ItemsSource="{Binding TiposPagamentoCollection}"
+                              SelectedValue="{Binding TipoPagamento}"
+                              Margin="0,25,0,0" />
+
+                    <!-- ===== Campos de Mês Único ===== -->
+                    <!-- Mês de Referência (único) -->
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0" Text="Mês de Referência:"
+                               FontWeight="Bold"
+                               IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}" />
+                    <ComboBox Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0"
+                              ItemsSource="{Binding MesesNomesCollection}"
+                              SelectedItem="{Binding MesNomeAtual}"
+                              Margin="0,25,0,0"
+                              IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}" />
+
+                    <!-- Ano de Referência (único) -->
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="6" Text="Ano de Referência:"
+                               FontWeight="Bold"
+                               IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}" />
+                    <ComboBox Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="6"
+                              ItemsSource="{Binding AnosCollection}"
+                              SelectedItem="{Binding AnoSelecionado}"
+                              Margin="0,25,0,0"
+                              IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}" />
+
+                    <!-- ===== Campos de Range de Meses ===== -->
+                    <!-- Mês Início Range -->
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="0" Text="Mês Início:" FontWeight="Bold"
+                               IsVisible="{Binding UsarRangoMeses}" />
+                    <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="0"
+                              ItemsSource="{Binding MesesNomesCollection}"
+                              SelectedItem="{Binding MesNomeAtual}"
+                              Margin="0,25,0,0"
+                              IsVisible="{Binding UsarRangoMeses}" />
+
+                    <!-- Ano Início Range -->
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="3" Text="Ano Início:" FontWeight="Bold"
+                               IsVisible="{Binding UsarRangoMeses}" />
+                    <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="3"
+                              ItemsSource="{Binding AnosCollection}"
+                              SelectedItem="{Binding AnoSelecionado}"
+                              Margin="0,25,0,0"
+                              IsVisible="{Binding UsarRangoMeses}" />
+
+                    <!-- Mês Fim Range -->
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="6" Text="Mês Fim:" FontWeight="Bold"
+                               IsVisible="{Binding UsarRangoMeses}" />
+                    <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="6"
+                              ItemsSource="{Binding MesesNomesCollection}"
+                              SelectedItem="{Binding MesNomeAtualFim}"
+                              Margin="0,25,0,0"
+                              IsVisible="{Binding UsarRangoMeses}" />
+
+                    <!-- Ano Fim Range -->
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="9" Text="Ano Fim:" FontWeight="Bold"
+                               IsVisible="{Binding UsarRangoMeses}" />
+                    <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="9"
+                              ItemsSource="{Binding AnosCollection}"
+                              SelectedItem="{Binding AnoSelecionadoFim}"
+                              Margin="0,25,0,0"
+                              IsVisible="{Binding UsarRangoMeses}" />
+
+                    <!-- Botão Salvar -->
+                    <Button Grid.Column="0" Grid.Row="7" Grid.ColumnSpan="12"
+                            Content="Salvar"
+                            Command="{Binding SalvarCommand}"
                             Classes="Primary"
-                            Grid.Column="0"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
-                    <Button Content="Importar Planilha"
-                            Command="{Binding ImportarCommand}"
-                            Classes="Primary"
-                            Grid.Column="1"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
-                </Grid>
-
-                 <!-- Código do Dizimista -->
-                 <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Text="Código Dizimista:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" 
-                          Text="{Binding CodigoDizimista}" 
-                          Margin="0,25,0,0"
-                          GotFocus="OnCodigoGotFocus"
-                          LostFocus="OnCodigoLostFocus"/>
-
-                <!-- Nome do Dizimista (desabilitado quando encontrado, habilitado quando permitir editar) -->
-                <TextBlock Grid.Row="1" Grid.ColumnSpan="10" Grid.Column="2" Text="Dizimista:" FontWeight="Bold"/>
-                <TextBox Grid.Row="1" Grid.ColumnSpan="10" Grid.Column="2" 
-                         Text="{Binding NomeDizimista}" 
-                         Margin="0,25,0,0"
-                         IsEnabled="{Binding NomeDizimistaEditable, FallbackValue=False}"/>
-
-                <!-- Data -->
-                <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="0" Text="Data:" FontWeight="Bold"/>
-                <CalendarDatePicker Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="0" SelectedDate="{Binding DataOferta}" Margin="0,25,0,0"/>
-
-                 <!-- Valor -->
-                 <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="4" Text="Valor:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="4" 
-                          Text="{Binding Valor}" 
-                          Margin="0,25,0,0"
-                          GotFocus="OnValorGotFocus"
-                          LostFocus="OnValorLostFocus"/>
-
-                <!-- Tipo de Pagamento -->
-                <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="8" Text="Tipo Pagamento:" FontWeight="Bold"/>
-                <ComboBox Grid.Row="2" Grid.ColumnSpan="4" Grid.Column="8" 
-                          ItemsSource="{Binding TiposPagamentoCollection}"
-                          SelectedValue="{Binding TipoPagamento}"
-                          Margin="0,25,0,0"/>
-
-                <!-- ===== Campos de Mês Único ===== -->
-                <!-- Mês de Referência (único) -->
-                <TextBlock Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0" Text="Mês de Referência:" FontWeight="Bold" 
-                           IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
-                <ComboBox Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0" 
-                          ItemsSource="{Binding MesesNomesCollection}"
-                          SelectedItem="{Binding MesNomeAtual}"
-                          Margin="0,25,0,0"
-                          IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
-
-                <!-- Ano de Referência (único) -->
-                <TextBlock Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="6" Text="Ano de Referência:" FontWeight="Bold" 
-                           IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
-                <ComboBox Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="6" 
-                          ItemsSource="{Binding AnosCollection}"
-                          SelectedItem="{Binding AnoSelecionado}"
-                          Margin="0,25,0,0"
-                          IsVisible="{Binding UsarRangoMeses, Converter={StaticResource InvertedBoolConverter}}"/>
-
-                <!-- ===== Campos de Range de Meses ===== -->
-                <!-- Mês Início Range -->
-                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="0" Text="Mês Início:" FontWeight="Bold" 
-                           IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="0" 
-                          ItemsSource="{Binding MesesNomesCollection}"
-                          SelectedItem="{Binding MesNomeAtual}"
-                          Margin="0,25,0,0"
-                          IsVisible="{Binding UsarRangoMeses}"/>
-
-                <!-- Ano Início Range -->
-                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="3" Text="Ano Início:" FontWeight="Bold" 
-                           IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="3" 
-                          ItemsSource="{Binding AnosCollection}"
-                          SelectedItem="{Binding AnoSelecionado}"
-                          Margin="0,25,0,0"
-                          IsVisible="{Binding UsarRangoMeses}"/>
-
-                <!-- Mês Fim Range -->
-                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="6" Text="Mês Fim:" FontWeight="Bold" 
-                           IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="6" 
-                          ItemsSource="{Binding MesesNomesCollection}"
-                          SelectedItem="{Binding MesNomeAtualFim}"
-                          Margin="0,25,0,0"
-                          IsVisible="{Binding UsarRangoMeses}"/>
-                
-                <!-- Ano Fim Range -->
-                <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="9" Text="Ano Fim:" FontWeight="Bold"
-                           IsVisible="{Binding UsarRangoMeses}"/>
-                <ComboBox Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="9" 
-                          ItemsSource="{Binding AnosCollection}"
-                          SelectedItem="{Binding AnoSelecionadoFim}"
-                          Margin="0,25,0,0"
-                          IsVisible="{Binding UsarRangoMeses}"/>
-
-                <!-- Botão Salvar -->
-                <Button Grid.Column="0"  Grid.Row="7" Grid.ColumnSpan="12" 
-                        Content="Salvar" 
-                        Command="{Binding SalvarCommand}" 
-                        Classes="Primary"
-                        Margin="0,12,0,0" 
-                        Padding="12"
-                        HorizontalAlignment="Center" />
+                            Margin="0,12,0,0"
+                            Padding="12"
+                            HorizontalAlignment="Center" />
                 </Grid>
             </StackPanel>
         </ScrollViewer>

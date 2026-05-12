@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Avalonia.Input;
 
 namespace Dizimo.Behaviors;
@@ -27,7 +26,7 @@ public class PhoneFormattingBehavior
 
         // Formatar: (99) 9999-9999 ou (99) 99999-9999
         var formattedText = cleanedText;
-        
+
         if (cleanedText.Length > 0)
         {
             if (cleanedText.Length <= 2)
@@ -41,22 +40,14 @@ public class PhoneFormattingBehavior
             else
             {
                 if (cleanedText.Length == 10)
-                {
-                    formattedText = $"({cleanedText.Substring(0, 2)}) {cleanedText.Substring(2, 4)}-{cleanedText.Substring(6)}";
-                }
+                    formattedText =
+                        $"({cleanedText.Substring(0, 2)}) {cleanedText.Substring(2, 4)}-{cleanedText.Substring(6)}";
                 else if (cleanedText.Length == 11)
-                {
-                    formattedText = $"({cleanedText.Substring(0, 2)}) {cleanedText.Substring(2, 5)}-{cleanedText.Substring(7)}";
-                }
+                    formattedText =
+                        $"({cleanedText.Substring(0, 2)}) {cleanedText.Substring(2, 5)}-{cleanedText.Substring(7)}";
             }
         }
 
-        if (textBox.Text != formattedText)
-        {
-            textBox.Text = formattedText;
-        }
+        if (textBox.Text != formattedText) textBox.Text = formattedText;
     }
 }
-
-
-

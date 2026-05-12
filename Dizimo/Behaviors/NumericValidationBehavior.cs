@@ -19,10 +19,7 @@ public class NumericValidationBehavior
         if (sender is not TextBox) return;
 
         // Permitir apenas números e teclas de controle
-        if (char.IsDigit((char)e.Key) || IsControlKey(e.Key))
-        {
-            return;
-        }
+        if (char.IsDigit((char)e.Key) || IsControlKey(e.Key)) return;
 
         e.Handled = true;
     }
@@ -33,6 +30,3 @@ public class NumericValidationBehavior
                key == Key.Left || key == Key.Right || key == Key.Home || key == Key.End;
     }
 }
-
-
-

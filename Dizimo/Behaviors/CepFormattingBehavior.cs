@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Avalonia.Input;
 
 namespace Dizimo.Behaviors;
@@ -27,26 +26,15 @@ public class CepFormattingBehavior
 
         // Formatar: 99999-999
         var formattedText = cleanedText;
-        
+
         if (cleanedText.Length > 0)
         {
             if (cleanedText.Length <= 5)
-            {
                 formattedText = cleanedText;
-            }
             else
-            {
                 formattedText = $"{cleanedText.Substring(0, 5)}-{cleanedText.Substring(5)}";
-            }
         }
 
-        if (textBox.Text != formattedText)
-        {
-            textBox.Text = formattedText;
-        }
+        if (textBox.Text != formattedText) textBox.Text = formattedText;
     }
 }
-
-
-
-

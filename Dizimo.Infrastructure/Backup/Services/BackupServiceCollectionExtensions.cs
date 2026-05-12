@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging;
 namespace Dizimo.Infrastructure.Backup.Services;
 
 /// <summary>
-/// Extensões para registrar serviços de backup no container de injeção de dependências.
+///     Extensões para registrar serviços de backup no container de injeção de dependências.
 /// </summary>
 public static class BackupServiceCollectionExtensions
 {
     /// <summary>
-    /// Registra os serviços de backup no container de DI.
+    ///     Registra os serviços de backup no container de DI.
     /// </summary>
     /// <param name="services">Coleção de serviços.</param>
     /// <param name="dbPath">Caminho do arquivo de banco de dados.</param>
@@ -48,6 +48,3 @@ public static class BackupServiceCollectionExtensions
         return services;
     }
 }
-
-
-

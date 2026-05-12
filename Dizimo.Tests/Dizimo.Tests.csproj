@@ -1,30 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <IsPackable>false</IsPackable>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <!-- Multi-platform support -->
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <!-- Multi-platform support -->
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    </PropertyGroup>
 
-  <!-- Windows-specific properties only for Windows builds -->
-  <PropertyGroup Condition="'$(IsWindows)' == 'true'">
-    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-	<ProjectReference Include="..\Dizimo\Dizimo.csproj" />
-    <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj" />
-    <ProjectReference Include="..\Dizimo.Application\Dizimo.Application.csproj" />
-    <ProjectReference Include="..\Dizimo.Infrastructure\Dizimo.Infrastructure.csproj" />
-  </ItemGroup>
+    <!-- Windows-specific properties only for Windows builds -->
+    <PropertyGroup Condition="'$(IsWindows)' == 'true'">
+        <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+        <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1"/>
+        <PackageReference Include="Moq" Version="4.20.72"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Dizimo\Dizimo.csproj"/>
+        <ProjectReference Include="..\Dizimo.Domain\Dizimo.Domain.csproj"/>
+        <ProjectReference Include="..\Dizimo.Application\Dizimo.Application.csproj"/>
+        <ProjectReference Include="..\Dizimo.Infrastructure\Dizimo.Infrastructure.csproj"/>
+    </ItemGroup>
 </Project>

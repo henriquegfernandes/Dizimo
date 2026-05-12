@@ -1,91 +1,90 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<OutputType>Exe</OutputType>
-		<RootNamespace>Dizimo</RootNamespace>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<UseAvalonia>true</UseAvalonia>
-		<!-- Disable compiled bindings to use reflection binding for dynamic views -->
-		<AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>Dizimo</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <UseAvalonia>true</UseAvalonia>
+        <!-- Disable compiled bindings to use reflection binding for dynamic views -->
+        <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
 
-		<!-- Display name -->
-		<ApplicationTitle>Dizimo</ApplicationTitle>
+        <!-- Display name -->
+        <ApplicationTitle>Dizimo</ApplicationTitle>
 
-		<!-- App Icon -->
-		<ApplicationIcon>Resources/AppIcon/appicon.ico</ApplicationIcon>
+        <!-- App Icon -->
+        <ApplicationIcon>Resources/AppIcon/appicon.ico</ApplicationIcon>
 
-		<!-- App Identifier -->
-		<ApplicationId>com.henriquefernandestech.dizimo</ApplicationId>
+        <!-- App Identifier -->
+        <ApplicationId>com.henriquefernandestech.dizimo</ApplicationId>
 
-	<!-- Versions -->
-	<ApplicationDisplayVersion>1.1.1</ApplicationDisplayVersion>
-	<ApplicationVersion>1</ApplicationVersion>
-	<AssemblyVersion>1.1.1</AssemblyVersion>
-	<FileVersion>1.1.1.0</FileVersion>
-	<InformationalVersion>1.1.1</InformationalVersion>
+        <!-- Versions -->
+        <ApplicationDisplayVersion>1.1.1</ApplicationDisplayVersion>
+        <ApplicationVersion>1</ApplicationVersion>
+        <AssemblyVersion>1.1.1</AssemblyVersion>
+        <FileVersion>1.1.1.0</FileVersion>
+        <InformationalVersion>1.1.1</InformationalVersion>
 
-	<!-- Multi-platform support (x64 and ARM64 for all platforms) -->
-	<RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
+        <!-- Multi-platform support (x64 and ARM64 for all platforms) -->
+        <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
 
-		<!-- Configurações de publicação -->
-		<WindowsPackageType>None</WindowsPackageType>
+        <!-- Configurações de publicação -->
+        <WindowsPackageType>None</WindowsPackageType>
 
-		<PlatformTarget>AnyCPU</PlatformTarget>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<PublishReadyToRun>false</PublishReadyToRun>
-		<DefaultLanguage>pt-br</DefaultLanguage>
-	</PropertyGroup>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <DefaultLanguage>pt-br</DefaultLanguage>
+    </PropertyGroup>
 
-	<!-- Windows-specific properties only for Windows builds -->
-	<PropertyGroup Condition="'$(IsWindows)' == 'true'">
-		<TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-	</PropertyGroup>
+    <!-- Windows-specific properties only for Windows builds -->
+    <PropertyGroup Condition="'$(IsWindows)' == 'true'">
+        <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+        <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<!-- XAML Files -->
-		<AvaloniaResource Include="App.xaml" />
-		<AvaloniaResource Include="MainWindow.xaml" />
-		<AvaloniaResource Include="AppShell.xaml" />
-		<AvaloniaResource Include="Pages/SetupPage.xaml" />
-		<AvaloniaResource Include="Pages/LoginPage.xaml" />
-		<AvaloniaResource Include="Pages/MainPage.xaml" />
-		<AvaloniaResource Include="Pages/DizimistaListPage.xaml" />
-		<AvaloniaResource Include="Pages/DizimistaCadastroPage.xaml" />
-		<AvaloniaResource Include="Pages/DizimistaDetalhesPage.xaml" />
-		<AvaloniaResource Include="Pages/OfertaListPage.xaml" />
-		<AvaloniaResource Include="Pages/OfertaCadastroPage.xaml" />
-		<AvaloniaResource Include="Pages/UsuarioListPage.xaml" />
-		<AvaloniaResource Include="Pages/UsuarioCadastroPage.xaml" />
-		<AvaloniaResource Include="Pages/BackupConfigPage.xaml" />
-		<!-- Resources (Fonts, Images) -->
-		<AvaloniaResource Include="Resources\**" />
-	</ItemGroup>
+    <ItemGroup>
+        <!-- XAML Files -->
+        <AvaloniaResource Include="App.xaml"/>
+        <AvaloniaResource Include="MainWindow.xaml"/>
+        <AvaloniaResource Include="AppShell.xaml"/>
+        <AvaloniaResource Include="Pages/SetupPage.xaml"/>
+        <AvaloniaResource Include="Pages/LoginPage.xaml"/>
+        <AvaloniaResource Include="Pages/MainPage.xaml"/>
+        <AvaloniaResource Include="Pages/DizimistaListPage.xaml"/>
+        <AvaloniaResource Include="Pages/DizimistaCadastroPage.xaml"/>
+        <AvaloniaResource Include="Pages/DizimistaDetalhesPage.xaml"/>
+        <AvaloniaResource Include="Pages/OfertaListPage.xaml"/>
+        <AvaloniaResource Include="Pages/OfertaCadastroPage.xaml"/>
+        <AvaloniaResource Include="Pages/UsuarioListPage.xaml"/>
+        <AvaloniaResource Include="Pages/UsuarioCadastroPage.xaml"/>
+        <AvaloniaResource Include="Pages/BackupConfigPage.xaml"/>
+        <!-- Resources (Fonts, Images) -->
+        <AvaloniaResource Include="Resources\**"/>
+    </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="12.0.2" />
-		<PackageReference Include="Avalonia.Desktop" Version="12.0.2" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2" />
-		<PackageReference Include="Avalonia.Themes.Simple" Version="12.0.2" />
-		<PackageReference Include="Avalonia.ReactiveUI" Version="11.3.8" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.7" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.Themes.Simple" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.8"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.7"/>
+    </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.7" />
-		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
-		<PackageReference Include="ClosedXML" Version="0.105.0" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
+        <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.7"/>
+        <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11"/>
+        <PackageReference Include="ClosedXML" Version="0.105.0"/>
+    </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\\Dizimo.Domain\\Dizimo.Domain.csproj" />
-		<ProjectReference Include="..\\Dizimo.Application\\Dizimo.Application.csproj" />
-		<ProjectReference Include="..\\Dizimo.Infrastructure\\Dizimo.Infrastructure.csproj" />
-	</ItemGroup>
-
+    <ItemGroup>
+        <ProjectReference Include="..\\Dizimo.Domain\\Dizimo.Domain.csproj"/>
+        <ProjectReference Include="..\\Dizimo.Application\\Dizimo.Application.csproj"/>
+        <ProjectReference Include="..\\Dizimo.Infrastructure\\Dizimo.Infrastructure.csproj"/>
+    </ItemGroup>
 
 
 </Project>

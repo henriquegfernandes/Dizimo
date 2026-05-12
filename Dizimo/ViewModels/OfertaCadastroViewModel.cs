@@ -1,40 +1,65 @@
-﻿using Dizimo.Data;
-using Dizimo.Models;
-using Dizimo.Services;
-using Dizimo.Utilities;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
-using System.Windows.Input;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Dizimo.Application.Ofertas.Commands;
 using Dizimo.Application.Ofertas.Handlers;
 using Dizimo.Application.Ofertas.Queries;
+using Dizimo.Application.Reporting.Services;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using Dizimo.Application.Reporting.Services;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
-using System.IO;
 
 namespace Dizimo.ViewModels;
 
 public partial class OfertaCadastroViewModel : ObservableObject, INavigationAware
 {
     private readonly CreateOfertaHandler _createHandler;
-    private readonly UpdateOfertaHandler _updateHandler;
-    private readonly GetOfertaHandlers _getHandler;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
+    private readonly GetOfertaHandlers _getHandler;
 
     private readonly string[] _mesesArray =
     [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
+
+    private readonly INavigationService _navigationService;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly UpdateOfertaHandler _updateHandler;
+
+    private int _anoReferencia = DateTime.Today.Year;
+
+    private int _anoReferenciaFim = DateTime.Today.Year;
+
+    private int _codigoDizimista;
+
+    private DateTime? _data = DateTime.Today;
+
+    private bool _dizimistaAtivo;
+
+    private bool _dizimistaEncontrado;
+
+    private Guid _dizimistaId;
+
+    private Guid _id;
+
+    private bool _isEditMode;
+
+    private int _mesReferencia = DateTime.Today.Month;
+
+    private int _mesReferenciaFim = DateTime.Today.Month;
+
+    private string _nomeDizimista = "";
+
+    private bool _nomeDizimistaEditable;
+
+    private string _tipoPagamento = "PIX";
+
+    private bool _usarRangoMeses;
+
+    private decimal _valor;
 
     public OfertaCadastroViewModel(
         CreateOfertaHandler createHandler,
@@ -50,7 +75,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-        
+
         var meses = new ObservableCollection<string>
         {
             "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -59,8 +84,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         MesesNomesCollection = meses;
 
         var anos = new ObservableCollection<int>();
-        int anoAtual = DateTime.Now.Year;
-        for (int i = anoAtual - 5; i <= anoAtual + 5; i++)
+        var anoAtual = DateTime.Now.Year;
+        for (var i = anoAtual - 5; i <= anoAtual + 5; i++)
             anos.Add(i);
         AnosCollection = anos;
 
@@ -77,40 +102,59 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
     public ObservableCollection<int> AnosCollection { get; }
     public ObservableCollection<string> TiposPagamentoCollection { get; }
 
-    private Guid _id;
-    public Guid Id { get => _id; set => SetProperty(ref _id, value); }
+    public Guid Id
+    {
+        get => _id;
+        set => SetProperty(ref _id, value);
+    }
 
-    private int _codigoDizimista;
-    public int CodigoDizimista { get => _codigoDizimista; set => SetProperty(ref _codigoDizimista, value); }
+    public int CodigoDizimista
+    {
+        get => _codigoDizimista;
+        set => SetProperty(ref _codigoDizimista, value);
+    }
 
-    private string _nomeDizimista = "";
-    public string NomeDizimista { get => _nomeDizimista; set => SetProperty(ref _nomeDizimista, value); }
+    public string NomeDizimista
+    {
+        get => _nomeDizimista;
+        set => SetProperty(ref _nomeDizimista, value);
+    }
 
-    private Guid _dizimistaId;
-    public Guid DizimistaIdProp { get => _dizimistaId; set => SetProperty(ref _dizimistaId, value); }
+    public Guid DizimistaIdProp
+    {
+        get => _dizimistaId;
+        set => SetProperty(ref _dizimistaId, value);
+    }
 
-    private decimal _valor;
-    public decimal Valor { get => _valor; set => SetProperty(ref _valor, value); }
+    public decimal Valor
+    {
+        get => _valor;
+        set => SetProperty(ref _valor, value);
+    }
 
-    private DateTime? _data = DateTime.Today;
-    public DateTime? DataOferta { get => _data; set => SetProperty(ref _data, value); }
+    public DateTime? DataOferta
+    {
+        get => _data;
+        set => SetProperty(ref _data, value);
+    }
 
-    private string _tipoPagamento = "PIX";
-    public string TipoPagamento { get => _tipoPagamento; set => SetProperty(ref _tipoPagamento, value); }
+    public string TipoPagamento
+    {
+        get => _tipoPagamento;
+        set => SetProperty(ref _tipoPagamento, value);
+    }
 
-    private bool _usarRangoMeses = false;
-    public bool UsarRangoMeses 
-    { 
-        get => _usarRangoMeses; 
+    public bool UsarRangoMeses
+    {
+        get => _usarRangoMeses;
         set => SetProperty(ref _usarRangoMeses, value);
     }
 
-    private int _mesReferencia = DateTime.Today.Month;
-    public int MesRef 
-    { 
-        get => _mesReferencia; 
-        set 
-        { 
+    public int MesRef
+    {
+        get => _mesReferencia;
+        set
+        {
             SetProperty(ref _mesReferencia, value);
             OnPropertyChanged(nameof(MesNomeAtual));
         }
@@ -121,23 +165,20 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         get => _mesReferencia >= 1 && _mesReferencia <= 12 ? _mesesArray[_mesReferencia - 1] : _mesesArray[0];
         set
         {
-            for (int i = 0; i < _mesesArray.Length; i++)
-            {
+            for (var i = 0; i < _mesesArray.Length; i++)
                 if (_mesesArray[i].Equals(value, StringComparison.OrdinalIgnoreCase))
                 {
                     MesRef = i + 1;
                     return;
                 }
-            }
         }
     }
 
-    private int _mesReferenciaFim = DateTime.Today.Month;
-    public int MesRefFim 
-    { 
-        get => _mesReferenciaFim; 
-        set 
-        { 
+    public int MesRefFim
+    {
+        get => _mesReferenciaFim;
+        set
+        {
             SetProperty(ref _mesReferenciaFim, value);
             OnPropertyChanged(nameof(MesNomeAtualFim));
         }
@@ -148,23 +189,20 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         get => _mesReferenciaFim >= 1 && _mesReferenciaFim <= 12 ? _mesesArray[_mesReferenciaFim - 1] : _mesesArray[0];
         set
         {
-            for (int i = 0; i < _mesesArray.Length; i++)
-            {
+            for (var i = 0; i < _mesesArray.Length; i++)
                 if (_mesesArray[i].Equals(value, StringComparison.OrdinalIgnoreCase))
                 {
                     MesRefFim = i + 1;
                     return;
                 }
-            }
         }
     }
 
-    private int _anoReferencia = DateTime.Today.Year;
-    public int AnoRef 
-    { 
-        get => _anoReferencia; 
-        set 
-        { 
+    public int AnoRef
+    {
+        get => _anoReferencia;
+        set
+        {
             SetProperty(ref _anoReferencia, value);
             OnPropertyChanged(nameof(AnoSelecionado));
         }
@@ -175,19 +213,15 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         get => _anoReferencia;
         set
         {
-            if (_anoReferencia != value)
-            {
-                AnoRef = value;
-            }
+            if (_anoReferencia != value) AnoRef = value;
         }
     }
 
-    private int _anoReferenciaFim = DateTime.Today.Year;
-    public int AnoRefFim 
-    { 
-        get => _anoReferenciaFim; 
-        set 
-        { 
+    public int AnoRefFim
+    {
+        get => _anoReferenciaFim;
+        set
+        {
             SetProperty(ref _anoReferenciaFim, value);
             OnPropertyChanged(nameof(AnoSelecionadoFim));
         }
@@ -198,28 +232,55 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         get => _anoReferenciaFim;
         set
         {
-            if (_anoReferenciaFim != value)
-            {
-                AnoRefFim = value;
-            }
+            if (_anoReferenciaFim != value) AnoRefFim = value;
         }
     }
 
-    private bool _isEditMode;
-    public bool IsEditMode { get => _isEditMode; set => SetProperty(ref _isEditMode, value); }
+    public bool IsEditMode
+    {
+        get => _isEditMode;
+        set => SetProperty(ref _isEditMode, value);
+    }
 
-    private bool _dizimistaEncontrado;
-    public bool DizimistaEncontrado { get => _dizimistaEncontrado; set => SetProperty(ref _dizimistaEncontrado, value); }
+    public bool DizimistaEncontrado
+    {
+        get => _dizimistaEncontrado;
+        set => SetProperty(ref _dizimistaEncontrado, value);
+    }
 
-    private bool _dizimistaAtivo;
-    public bool DizimistaAtivo { get => _dizimistaAtivo; set => SetProperty(ref _dizimistaAtivo, value); }
+    public bool DizimistaAtivo
+    {
+        get => _dizimistaAtivo;
+        set => SetProperty(ref _dizimistaAtivo, value);
+    }
 
-    private bool _nomeDizimistaEditable;
     /// <summary>
-    /// Controla se o campo de nome do dizimista pode ser editado
-    /// Fica habilitado quando o dizimista não é encontrado e o usuário opta por criar um novo
+    ///     Controla se o campo de nome do dizimista pode ser editado
+    ///     Fica habilitado quando o dizimista não é encontrado e o usuário opta por criar um novo
     /// </summary>
-    public bool NomeDizimistaEditable { get => _nomeDizimistaEditable; set => SetProperty(ref _nomeDizimistaEditable, value); }
+    public bool NomeDizimistaEditable
+    {
+        get => _nomeDizimistaEditable;
+        set => SetProperty(ref _nomeDizimistaEditable, value);
+    }
+
+    /// <summary>
+    ///     Implementação de INavigationAware - Carrega oferta quando navega para esta página
+    /// </summary>
+    public void OnNavigatedTo(NavigationParameters parameters)
+    {
+        if (parameters.TryGetValue("id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var ofertaId))
+            CarregarOfertaAsync(ofertaId).GetAwaiter().GetResult();
+        else
+            LimparCampos();
+    }
+
+    /// <summary>
+    ///     Implementação de INavigationAware - Limpa estado ao sair da página
+    /// </summary>
+    public void OnNavigatedFrom()
+    {
+    }
 
     [RelayCommand]
     public async Task BuscarDizimistaAsync()
@@ -239,7 +300,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
             {
                 if (!dizimista.Ativo)
                 {
-                    await _dialogService.ShowInfoAsync("Dizimista Inativo", $"O dizimista com código {CodigoDizimista} está inativo.");
+                    await _dialogService.ShowInfoAsync("Dizimista Inativo",
+                        $"O dizimista com código {CodigoDizimista} está inativo.");
                     ResetarDizimista();
                     return;
                 }
@@ -255,8 +317,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                 var confirmar = await _dialogService.ShowConfirmAsync(
                     "Dizimista Não Encontrado",
                     $"Não existe um dizimista com o código {CodigoDizimista}.\n\nDeseja criar um novo dizimista com esse código?",
-                    "Sim, Criar",
-                    "Não");
+                    "Sim, Criar");
 
                 if (confirmar)
                 {
@@ -276,7 +337,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         {
             await _dialogService.ShowErrorAsync($"Erro ao buscar dizimista: {ex.Message}");
             ResetarDizimista();
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao buscar dizimista: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao buscar dizimista: {ex.Message}");
         }
     }
 
@@ -342,7 +403,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         // Validações iniciais
         if (CodigoDizimista <= 0 || !DizimistaAtivo || Valor <= 0)
         {
-            System.Diagnostics.Debug.WriteLine("[ERRO] Validação: dados inválidos");
+            Debug.WriteLine("[ERRO] Validação: dados inválidos");
             return;
         }
 
@@ -354,7 +415,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
 
             if (dataFim < dataInicio)
             {
-                System.Diagnostics.Debug.WriteLine("[ERRO] Período de datas inválido");
+                Debug.WriteLine("[ERRO] Período de datas inválido");
                 return;
             }
         }
@@ -364,7 +425,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         {
             if (string.IsNullOrWhiteSpace(NomeDizimista))
             {
-                System.Diagnostics.Debug.WriteLine("[ERRO] Nome do dizimista não preenchido");
+                Debug.WriteLine("[ERRO] Nome do dizimista não preenchido");
                 return;
             }
 
@@ -391,25 +452,26 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao criar novo dizimista: {ex.Message}");
+                Debug.WriteLine($"[ERRO] Erro ao criar novo dizimista: {ex.Message}");
                 return;
             }
         }
 
         if (!DizimistaEncontrado || DizimistaIdProp == Guid.Empty)
         {
-            System.Diagnostics.Debug.WriteLine("[ERRO] Dizimista inválido");
+            Debug.WriteLine("[ERRO] Dizimista inválido");
             return;
         }
 
         try
         {
             var tipoPagamentoSelecionado = TipoPagamento.Replace("Cartão", "Cartao");
-            TipoPagamento tipoPagamento = (TipoPagamento)Enum.Parse<TipoPagamento>(tipoPagamentoSelecionado);
+            var tipoPagamento = Enum.Parse<TipoPagamento>(tipoPagamentoSelecionado);
 
             if (IsEditMode)
             {
-                await _updateHandler.Handle(new UpdateOfertaCommand(Id, DizimistaIdProp, Valor, DataOferta ?? DateTime.Today, MesRef, AnoRef));
+                await _updateHandler.Handle(new UpdateOfertaCommand(Id, DizimistaIdProp, Valor,
+                    DataOferta ?? DateTime.Today, MesRef, AnoRef));
                 var oferta = await _unitOfWork.Ofertas.GetByIdAsync(Id);
                 if (oferta != null)
                 {
@@ -443,8 +505,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
 
             if (!IsEditMode)
             {
-                System.Diagnostics.Debug.WriteLine("[INFO] Oferta(s) salva(s) com sucesso");
-                
+                Debug.WriteLine("[INFO] Oferta(s) salva(s) com sucesso");
+
                 var criarOutra = await _dialogService.ShowConfirmAsync(
                     "Oferta Criada com Sucesso!",
                     "Deseja cadastrar outra oferta?",
@@ -452,13 +514,9 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                     "Não, Voltar");
 
                 if (criarOutra)
-                {
                     LimparCampos();
-                }
                 else
-                {
                     _navigationService.GoBack();
-                }
             }
             else
             {
@@ -467,23 +525,23 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao salvar oferta: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao salvar oferta: {ex.Message}");
         }
     }
 
     private async Task CriarOfertasRangoAsync(TipoPagamento tipoPagamento)
     {
-        int mesInicio = MesRef;
-        int mesFim = MesRefFim;
-        int anoInicio = AnoRef;
-        int anoFim = AnoRefFim;
+        var mesInicio = MesRef;
+        var mesFim = MesRefFim;
+        var anoInicio = AnoRef;
+        var anoFim = AnoRefFim;
 
-        int qtdMeses = CalcularQuantidadeMeses(mesInicio, mesFim, anoInicio, anoFim);
-        decimal valorPorMes = qtdMeses > 0 ? Valor / qtdMeses : Valor;
+        var qtdMeses = CalcularQuantidadeMeses(mesInicio, mesFim, anoInicio, anoFim);
+        var valorPorMes = qtdMeses > 0 ? Valor / qtdMeses : Valor;
 
-        int mesTemp = mesInicio;
-        int anoTemp = anoInicio;
-        
+        var mesTemp = mesInicio;
+        var anoTemp = anoInicio;
+
         while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
         {
             var novaOferta = new Oferta
@@ -497,7 +555,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                 TipoPagamento = tipoPagamento
             };
             await _unitOfWork.Ofertas.AddAsync(novaOferta);
-            
+
             mesTemp++;
             if (mesTemp > 12)
             {
@@ -505,15 +563,15 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                 anoTemp++;
             }
         }
-        
+
         await _unitOfWork.SaveChangesAsync();
     }
 
     private static int CalcularQuantidadeMeses(int mesInicio, int mesFim, int anoInicio, int anoFim)
     {
-        int qtdMeses = 0;
-        int mesTemp = mesInicio;
-        int anoTemp = anoInicio;
+        var qtdMeses = 0;
+        var mesTemp = mesInicio;
+        var anoTemp = anoInicio;
 
         while (anoTemp < anoFim || (anoTemp == anoFim && mesTemp <= mesFim))
         {
@@ -528,6 +586,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
 
         return qtdMeses;
     }
+
     [RelayCommand]
     public void Voltar()
     {
@@ -537,7 +596,7 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao voltar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao voltar: {ex.Message}");
         }
     }
 
@@ -545,19 +604,17 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
     public async Task ExcluirAsync()
     {
         if (IsEditMode && Id != Guid.Empty)
-        {
             try
             {
                 await _unitOfWork.Ofertas.DeleteAsync(Id);
                 await _unitOfWork.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine("[INFO] Oferta excluída com sucesso");
+                Debug.WriteLine("[INFO] Oferta excluída com sucesso");
                 _navigationService.GoBack();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao excluir oferta: {ex.Message}");
+                Debug.WriteLine($"[ERRO] Erro ao excluir oferta: {ex.Message}");
             }
-        }
     }
 
     [RelayCommand]
@@ -565,23 +622,24 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
-            
+            Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
+
             var fileName = $"oferta_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
+
+            if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
-                    
+
                     if (storageProvider != null)
                     {
-                        var file = await storageProvider.SaveFilePickerAsync(new()
+                        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                         {
                             Title = "Salvar Planilha Modelo",
                             DefaultExtension = "xlsx",
-                            FileTypeChoices = new[] { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                            FileTypeChoices = new[]
+                                { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
                             SuggestedFileName = fileName
                         });
 
@@ -590,16 +648,15 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                             var excelStream = OfertaExcelService.GerarModelo();
                             await using var fileStream = await file.OpenWriteAsync();
                             await fileStream.WriteAsync(excelStream.ToArray());
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
+                            Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
                             return;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                    Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                 }
-            }
 
             // Fallback: salvar em Downloads
             var excelStreamFallback = OfertaExcelService.GerarModelo();
@@ -613,11 +670,11 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStreamFallback.ToArray());
 
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
+            Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
         }
     }
 
@@ -626,26 +683,27 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
-            
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
+            Debug.WriteLine("[INFO] ImportarAsync iniciado");
+
+            if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
                     if (storageProvider != null)
                     {
-                        var files = await storageProvider.OpenFilePickerAsync(new()
+                        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                         {
                             Title = "Selecionar Planilha para Importar",
                             AllowMultiple = false,
-                            FileTypeFilter = new[] { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
+                            FileTypeFilter = new[]
+                                { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
                         });
 
                         if (files.Count > 0)
                         {
                             var file = files[0];
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
+                            Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
 
                             await using var stream = await file.OpenReadAsync();
                             using var memoryStream = new MemoryStream();
@@ -654,24 +712,23 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
 
                             var excelService = new OfertaExcelService(_unitOfWork);
                             var resultado = await excelService.ImportarAsync(excelBytes);
-                            
+
                             if (resultado.OfertasImportadas.Count == 0)
                             {
-                                var mensagemErro = resultado.Erros.Count > 0 
+                                var mensagemErro = resultado.Erros.Count > 0
                                     ? $"Nenhuma oferta foi importada.\n\nErros:\n{string.Join("\n", resultado.Erros.Take(5))}{(resultado.Erros.Count > 5 ? $"\n... e mais {resultado.Erros.Count - 5} erro(s)" : "")}"
                                     : "Nenhuma oferta foi encontrada no arquivo.";
-                                    
+
                                 await _dialogService.ShowAlertAsync("Importação", mensagemErro);
                                 return;
                             }
 
-                            System.Diagnostics.Debug.WriteLine($"[INFO] {resultado.OfertasImportadas.Count} ofertas lidas da planilha");
+                            Debug.WriteLine($"[INFO] {resultado.OfertasImportadas.Count} ofertas lidas da planilha");
 
-                            int sucessos = 0;
-                            int erros = resultado.Erros.Count;
+                            var sucessos = 0;
+                            var erros = resultado.Erros.Count;
 
                             foreach (var oferta in resultado.OfertasImportadas)
-                            {
                                 try
                                 {
                                     await _unitOfWork.Ofertas.AddAsync(oferta);
@@ -680,9 +737,8 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                                 catch (Exception ex)
                                 {
                                     erros++;
-                                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar oferta: {ex.Message}");
+                                    Debug.WriteLine($"[ERRO] Erro ao importar oferta: {ex.Message}");
                                 }
-                            }
 
                             try
                             {
@@ -690,12 +746,12 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                             }
                             catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao salvar ofertas: {ex.Message}");
+                                Debug.WriteLine($"[ERRO] Erro ao salvar ofertas: {ex.Message}");
                                 await _dialogService.ShowErrorAsync($"Erro ao salvar ofertas: {ex.Message}");
                                 return;
                             }
 
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
+                            Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
 
                             var mensagem = $"Importação concluída!\n\n✓ {sucessos} oferta(s) importada(s) com sucesso";
                             if (erros > 0)
@@ -710,53 +766,26 @@ public partial class OfertaCadastroViewModel : ObservableObject, INavigationAwar
                                 "Voltar para Lista");
 
                             if (!result)
-                            {
                                 _navigationService.GoBack();
-                            }
                             else
-                            {
                                 LimparCampos();
-                            }
                             return;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                    Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                     await _dialogService.ShowErrorAsync($"Erro ao abrir file picker: {ex.Message}");
                 }
-            }
 
-            System.Diagnostics.Debug.WriteLine("[ERRO] StorageProvider não disponível");
+            Debug.WriteLine("[ERRO] StorageProvider não disponível");
             await _dialogService.ShowErrorAsync("StorageProvider não disponível");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Erro ao importar: {ex.Message}");
         }
-    }
-
-    /// <summary>
-    /// Implementação de INavigationAware - Carrega oferta quando navega para esta página
-    /// </summary>
-    public void OnNavigatedTo(NavigationParameters parameters)
-    {
-        if (parameters.TryGetValue("id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var ofertaId))
-        {
-            CarregarOfertaAsync(ofertaId).GetAwaiter().GetResult();
-        }
-        else
-        {
-            LimparCampos();
-        }
-    }
-
-    /// <summary>
-    /// Implementação de INavigationAware - Limpa estado ao sair da página
-    /// </summary>
-    public void OnNavigatedFrom()
-    {
     }
 }

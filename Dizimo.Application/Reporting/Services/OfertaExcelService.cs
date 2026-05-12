@@ -1,7 +1,7 @@
+using System.Globalization;
+using ClosedXML.Excel;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using ClosedXML.Excel;
-using System.Globalization;
 
 namespace Dizimo.Application.Reporting.Services;
 
@@ -9,7 +9,8 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
+    public async Task<MemoryStream> ExportarAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null,
+        DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
         // Se nenhuma lista for passada, busca todas as ofertas
         if (ofertas == null)
@@ -35,31 +36,28 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
 
         // Filtro de tipo de pagamento
         if (!string.IsNullOrWhiteSpace(tipoPagamento) && tipoPagamento != "Todos")
-        {
             if (Enum.TryParse<TipoPagamento>(tipoPagamento, out var tipo))
                 ofertasFiltradas = ofertasFiltradas.Where(o => o.TipoPagamento == tipo);
-        }
 
         // Filtro de nome do dizimista (usando dicionário em memória)
         if (!string.IsNullOrWhiteSpace(filtroNome))
-        {
             ofertasFiltradas = ofertasFiltradas.Where(oferta =>
             {
                 if (dicionarioDizimistas.TryGetValue(oferta.DizimistaId, out var dizimista))
-                {
                     return dizimista.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
                            dizimista.NumeroCadastro.ToString().Contains(filtroNome);
-                }
                 return false;
             });
-        }
 
         // Aplicar a mesma ordenação que a página: OrderByDescending(o => o.Data).ThenBy(o => o.DizimistaId).ThenBy(o => o.AnoReferencia).ThenBy(o => o.MesReferencia)
-        ofertas = [.. ofertasFiltradas
-            .OrderByDescending(o => o.Data)
-            .ThenBy(o => o.DizimistaId)
-            .ThenBy(o => o.AnoReferencia)
-            .ThenBy(o => o.MesReferencia)];
+        ofertas =
+        [
+            .. ofertasFiltradas
+                .OrderByDescending(o => o.Data)
+                .ThenBy(o => o.DizimistaId)
+                .ThenBy(o => o.AnoReferencia)
+                .ThenBy(o => o.MesReferencia)
+        ];
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Ofertas");
@@ -82,8 +80,8 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
 
         // Dados
         decimal totalValor = 0;
-        int rowNumber = 2;
-        
+        var rowNumber = 2;
+
         foreach (var o in ofertas)
         {
             var codigoDizimista = "";
@@ -161,13 +159,9 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
         worksheet.Cell(2, 6).Value = "PIX";
 
         // Linhas em branco para o usuário preencher (5 linhas)
-        for (int i = 3; i <= 7; i++)
-        {
-            for (int j = 1; j <= 6; j++)
-            {
+        for (var i = 3; i <= 7; i++)
+            for (var j = 1; j <= 6; j++)
                 worksheet.Cell(i, j).Value = "";
-            }
-        }
 
         // Ajustar largura das colunas
         worksheet.Column(1).Width = 20;
@@ -186,12 +180,6 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
         return stream;
     }
 
-    public class ResultadoImportacao
-    {
-        public List<Oferta> OfertasImportadas { get; set; } = [.. new List<Oferta>()];
-        public List<string> Erros { get; set; } = [.. new List<string>()];
-    }
-
     public async Task<ResultadoImportacao> ImportarAsync(byte[] excelBytes)
     {
         var resultado = new ResultadoImportacao();
@@ -202,22 +190,20 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
 
         var dizimistas = await _unitOfWork.Dizimistas.GetAllAsync();
 
-        int numeroLinha = 2; // Começa em 2 (linha 1 é cabeçalho)
-        int lastRow = 1;
+        var numeroLinha = 2; // Começa em 2 (linha 1 é cabeçalho)
+        var lastRow = 1;
         var lastRowUsed = worksheet.LastRowUsed();
-        if (lastRowUsed != null)
-        {
-            lastRow = lastRowUsed.RowNumber();
-        }
+        if (lastRowUsed != null) lastRow = lastRowUsed.RowNumber();
 
-        for (int rowNumber = 2; rowNumber <= lastRow; rowNumber++)
+        for (var rowNumber = 2; rowNumber <= lastRow; rowNumber++)
         {
             var codigoDizimistaCell = worksheet.Cell(rowNumber, 1).GetValue<string>();
             if (string.IsNullOrWhiteSpace(codigoDizimistaCell)) continue;
 
             if (!int.TryParse(codigoDizimistaCell.Trim(), out var codigoDizimista))
             {
-                resultado.Erros.Add($"Linha {numeroLinha}: Código do dizimista '{codigoDizimistaCell.Trim()}' é inválido (deve ser um número)");
+                resultado.Erros.Add(
+                    $"Linha {numeroLinha}: Código do dizimista '{codigoDizimistaCell.Trim()}' é inválido (deve ser um número)");
                 numeroLinha++;
                 continue;
             }
@@ -225,7 +211,8 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
             var dizimista = dizimistas.FirstOrDefault(d => d.NumeroCadastro == codigoDizimista);
             if (dizimista == null)
             {
-                resultado.Erros.Add($"Linha {numeroLinha}: Dizimista com código {codigoDizimista} não encontrado no sistema");
+                resultado.Erros.Add(
+                    $"Linha {numeroLinha}: Dizimista com código {codigoDizimista} não encontrado no sistema");
                 numeroLinha++;
                 continue;
             }
@@ -239,20 +226,22 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
             }
 
             var dataCell = worksheet.Cell(rowNumber, 3).GetValue<string>();
-            if (!DateTime.TryParseExact(dataCell.Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data))
-            {
+            if (!DateTime.TryParseExact(dataCell.Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out var data))
                 if (!DateTime.TryParse(dataCell.Trim(), out data))
                 {
-                    resultado.Erros.Add($"Linha {numeroLinha}: Data '{dataCell.Trim()}' está em formato inválido (use dd/mm/yyyy)");
+                    resultado.Erros.Add(
+                        $"Linha {numeroLinha}: Data '{dataCell.Trim()}' está em formato inválido (use dd/mm/yyyy)");
                     numeroLinha++;
                     continue;
                 }
-            }
 
             var mesReferenciaCell = worksheet.Cell(rowNumber, 4).GetValue<string>();
-            if (!int.TryParse(mesReferenciaCell.Trim(), out var mesReferencia) || mesReferencia < 1 || mesReferencia > 12)
+            if (!int.TryParse(mesReferenciaCell.Trim(), out var mesReferencia) || mesReferencia < 1 ||
+                mesReferencia > 12)
             {
-                resultado.Erros.Add($"Linha {numeroLinha}: Mês de referência '{mesReferenciaCell.Trim()}' é inválido (deve ser entre 1 e 12)");
+                resultado.Erros.Add(
+                    $"Linha {numeroLinha}: Mês de referência '{mesReferenciaCell.Trim()}' é inválido (deve ser entre 1 e 12)");
                 numeroLinha++;
                 continue;
             }
@@ -267,21 +256,28 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
 
             // Ler tipo de pagamento (coluna 6)
             var tipoPagamentoCell = worksheet.Cell(rowNumber, 6).GetValue<string>();
-            TipoPagamento tipoPagamento = TipoPagamento.Dinheiro; // Default é Dinheiro
+            var tipoPagamento = TipoPagamento.Dinheiro; // Default é Dinheiro
 
             if (!string.IsNullOrWhiteSpace(tipoPagamentoCell))
             {
                 var tipoPagamentoTrimmed = tipoPagamentoCell.Trim();
                 if (tipoPagamentoTrimmed.Equals("PIX", StringComparison.OrdinalIgnoreCase))
+                {
                     tipoPagamento = TipoPagamento.PIX;
+                }
                 else if (tipoPagamentoTrimmed.Equals("Dinheiro", StringComparison.OrdinalIgnoreCase))
+                {
                     tipoPagamento = TipoPagamento.Dinheiro;
-                else if (tipoPagamentoTrimmed.Equals("Cartão", StringComparison.OrdinalIgnoreCase) || 
+                }
+                else if (tipoPagamentoTrimmed.Equals("Cartão", StringComparison.OrdinalIgnoreCase) ||
                          tipoPagamentoTrimmed.Equals("Cartao", StringComparison.OrdinalIgnoreCase))
+                {
                     tipoPagamento = TipoPagamento.Cartao;
+                }
                 else
                 {
-                    resultado.Erros.Add($"Linha {numeroLinha}: Tipo de pagamento '{tipoPagamentoCell.Trim()}' é inválido (use PIX, Dinheiro ou Cartão)");
+                    resultado.Erros.Add(
+                        $"Linha {numeroLinha}: Tipo de pagamento '{tipoPagamentoCell.Trim()}' é inválido (use PIX, Dinheiro ou Cartão)");
                     numeroLinha++;
                     continue;
                 }
@@ -303,5 +299,10 @@ public class OfertaExcelService(IUnitOfWork unitOfWork)
 
         return resultado;
     }
-}
 
+    public class ResultadoImportacao
+    {
+        public List<Oferta> OfertasImportadas { get; set; } = [];
+        public List<string> Erros { get; set; } = [];
+    }
+}

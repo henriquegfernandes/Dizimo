@@ -1,15 +1,17 @@
-using System;
+using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using Dizimo.Application.Dizimistas.Commands;
-using System.Threading.Tasks;
 
 namespace Dizimo.Application.Dizimistas.Handlers;
 
 public class CreateDizimistaHandler
 {
     private readonly IUnitOfWork _unitOfWork;
-    public CreateDizimistaHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public CreateDizimistaHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task<Guid> Handle(CreateDizimistaCommand command)
     {

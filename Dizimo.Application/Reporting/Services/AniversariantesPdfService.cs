@@ -1,6 +1,7 @@
+using System.Diagnostics;
+using System.Text;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using System.Text;
 
 namespace Dizimo.Application.Reporting.Services;
 
@@ -41,12 +42,14 @@ public class AniversariantesPdfService(IUnitOfWork unitOfWork)
         sb.AppendLine("h1 { text-align: center; color: #333; margin-bottom: 10px; }");
         sb.AppendLine("h2 { text-align: center; color: #666; font-size: 16px; margin-bottom: 30px; }");
         sb.AppendLine("table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #999; }");
-        sb.AppendLine("th { background-color: #4CAF50; color: white; padding: 12px; border: 1px solid #999; text-align: left; font-weight: bold; }");
+        sb.AppendLine(
+            "th { background-color: #4CAF50; color: white; padding: 12px; border: 1px solid #999; text-align: left; font-weight: bold; }");
         sb.AppendLine("td { padding: 10px; border: 1px solid #ddd; }");
         sb.AppendLine("tr:nth-child(even) { background-color: #f9f9f9; }");
         sb.AppendLine("tr:hover { background-color: #f0f0f0; }");
         sb.AppendLine(".text-center { text-align: center; }");
-        sb.AppendLine(".summary-birthday { margin-top: 40px; padding: 20px; background-color: #fff3e0; border: 2px solid #ff9800; border-radius: 5px; }");
+        sb.AppendLine(
+            ".summary-birthday { margin-top: 40px; padding: 20px; background-color: #fff3e0; border: 2px solid #ff9800; border-radius: 5px; }");
         sb.AppendLine(".summary-birthday h2 { text-align: center; color: #333; margin: 0 0 20px 0; font-size: 20px; }");
         sb.AppendLine(".birthday-content { text-align: center; }");
         sb.AppendLine(".birthday-content p { margin: 10px 0; font-size: 16px; font-weight: bold; }");
@@ -100,7 +103,7 @@ public class AniversariantesPdfService(IUnitOfWork unitOfWork)
             sb.AppendLine("<h2>🎂 Resumo Final</h2>");
             sb.AppendLine("<div class='birthday-content'>");
             sb.AppendLine($"<p>Total de aniversariantes: {aniversariantes.Count}</p>");
-            sb.AppendLine($"<div class='birthday-total'>Parabéns a todos!</div>");
+            sb.AppendLine("<div class='birthday-total'>Parabéns a todos!</div>");
             sb.AppendLine("</div>");
             sb.AppendLine("</div>");
 
@@ -126,7 +129,7 @@ public class AniversariantesPdfService(IUnitOfWork unitOfWork)
     private static MemoryStream ConvertHtmlToPdf(string html)
     {
         var stream = new MemoryStream();
-        
+
         try
         {
             var htmlBytes = Encoding.UTF8.GetBytes(html);
@@ -135,11 +138,10 @@ public class AniversariantesPdfService(IUnitOfWork unitOfWork)
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Erro ao gerar PDF: {ex.Message}");
+            Debug.WriteLine($"Erro ao gerar PDF: {ex.Message}");
             stream.Position = 0;
         }
 
         return stream;
     }
 }
-

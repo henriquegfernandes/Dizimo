@@ -1,7 +1,7 @@
+using System.Diagnostics;
+using System.Text;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using System.Globalization;
-using System.Text;
 
 namespace Dizimo.Application.Reporting.Services;
 
@@ -9,7 +9,8 @@ public class OfertaPdfService(IUnitOfWork unitOfWork)
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    public async Task<MemoryStream> ImprimirAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
+    public async Task<MemoryStream> ImprimirAsync(List<Oferta>? ofertas = null, DateTime? dataInicio = null,
+        DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
         // Se nenhuma lista for passada, busca todas as ofertas
         if (ofertas == null)
@@ -43,17 +44,13 @@ public class OfertaPdfService(IUnitOfWork unitOfWork)
 
         // Filtro de nome do dizimista (usando dicionário em memória)
         if (!string.IsNullOrWhiteSpace(filtroNome))
-        {
             ofertasFiltradas = ofertasFiltradas.Where(oferta =>
             {
                 if (dicionarioDizimistas.TryGetValue(oferta.DizimistaId, out var dizimista))
-                {
                     return dizimista.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
                            dizimista.NumeroCadastro.ToString().Contains(filtroNome);
-                }
                 return false;
             });
-        }
 
         ofertas = [.. ofertasFiltradas];
 
@@ -82,12 +79,14 @@ public class OfertaPdfService(IUnitOfWork unitOfWork)
         sb.AppendLine("body { font-family: Arial, sans-serif; margin: 20px; }");
         sb.AppendLine("h1 { text-align: center; color: #333; margin-bottom: 30px; }");
         sb.AppendLine("table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #999; }");
-        sb.AppendLine("th { background-color: #d3d3d3; padding: 10px; border: 1px solid #999; text-align: left; font-weight: bold; }");
+        sb.AppendLine(
+            "th { background-color: #d3d3d3; padding: 10px; border: 1px solid #999; text-align: left; font-weight: bold; }");
         sb.AppendLine("td { padding: 8px; border: 1px solid #ddd; }");
         sb.AppendLine("tr:nth-child(even) { background-color: #f9f9f9; }");
         sb.AppendLine(".text-center { text-align: center; }");
         sb.AppendLine(".text-right { text-align: right; }");
-        sb.AppendLine(".total-container { margin-top: 40px; padding: 20px; background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 5px; }");
+        sb.AppendLine(
+            ".total-container { margin-top: 40px; padding: 20px; background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 5px; }");
         sb.AppendLine(".total-container h2 { text-align: center; color: #333; margin-bottom: 20px; }");
         sb.AppendLine(".total-summary { text-align: center; }");
         sb.AppendLine(".total-summary p { margin: 10px 0; font-size: 16px; font-weight: bold; }");
@@ -175,15 +174,20 @@ public class OfertaPdfService(IUnitOfWork unitOfWork)
             stream.Position = 0;
 
             // Limpeza
-            try { File.Delete(tempHtmlPath); } catch { }
+            try
+            {
+                File.Delete(tempHtmlPath);
+            }
+            catch
+            {
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Erro ao gerar PDF: {ex.Message}");
+            Debug.WriteLine($"Erro ao gerar PDF: {ex.Message}");
             stream.Position = 0;
         }
 
         return stream;
     }
 }
-

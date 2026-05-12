@@ -1,39 +1,40 @@
-namespace Dizimo.Services
+using System.Diagnostics;
+
+namespace Dizimo.Services;
+
+/// <summary>
+///     Modal Error Handler com logging
+/// </summary>
+public class ModalErrorHandler : IErrorHandler
 {
-    /// <summary>
-    /// Modal Error Handler com logging
-    /// </summary>
-    public class ModalErrorHandler : IErrorHandler
+    private readonly IDialogService _dialogService;
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
+
+    public ModalErrorHandler(IDialogService? dialogService = null)
     {
-        private readonly IDialogService _dialogService;
-        private SemaphoreSlim _semaphore = new(1, 1);
+        _dialogService = dialogService ?? new DialogService();
+    }
 
-        public ModalErrorHandler(IDialogService? dialogService = null)
+    /// <summary>
+    ///     Handle error in UI com logging.
+    /// </summary>
+    /// <param name="ex">Exception.</param>
+    public void HandleError(Exception ex)
+    {
+        Debug.WriteLine($"[ERROR] {ex.Message}");
+        DisplayErrorAsync(ex).FireAndForgetSafeAsync();
+    }
+
+    private async Task DisplayErrorAsync(Exception ex)
+    {
+        try
         {
-            _dialogService = dialogService ?? new DialogService();
+            await _semaphore.WaitAsync();
+            await _dialogService.ShowErrorAsync(ex.Message);
         }
-
-        /// <summary>
-        /// Handle error in UI com logging.
-        /// </summary>
-        /// <param name="ex">Exception.</param>
-        public void HandleError(Exception ex)
+        finally
         {
-            System.Diagnostics.Debug.WriteLine($"[ERROR] {ex.Message}");
-            DisplayErrorAsync(ex).FireAndForgetSafeAsync();
-        }
-
-        private async Task DisplayErrorAsync(Exception ex)
-        {
-            try
-            {
-                await _semaphore.WaitAsync();
-                await _dialogService.ShowErrorAsync(ex.Message);
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
+            _semaphore.Release();
         }
     }
 }

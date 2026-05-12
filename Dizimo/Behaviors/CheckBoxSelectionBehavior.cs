@@ -1,14 +1,13 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Diagnostics;
+using Avalonia.Interactivity;
 
 namespace Dizimo.Behaviors;
 
 /// <summary>
-/// Behavior genérico que sincroniza CheckBox com uma coleção de selecionados
-/// Funciona com qualquer tipo de entidade (Dizimista, Usuario, Oferta, etc)
+///     Behavior genérico que sincroniza CheckBox com uma coleção de selecionados
+///     Funciona com qualquer tipo de entidade (Dizimista, Usuario, Oferta, etc)
 /// </summary>
 public class CheckBoxSelectionBehavior : AvaloniaObject
 {
@@ -18,19 +17,33 @@ public class CheckBoxSelectionBehavior : AvaloniaObject
     public static readonly AttachedProperty<IList?> SelectedItemsProperty =
         AvaloniaProperty.RegisterAttached<CheckBoxSelectionBehavior, Control, IList?>("SelectedItems");
 
-    private static Dictionary<CheckBox, EventHandler<RoutedEventArgs>> _checkBoxHandlers = new();
-    private static Dictionary<CheckBox, NotifyCollectionChangedEventHandler> _collectionHandlers = new();
-
-    public static object? GetItem(Control control) => control.GetValue(ItemProperty);
-    public static void SetItem(Control control, object? value) => control.SetValue(ItemProperty, value);
-
-    public static IList? GetSelectedItems(Control control) => control.GetValue(SelectedItemsProperty);
-    public static void SetSelectedItems(Control control, IList? value) => control.SetValue(SelectedItemsProperty, value);
+    private static readonly Dictionary<CheckBox, EventHandler<RoutedEventArgs>> _checkBoxHandlers = new();
+    private static readonly Dictionary<CheckBox, NotifyCollectionChangedEventHandler> _collectionHandlers = new();
 
     static CheckBoxSelectionBehavior()
     {
         ItemProperty.Changed.AddClassHandler<CheckBox>((cb, e) => OnItemChanged(cb, e));
         SelectedItemsProperty.Changed.AddClassHandler<CheckBox>((cb, e) => OnSelectedItemsChanged(cb, e));
+    }
+
+    public static object? GetItem(Control control)
+    {
+        return control.GetValue(ItemProperty);
+    }
+
+    public static void SetItem(Control control, object? value)
+    {
+        control.SetValue(ItemProperty, value);
+    }
+
+    public static IList? GetSelectedItems(Control control)
+    {
+        return control.GetValue(SelectedItemsProperty);
+    }
+
+    public static void SetSelectedItems(Control control, IList? value)
+    {
+        control.SetValue(SelectedItemsProperty, value);
     }
 
     private static void OnItemChanged(CheckBox cb, AvaloniaPropertyChangedEventArgs e)
@@ -66,13 +79,13 @@ public class CheckBoxSelectionBehavior : AvaloniaObject
             _checkBoxHandlers[cb] = checkBoxHandler;
         }
 
-        System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] Coleção configurada para CheckBox");
+        Debug.WriteLine("[CheckBoxSync] Coleção configurada para CheckBox");
         UpdateBinding(cb);
     }
 
     private static void OnCollectionChanged(CheckBox cb)
     {
-        System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] Coleção foi alterada, atualizando CheckBox");
+        Debug.WriteLine("[CheckBoxSync] Coleção foi alterada, atualizando CheckBox");
         UpdateBinding(cb);
     }
 
@@ -83,18 +96,18 @@ public class CheckBoxSelectionBehavior : AvaloniaObject
 
         if (item == null || selecionados == null)
         {
-            System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] Item ou coleção é null");
+            Debug.WriteLine("[CheckBoxSync] Item ou coleção é null");
             return;
         }
 
-        System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] CheckBox mudou para {cb.IsChecked}");
+        Debug.WriteLine($"[CheckBoxSync] CheckBox mudou para {cb.IsChecked}");
 
         if (cb.IsChecked == true)
         {
             if (!selecionados.Contains(item))
             {
                 selecionados.Add(item);
-                System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] Item adicionado à coleção");
+                Debug.WriteLine("[CheckBoxSync] Item adicionado à coleção");
             }
         }
         else if (cb.IsChecked == false)
@@ -102,7 +115,7 @@ public class CheckBoxSelectionBehavior : AvaloniaObject
             if (selecionados.Contains(item))
             {
                 selecionados.Remove(item);
-                System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] Item removido da coleção");
+                Debug.WriteLine("[CheckBoxSync] Item removido da coleção");
             }
         }
     }
@@ -118,10 +131,9 @@ public class CheckBoxSelectionBehavior : AvaloniaObject
             if (cb.IsChecked != isSelected)
             {
                 cb.IsChecked = isSelected;
-                System.Diagnostics.Debug.WriteLine($"[CheckBoxSync] Estado visual atualizado - IsChecked: {cb.IsChecked}, Count na coleção: {selecionados.Count}");
+                Debug.WriteLine(
+                    $"[CheckBoxSync] Estado visual atualizado - IsChecked: {cb.IsChecked}, Count na coleção: {selecionados.Count}");
             }
         }
     }
 }
-
-

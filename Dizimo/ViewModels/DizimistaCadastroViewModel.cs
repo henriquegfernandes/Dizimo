@@ -1,133 +1,151 @@
+using System.Diagnostics;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dizimo.Domain.Entities;
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Dizimistas.Commands;
 using Dizimo.Application.Dizimistas.Handlers;
 using Dizimo.Application.Dizimistas.Queries;
-using Dizimo.Services;
 using Dizimo.Application.Reporting.Services;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
-using System.IO;
+using Dizimo.Domain.Entities;
 
 namespace Dizimo.ViewModels;
 
-public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHandler, UpdateDizimistaHandler updateHandler, GetDizimistaHandlers getHandler, INavigationService navigationService, IDialogService dialogService) : ObservableObject, INavigationAware
+public partial class DizimistaCadastroViewModel(
+    CreateDizimistaHandler createHandler,
+    UpdateDizimistaHandler updateHandler,
+    GetDizimistaHandlers getHandler,
+    INavigationService navigationService,
+    IDialogService dialogService) : ObservableObject, INavigationAware
 {
     private readonly CreateDizimistaHandler _createHandler = createHandler;
-    private readonly UpdateDizimistaHandler _updateHandler = updateHandler;
+    private readonly IDialogService _dialogService = dialogService;
     private readonly GetDizimistaHandlers _getHandler = getHandler;
     private readonly INavigationService _navigationService = navigationService;
-    private readonly IDialogService _dialogService = dialogService;
+    private readonly UpdateDizimistaHandler _updateHandler = updateHandler;
+
+    private bool _ativo = true;
+
+    private string _bairro = string.Empty;
+
+    private string _cep = string.Empty;
+
+    private string _cidade = "Osasco";
+
+    private string _complemento = string.Empty;
+
+    private DateTime _dataCadastro = DateTime.Today;
+
+    private DateTime _dataNascimento = DateTime.Today;
+
+    private Guid _id;
+
+    private bool _isEditMode;
+
+    private string _nome = string.Empty;
+
+    private string _numero = string.Empty;
 
     private int _numeroCadastro;
+
+    private string _rua = string.Empty;
+
+    private string _telefone = string.Empty;
+
+    private string _uf = "SP";
+
+    private string _whatsapp = string.Empty;
+
     public int NumeroCadastro
     {
         get => _numeroCadastro;
         set => SetProperty(ref _numeroCadastro, value);
     }
 
-    private string _nome = string.Empty;
     public string Nome
     {
         get => _nome;
         set => SetProperty(ref _nome, value);
     }
 
-    private DateTime _dataNascimento = DateTime.Today;
     public DateTime DataNascimento
     {
         get => _dataNascimento;
         set => SetProperty(ref _dataNascimento, value);
     }
 
-    private bool _ativo = true;
     public bool Ativo
     {
         get => _ativo;
         set => SetProperty(ref _ativo, value);
     }
 
-    private Guid _id;
     public Guid Id
     {
         get => _id;
         set => SetProperty(ref _id, value);
     }
 
-    private bool _isEditMode;
     public bool IsEditMode
     {
         get => _isEditMode;
         set => SetProperty(ref _isEditMode, value);
     }
 
-    private string _telefone = string.Empty;
     public string Telefone
     {
         get => _telefone;
         set => SetProperty(ref _telefone, value);
     }
 
-    private string _whatsapp = string.Empty;
     public string Whatsapp
     {
         get => _whatsapp;
         set => SetProperty(ref _whatsapp, value);
     }
 
-    private DateTime _dataCadastro = DateTime.Today;
     public DateTime DataCadastro
     {
         get => _dataCadastro;
         set => SetProperty(ref _dataCadastro, value);
     }
 
-    private string _rua = string.Empty;
     public string Rua
     {
         get => _rua;
         set => SetProperty(ref _rua, value);
     }
 
-    private string _numero = string.Empty;
     public string Numero
     {
         get => _numero;
         set => SetProperty(ref _numero, value);
     }
 
-    private string _bairro = string.Empty;
     public string Bairro
     {
         get => _bairro;
         set => SetProperty(ref _bairro, value);
     }
 
-    private string _cidade = "Osasco";
     public string Cidade
     {
         get => _cidade;
         set => SetProperty(ref _cidade, value);
     }
 
-    private string _uf = "SP";
     public string Uf
     {
         get => _uf;
         set => SetProperty(ref _uf, value);
     }
 
-    private string _cep = string.Empty;
     public string Cep
     {
         get => _cep;
         set => SetProperty(ref _cep, value);
     }
 
-    private string _complemento = string.Empty;
     public string Complemento
     {
         get => _complemento;
@@ -136,7 +154,8 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
     public List<string> EstadosBrasileiros { get; } =
     [
-        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+        "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
     ];
 
     public Endereco Endereco => new()
@@ -150,74 +169,11 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
         CEP = Cep
     };
 
-    /// <summary>
-    /// Remove caracteres especiais de campos numericos
-    /// </summary>
-    private void LimparCamposNumericos()
-    {
-        // Remove caracteres nao numericos do telefone
-        Telefone = new string([.. Telefone.Where(char.IsDigit)]);
-        
-        // Remove caracteres nao numericos do whatsapp
-        Whatsapp = new string([.. Whatsapp.Where(char.IsDigit)]);
-        
-        // Remove caracteres nao numericos do CEP
-        Cep = new string([.. Cep.Where(char.IsDigit)]);
-        
-        // Remove caracteres nao numericos do numero
-        Numero = new string([.. Numero.Where(char.IsDigit)]);
-    }
-
-    /// <summary>
-    /// Valida os campos de telefone, whatsapp e CEP
-    /// </summary>
-    /// <returns>Mensagem de erro, ou null se valido</returns>
-    private string? ValidarCampos()
-    {
-        // Contar apenas digitos do telefone
-        var telefoneLimpo = new string([.. Telefone.Where(char.IsDigit)]);
-        
-        // Contar apenas digitos do whatsapp
-        var whatsappLimpo = new string([.. Whatsapp.Where(char.IsDigit)]);
-        
-        // Contar apenas digitos do CEP
-        var cepLimpo = new string([.. Cep.Where(char.IsDigit)]);
-
-        // Validar telefone
-        if (!string.IsNullOrWhiteSpace(telefoneLimpo))
-        {
-            if (telefoneLimpo.Length < 10 || telefoneLimpo.Length > 11)
-            {
-                return "Telefone deve conter entre 10 e 11 digitos.";
-            }
-        }
-
-        // Validar whatsapp
-        if (!string.IsNullOrWhiteSpace(whatsappLimpo))
-        {
-            if (whatsappLimpo.Length < 10 || whatsappLimpo.Length > 11)
-            {
-                return "WhatsApp deve conter entre 10 e 11 digitos.";
-            }
-        }
-
-        // Validar CEP
-        if (!string.IsNullOrWhiteSpace(cepLimpo))
-        {
-            if (cepLimpo.Length != 8)
-            {
-                return "CEP deve conter exatamente 8 digitos.";
-            }
-        }
-
-        return null;
-    }
-
     public async void OnNavigatedTo(NavigationParameters parameters)
     {
         // Tenta extrair o ID do parâmetro de navegação
         Guid? dizimistaId = null;
-        
+
         if (parameters != null && parameters.TryGetValue("id", out var idObj))
         {
             if (idObj is Guid guidId)
@@ -260,6 +216,57 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
         // Lógica ao sair da página se necessário
     }
 
+    /// <summary>
+    ///     Remove caracteres especiais de campos numericos
+    /// </summary>
+    private void LimparCamposNumericos()
+    {
+        // Remove caracteres nao numericos do telefone
+        Telefone = new string([.. Telefone.Where(char.IsDigit)]);
+
+        // Remove caracteres nao numericos do whatsapp
+        Whatsapp = new string([.. Whatsapp.Where(char.IsDigit)]);
+
+        // Remove caracteres nao numericos do CEP
+        Cep = new string([.. Cep.Where(char.IsDigit)]);
+
+        // Remove caracteres nao numericos do numero
+        Numero = new string([.. Numero.Where(char.IsDigit)]);
+    }
+
+    /// <summary>
+    ///     Valida os campos de telefone, whatsapp e CEP
+    /// </summary>
+    /// <returns>Mensagem de erro, ou null se valido</returns>
+    private string? ValidarCampos()
+    {
+        // Contar apenas digitos do telefone
+        var telefoneLimpo = new string([.. Telefone.Where(char.IsDigit)]);
+
+        // Contar apenas digitos do whatsapp
+        var whatsappLimpo = new string([.. Whatsapp.Where(char.IsDigit)]);
+
+        // Contar apenas digitos do CEP
+        var cepLimpo = new string([.. Cep.Where(char.IsDigit)]);
+
+        // Validar telefone
+        if (!string.IsNullOrWhiteSpace(telefoneLimpo))
+            if (telefoneLimpo.Length < 10 || telefoneLimpo.Length > 11)
+                return "Telefone deve conter entre 10 e 11 digitos.";
+
+        // Validar whatsapp
+        if (!string.IsNullOrWhiteSpace(whatsappLimpo))
+            if (whatsappLimpo.Length < 10 || whatsappLimpo.Length > 11)
+                return "WhatsApp deve conter entre 10 e 11 digitos.";
+
+        // Validar CEP
+        if (!string.IsNullOrWhiteSpace(cepLimpo))
+            if (cepLimpo.Length != 8)
+                return "CEP deve conter exatamente 8 digitos.";
+
+        return null;
+    }
+
     private void LimparCampos()
     {
         Id = Guid.Empty;
@@ -285,12 +292,12 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
     {
         // Limpar caracteres especiais antes de salvar
         LimparCamposNumericos();
-        
+
         // Validar campos
         var erroValidacao = ValidarCampos();
         if (!string.IsNullOrEmpty(erroValidacao))
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] {erroValidacao}");
+            Debug.WriteLine($"[ERRO] {erroValidacao}");
             return;
         }
 
@@ -300,7 +307,7 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
             var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
             if (dizimistaExistente != null)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Código duplicado: {NumeroCadastro}");
+                Debug.WriteLine($"[ERRO] Código duplicado: {NumeroCadastro}");
                 return;
             }
         }
@@ -311,21 +318,19 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
             var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
             if (dizimistaExistente != null && dizimistaExistente.Id != Id)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO] Código duplicado ao editar: {NumeroCadastro}");
+                Debug.WriteLine($"[ERRO] Código duplicado ao editar: {NumeroCadastro}");
                 return;
             }
         }
-        
+
         if (IsEditMode)
-        {
-            await _updateHandler.Handle(new UpdateDizimistaCommand(Id, NumeroCadastro, Nome, DataNascimento, Ativo, Endereco, Telefone, Whatsapp, DataCadastro));
-        }
+            await _updateHandler.Handle(new UpdateDizimistaCommand(Id, NumeroCadastro, Nome, DataNascimento, Ativo,
+                Endereco, Telefone, Whatsapp, DataCadastro));
         else
-        {
-            await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento, Endereco, Telefone, Whatsapp, DataCadastro));
-        }
-        
-        System.Diagnostics.Debug.WriteLine($"[INFO] Dizimista salvo com sucesso");
+            await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento, Endereco,
+                Telefone, Whatsapp, DataCadastro));
+
+        Debug.WriteLine("[INFO] Dizimista salvo com sucesso");
         _navigationService.Navigate("dizimistas");
     }
 
@@ -334,23 +339,24 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
-            
+            Debug.WriteLine("[INFO] BaixarModeloAsync iniciado");
+
             var fileName = $"dizimista_modelo_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
+
+            if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
-                    
+
                     if (storageProvider != null)
                     {
-                        var file = await storageProvider.SaveFilePickerAsync(new()
+                        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                         {
                             Title = "Salvar Planilha Modelo",
                             DefaultExtension = "xlsx",
-                            FileTypeChoices = new[] { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                            FileTypeChoices = new[]
+                                { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
                             SuggestedFileName = fileName
                         });
 
@@ -359,16 +365,15 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
                             var excelStream = DizimistaExcelService.GerarModelo();
                             await using var fileStream = await file.OpenWriteAsync();
                             await fileStream.WriteAsync(excelStream.ToArray());
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
+                            Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
                             return;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                    Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                 }
-            }
 
             // Fallback: salvar em Downloads
             var excelStreamFallback = DizimistaExcelService.GerarModelo();
@@ -382,11 +387,11 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
             var filePath = Path.Combine(downloadsPath, fileName);
             await File.WriteAllBytesAsync(filePath, excelStreamFallback.ToArray());
 
-            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
+            Debug.WriteLine($"[INFO] Arquivo modelo salvo em: {filePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao baixar modelo: {ex.Message}");
         }
     }
 
@@ -399,7 +404,7 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao voltar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao voltar: {ex.Message}");
         }
     }
 
@@ -408,26 +413,27 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[INFO] ImportarAsync iniciado");
-            
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
+            Debug.WriteLine("[INFO] ImportarAsync iniciado");
+
+            if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
                     if (storageProvider != null)
                     {
-                        var files = await storageProvider.OpenFilePickerAsync(new()
+                        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                         {
                             Title = "Selecionar Planilha para Importar",
                             AllowMultiple = false,
-                            FileTypeFilter = new[] { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
+                            FileTypeFilter = new[]
+                                { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
                         });
 
                         if (files.Count > 0)
                         {
                             var file = files[0];
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
+                            Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
 
                             // Ler arquivo
                             await using var stream = await file.OpenReadAsync();
@@ -437,25 +443,27 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
 
                             // Importar dizimistas do arquivo
                             var dizimistasImportados = await DizimistaExcelService.ImportarAsync(excelBytes);
-                            
+
                             if (dizimistasImportados.Count == 0)
                             {
-                                await _dialogService.ShowAlertAsync("Importação", "Nenhum dizimista foi encontrado no arquivo.");
+                                await _dialogService.ShowAlertAsync("Importação",
+                                    "Nenhum dizimista foi encontrado no arquivo.");
                                 return;
                             }
 
-                            System.Diagnostics.Debug.WriteLine($"[INFO] {dizimistasImportados.Count} dizimistas lidos da planilha");
+                            Debug.WriteLine($"[INFO] {dizimistasImportados.Count} dizimistas lidos da planilha");
 
                             // Salvar cada dizimista importado
-                            int sucessos = 0;
-                            int erros = 0;
+                            var sucessos = 0;
+                            var erros = 0;
 
                             foreach (var dizimista in dizimistasImportados)
-                            {
                                 try
                                 {
                                     // Verificar se já existe um dizimista com o mesmo número de cadastro
-                                    var existente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(dizimista.NumeroCadastro));
+                                    var existente =
+                                        await _getHandler.Handle(
+                                            new GetDizimistaByNumeroCadastroQuery(dizimista.NumeroCadastro));
                                     if (existente != null)
                                     {
                                         erros++;
@@ -472,21 +480,21 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
                                         dizimista.Whatsapp,
                                         dizimista.DataCadastro
                                     );
-                                    
+
                                     await _createHandler.Handle(cmd);
                                     sucessos++;
                                 }
                                 catch (Exception ex)
                                 {
                                     erros++;
-                                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar dizimista: {ex.Message}");
+                                    Debug.WriteLine($"[ERRO] Erro ao importar dizimista: {ex.Message}");
                                 }
-                            }
 
-                            System.Diagnostics.Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
+                            Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
 
                             // Mostrar resultado
-                            var mensagem = $"Importação concluída!\n\n✓ {sucessos} dizimista(s) importado(s) com sucesso";
+                            var mensagem =
+                                $"Importação concluída!\n\n✓ {sucessos} dizimista(s) importado(s) com sucesso";
                             if (erros > 0)
                                 mensagem += $"\n✗ {erros} erro(s) durante a importação";
 
@@ -499,32 +507,26 @@ public partial class DizimistaCadastroViewModel(CreateDizimistaHandler createHan
                                 "Voltar para Lista");
 
                             if (!result)
-                            {
                                 _navigationService.Navigate("dizimistas");
-                            }
                             else
-                            {
                                 LimparCampos();
-                            }
                             return;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                    Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                     await _dialogService.ShowErrorAsync($"Erro ao abrir file picker: {ex.Message}");
                 }
-            }
 
-            System.Diagnostics.Debug.WriteLine("[ERRO] StorageProvider não disponível");
+            Debug.WriteLine("[ERRO] StorageProvider não disponível");
             await _dialogService.ShowErrorAsync("StorageProvider não disponível");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao importar: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Erro ao importar: {ex.Message}");
         }
     }
 }
-

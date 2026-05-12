@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
@@ -12,11 +11,12 @@ public class MonthIntToStringConverter : IValueConverter
         {
             var meses = new[]
             {
-                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Janeiro", "Fevereiro", "Marï¿½o", "Abril", "Maio", "Junho",
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
             };
             return meses[month - 1];
         }
+
         return string.Empty;
     }
 
@@ -26,18 +26,15 @@ public class MonthIntToStringConverter : IValueConverter
         {
             var meses = new[]
             {
-                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Janeiro", "Fevereiro", "Marï¿½o", "Abril", "Maio", "Junho",
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
             };
-            
-            for (int i = 0; i < meses.Length; i++)
-            {
+
+            for (var i = 0; i < meses.Length; i++)
                 if (meses[i].Equals(mesNome, StringComparison.OrdinalIgnoreCase))
-                {
                     return i + 1;
-                }
-            }
         }
+
         return 1;
     }
 }

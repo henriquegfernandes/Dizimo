@@ -1,15 +1,14 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters;
 
 /// <summary>
-/// Converter genérico para validar null/empty com diferentes estratégias
-/// Usar ConverterParameter para escolher:
-/// - "null" : null → false (padrão)
-/// - "empty" : empty/null string → false
-/// - "invert" : inverte bool
+///     Converter genérico para validar null/empty com diferentes estratégias
+///     Usar ConverterParameter para escolher:
+///     - "null" : null → false (padrão)
+///     - "empty" : empty/null string → false
+///     - "invert" : inverte bool
 /// </summary>
 public class NullOrEmptyToBoolConverter : IValueConverter
 {
@@ -31,4 +30,3 @@ public class NullOrEmptyToBoolConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-

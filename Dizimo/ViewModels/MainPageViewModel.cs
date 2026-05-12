@@ -1,18 +1,19 @@
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Application.Dashboard;
-using Dizimo.Domain.Entities;
 using Dizimo.Application.Reporting.Services;
 using Dizimo.Converters;
-using System.Collections.ObjectModel;
-using Avalonia.Platform.Storage;
-using Avalonia.Controls.ApplicationLifetimes;
+using Dizimo.Domain.Entities;
 
 namespace Dizimo.ViewModels;
 
 /// <summary>
-/// DTO para dados do gráfico - permite binding de propriedades nomeadas em Avalonia UI
-/// (ValueTuple não suporta binding de Item1, Item2, etc em Avalonia)
+///     DTO para dados do gráfico - permite binding de propriedades nomeadas em Avalonia UI
+///     (ValueTuple não suporta binding de Item1, Item2, etc em Avalonia)
 /// </summary>
 public class GraficoData
 {
@@ -21,40 +22,39 @@ public class GraficoData
     public required string CorHex { get; set; }
 }
 
-public partial class MainPageViewModel(DashboardService dashboardService, AniversariantesExcelService aniversariantesExcelService, AniversariantesPdfService aniversariantesPdfService, IDialogService dialogService) : ObservableObject
+public partial class MainPageViewModel(
+    DashboardService dashboardService,
+    AniversariantesExcelService aniversariantesExcelService,
+    AniversariantesPdfService aniversariantesPdfService,
+    IDialogService dialogService) : ObservableObject
 {
-    private readonly DashboardService _dashboardService = dashboardService ?? throw new ArgumentNullException(nameof(dashboardService));
-    private readonly AniversariantesExcelService _aniversariantesExcelService = aniversariantesExcelService ?? throw new ArgumentNullException(nameof(aniversariantesExcelService));
-    private readonly AniversariantesPdfService _aniversariantesPdfService = aniversariantesPdfService ?? throw new ArgumentNullException(nameof(aniversariantesPdfService));
-    private readonly IDialogService _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+    private readonly AniversariantesExcelService _aniversariantesExcelService = aniversariantesExcelService ??
+        throw new ArgumentNullException(nameof(aniversariantesExcelService));
 
-    private bool _isInitialized = false;
+    private readonly AniversariantesPdfService _aniversariantesPdfService =
+        aniversariantesPdfService ?? throw new ArgumentNullException(nameof(aniversariantesPdfService));
 
-    /// <summary>
-    /// Inicializa o ViewModel e carrega os dados. Deve ser chamado uma vez quando a view estiver pronta.
-    /// </summary>
-    public async Task InitializeAsync()
-    {
-        if (_isInitialized) return;
-        _isInitialized = true;
-        
-        System.Diagnostics.Debug.WriteLine("[INFO] MainPageViewModel.InitializeAsync() chamado");
-        await CarregarDadosAsync();
-    }
+    private readonly DashboardService _dashboardService =
+        dashboardService ?? throw new ArgumentNullException(nameof(dashboardService));
+
+    private readonly IDialogService _dialogService =
+        dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+
+    private ObservableCollection<Dizimista> _aniversariantes = [];
+
+    private ObservableCollection<GraficoData> _dadosGrafico = [];
 
     // ...existing code...
 
     private ObservableCollection<DashboardService.DizimistaPeriodoOfertaData> _dizimistasAgrupadosPeriodo = [];
-    
-    private ObservableCollection<GraficoData> _dadosGrafico = [];
-
-    private ObservableCollection<Dizimista> _aniversariantes = [];
 
     private bool _isBusy;
 
-    private string _visualizacaoAtual = "Semana";
+    private bool _isInitialized;
 
     private int _mesSelecionado = DateTime.Now.Month;
+
+    private string _visualizacaoAtual = "Semana";
 
     public ObservableCollection<DashboardService.DizimistaPeriodoOfertaData> DizimistasAgrupadosPeriodo
     {
@@ -84,10 +84,10 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
     public string VisualizacaoAtual
     {
         get => _visualizacaoAtual;
-        set 
-        { 
+        set
+        {
             SetProperty(ref _visualizacaoAtual, value);
-            OnPropertyChanged(nameof(VisualizacaoAtual));
+            OnPropertyChanged();
             OnPropertyChanged(nameof(TextoBotaoAlternarVisualizacao));
         }
     }
@@ -98,34 +98,39 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
         set
         {
             if (SetProperty(ref _mesSelecionado, value))
-            {
                 // Recarregar aniversariantes quando o m�s mudar
                 _ = CarregarAniversariantesAsync();
-            }
         }
     }
 
     public int IndiceMesSelecionado
     {
         get => MesSelecionado - 1;
-        set
-        {
-            MesSelecionado = value + 1;
-        }
+        set => MesSelecionado = value + 1;
     }
 
-    private readonly ObservableCollection<string> _mesesDisponiveis = 
+    public ObservableCollection<string> MesesDisponiveis { get; } =
     [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
-    public ObservableCollection<string> MesesDisponiveis
-    {
-        get => _mesesDisponiveis;
-    }
-
     public static string Titulo => $"Dashboard - {DateTime.Now:dddd, dd 'de' MMMM 'de' yyyy}";
+
+    public string TextoBotaoAlternarVisualizacao =>
+        VisualizacaoAtual == "Semana" ? "Visualizar Mês" : "Visualizar Semana Atual";
+
+    /// <summary>
+    ///     Inicializa o ViewModel e carrega os dados. Deve ser chamado uma vez quando a view estiver pronta.
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        if (_isInitialized) return;
+        _isInitialized = true;
+
+        Debug.WriteLine("[INFO] MainPageViewModel.InitializeAsync() chamado");
+        await CarregarDadosAsync();
+    }
 
     [RelayCommand]
     public async Task CarregarDadosAsync()
@@ -136,14 +141,14 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
 
             var dados = await _dashboardService.GetDizimistasAgrupadosPorPeriodoAsync();
             DizimistasAgrupadosPeriodo = new ObservableCollection<DashboardService.DizimistaPeriodoOfertaData>(dados);
-            
+
             // Mapear dados para gráfico com cores - usando GraficoData ao invés de ValueTuple
             var dadosGraficoDtos = dados
-                .Select(d => new GraficoData 
-                { 
-                    Periodo = d.Periodo, 
-                    Quantidade = d.Quantidade, 
-                    CorHex = d.Cor 
+                .Select(d => new GraficoData
+                {
+                    Periodo = d.Periodo,
+                    Quantidade = d.Quantidade,
+                    CorHex = d.Cor
                 })
                 .ToList();
 
@@ -152,18 +157,18 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
             {
                 var maxQtd = dadosGraficoDtos.Max(d => d.Quantidade);
                 RelativeWidthConverter.SetMaxQuantidade(maxQtd);
-                System.Diagnostics.Debug.WriteLine($"[GRAFICO] Quantidade máxima definida: {maxQtd}");
+                Debug.WriteLine($"[GRAFICO] Quantidade máxima definida: {maxQtd}");
             }
 
             DadosGrafico = new ObservableCollection<GraficoData>(dadosGraficoDtos);
-            System.Diagnostics.Debug.WriteLine($"[GRAFICO] Dados do gráfico carregados: {DadosGrafico.Count} períodos");
+            Debug.WriteLine($"[GRAFICO] Dados do gráfico carregados: {DadosGrafico.Count} períodos");
 
             await CarregarAniversariantesAsync();
         }
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync($"Erro ao carregar dados: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
+            Debug.WriteLine($"[ERRO] {ex}");
         }
         finally
         {
@@ -192,7 +197,7 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync($"Erro ao carregar aniversariantes: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
+            Debug.WriteLine($"[ERRO] {ex}");
         }
     }
 
@@ -231,19 +236,20 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
                 ? $"aniversariantes_semana_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
                 : $"aniversariantes_mes_{MesesDisponiveis[MesSelecionado - 1]}_{DateTime.Now:yyyyMMdd_HHmms}.xlsx";
 
-            if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
+            if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
 
                     if (storageProvider != null)
                     {
-                        var file = await storageProvider.SaveFilePickerAsync(new()
+                        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                         {
                             Title = "Salvar Aniversariantes",
                             DefaultExtension = "xlsx",
-                            FileTypeChoices = new[] { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                            FileTypeChoices = new[]
+                                { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
                             SuggestedFileName = fileName
                         });
 
@@ -254,11 +260,12 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
                             await fileStream.WriteAsync(excelStream.ToArray());
 
                             var filePath = file.Path.LocalPath;
-                            await _dialogService.ShowSuccessAsync($"Aniversariantes exportados com sucesso!\n\nLocalização: {filePath}");
+                            await _dialogService.ShowSuccessAsync(
+                                $"Aniversariantes exportados com sucesso!\n\nLocalização: {filePath}");
 
                             try
                             {
-                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                Process.Start(new ProcessStartInfo
                                 {
                                     FileName = filePath,
                                     UseShellExecute = true
@@ -266,26 +273,26 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
                             }
                             catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                                Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
                             }
+
                             return;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
+                    Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                     await _dialogService.ShowErrorAsync($"Erro ao abrir file picker: {ex.Message}");
                     return;
                 }
-            }
 
             await _dialogService.ShowErrorAsync("StorageProvider não disponível");
         }
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync($"Erro ao exportar: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
+            Debug.WriteLine($"[ERRO] {ex}");
         }
     }
 
@@ -313,7 +320,7 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
 
             try
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = tempPath,
                     UseShellExecute = true
@@ -321,22 +328,14 @@ public partial class MainPageViewModel(DashboardService dashboardService, Aniver
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
+                Debug.WriteLine($"[AVISO] Não foi possível abrir o arquivo: {ex.Message}");
                 await _dialogService.ShowErrorAsync($"Erro ao abrir arquivo: {ex.Message}");
             }
         }
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync($"Erro ao gerar relatório: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[ERRO] {ex}");
-        }
-    }
-
-    public string TextoBotaoAlternarVisualizacao
-    {
-        get
-        {
-            return VisualizacaoAtual == "Semana" ? "Visualizar Mês" : "Visualizar Semana Atual";
+            Debug.WriteLine($"[ERRO] {ex}");
         }
     }
 }

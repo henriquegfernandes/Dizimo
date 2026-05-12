@@ -10,7 +10,7 @@ public class DataPathProvider : IDataPathProvider
         _appDataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "Dizimo");
-        
+
         // Criar diretório se não existir
         if (!Directory.Exists(_appDataDirectory))
             Directory.CreateDirectory(_appDataDirectory);

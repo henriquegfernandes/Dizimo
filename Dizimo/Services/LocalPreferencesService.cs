@@ -1,9 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Dizimo.Services;
 
 /// <summary>
-/// Implementação de IPreferencesService usando JSON local
+///     Implementação de IPreferencesService usando JSON local
 /// </summary>
 public class LocalPreferencesService : IPreferencesService
 {
@@ -22,7 +23,6 @@ public class LocalPreferencesService : IPreferencesService
         if (_preferences.TryGetValue(key, out var value))
         {
             if (value is JsonElement je)
-            {
                 try
                 {
                     return JsonSerializer.Deserialize<T>(je.GetRawText());
@@ -31,8 +31,7 @@ public class LocalPreferencesService : IPreferencesService
                 {
                     return defaultValue;
                 }
-            }
-            
+
             if (value is T typedValue)
                 return typedValue;
         }
@@ -70,7 +69,7 @@ public class LocalPreferencesService : IPreferencesService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[AVISO] Erro ao carregar preferências: {ex.Message}");
+            Debug.WriteLine($"[AVISO] Erro ao carregar preferências: {ex.Message}");
             _preferences = [];
         }
     }
@@ -83,13 +82,12 @@ public class LocalPreferencesService : IPreferencesService
             var directory = Path.GetDirectoryName(_preferencesPath);
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory!);
-            
+
             File.WriteAllText(_preferencesPath, json);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao salvar preferências: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao salvar preferências: {ex.Message}");
         }
     }
 }
-

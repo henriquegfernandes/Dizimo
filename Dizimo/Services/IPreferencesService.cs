@@ -1,7 +1,7 @@
 namespace Dizimo.Services;
 
 /// <summary>
-/// Serviço de preferências agnostic para MAUI
+///     Serviço de preferências agnostic para MAUI
 /// </summary>
 public interface IPreferencesService
 {
@@ -10,4 +10,3 @@ public interface IPreferencesService
     void Remove(string key);
     void Clear();
 }
-

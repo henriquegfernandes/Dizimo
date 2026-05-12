@@ -1,15 +1,12 @@
-using System.Threading.Tasks;
 using Dizimo.Domain.Repositories;
 using Dizimo.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dizimo.Infrastructure.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {
     private readonly DizimoDbContext _context;
-    public IDizimistaRepository Dizimistas { get; }
-    public IOfertaRepository Ofertas { get; }
-    public IUsuarioRepository Usuarios { get; }
 
     public UnitOfWork(DizimoDbContext context)
     {
@@ -19,6 +16,10 @@ public class UnitOfWork : IUnitOfWork
         Usuarios = new UsuarioRepository(_context);
     }
 
+    public IDizimistaRepository Dizimistas { get; }
+    public IOfertaRepository Ofertas { get; }
+    public IUsuarioRepository Usuarios { get; }
+
     public Task<int> SaveChangesAsync()
     {
         return _context.SaveChangesAsync();
@@ -26,11 +27,8 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task ClearDbContextAsync()
     {
-        // Descarta todas as entidades rastreadas para garantir que o próximo acesso seja do banco
-        foreach (var entry in _context.ChangeTracker.Entries())
-        {
-            entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-        }
+        // Descarta todas as entidades rastreadas para garantir que o prï¿½ximo acesso seja do banco
+        foreach (var entry in _context.ChangeTracker.Entries()) entry.State = EntityState.Detached;
         await Task.CompletedTask;
     }
 }

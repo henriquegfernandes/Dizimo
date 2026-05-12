@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
-             xmlns:behaviors="clr-namespace:Dizimo.Behaviors"
              x:Class="Dizimo.Pages.DizimistaCadastroPage"
              x:DataType="vm:DizimistaCadastroViewModel">
-    <Grid RowDefinitions="Auto,*" 
-          HorizontalAlignment="Stretch" 
+    <Grid RowDefinitions="Auto,*"
+          HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
         <!-- Barra de navegação customizada -->
         <Grid Grid.Row="0" Margin="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
             <!-- Botão de voltar -->
-            <Button Grid.Column="0" 
+            <Button Grid.Column="0"
                     Content="Voltar"
                     Command="{Binding VoltarCommand}"
                     Classes="Secondary"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center" />
-            
+
             <!-- Título centralizado -->
-            <TextBlock Grid.Column="1" 
-                   Text="Cadastro de Dizimista" 
-                   FontSize="20"
-                   FontWeight="Bold"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
-            
+            <TextBlock Grid.Column="1"
+                       Text="Cadastro de Dizimista"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+
             <!-- Espaço vazio à direita para manter a simetria -->
             <StackPanel Grid.Column="2" />
         </Grid>
 
         <!-- Conteúdo da página -->
-        <ScrollViewer Grid.Row="1" 
+        <ScrollViewer Grid.Row="1"
                       Margin="16,12"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto"
@@ -74,53 +74,57 @@
                             VerticalAlignment="Center" />
                 </Grid>
 
-                 <!-- Nome -->
-                 <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="Nome:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Nome}" Margin="0,25,0,0"/>
-                 <!-- Número Cadastro -->
-                 <TextBlock Grid.Row="1" Grid.Column="2" Text="Nº Cadastro:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding NumeroCadastro}" Margin="0,25,0,0"/>
-                 <!-- Data de Nascimento -->
-                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Nascimento:" FontWeight="Bold"/>
-                 <CalendarDatePicker Grid.Row="2" Grid.Column="0" SelectedDate="{Binding DataNascimento}" Margin="0,25,0,0"/>
-                 <!-- Telefone -->
-                 <TextBlock Grid.Row="2" Grid.Column="1" Text="Telefone:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Telefone}" Margin="0,25,0,0"/>
-                 <!-- Whatsapp -->
-                 <TextBlock Grid.Row="2" Grid.Column="2" Text="Whatsapp:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding Whatsapp}" Margin="0,25,0,0"/>
-                 <!-- Endereço: Rua -->
-                 <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="Rua:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding Rua}" Margin="0,25,0,0"/>
-                 <!-- Endereço: Número -->
-                 <TextBlock Grid.Row="3" Grid.Column="2" Text="Número:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Numero}" Margin="0,25,0,0"/>
-                 <!-- Endereço: Complemento -->
-                 <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="Complemento:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding Complemento}" Margin="0,25,0,0"/>
-                 <!-- Endereço: Bairro -->
-                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Bairro:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="5" Grid.Column="0" Text="{Binding Bairro}" Margin="0,25,0,0"/>
-                 <!-- Endereço: Cidade -->
-                 <TextBlock Grid.Row="5" Grid.Column="1" Text="Cidade:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Cidade}" Margin="0,25,0,0"/>
-                 <!-- Endereço: UF -->
-                 <TextBlock Grid.Row="5" Grid.Column="2" Text="UF:" FontWeight="Bold"/>
-                 <ComboBox Grid.Row="5" Grid.Column="2" ItemsSource="{Binding EstadosBrasileiros}" SelectedItem="{Binding Uf}" Margin="0,25,0,0"/>
-                 <!-- Endereço: CEP -->
-                 <TextBlock Grid.Row="6" Grid.Column="0" Text="CEP:" FontWeight="Bold"/>
-                 <TextBox Grid.Row="6" Grid.Column="0" Text="{Binding Cep}" Margin="0,25,0,0"/>
-                 <!-- Data de Cadastro -->
-                 <TextBlock Grid.Row="6" Grid.Column="1" Text="Cadastro:" FontWeight="Bold"/>
-                 <CalendarDatePicker Grid.Row="6" Grid.Column="1" SelectedDate="{Binding DataCadastro}" Margin="0,25,0,0"/>
-                 <!-- Ativo -->
-                 <StackPanel Grid.Row="6" Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                     <TextBlock Text="Ativo" VerticalAlignment="Center" />
-                     <ToggleSwitch IsChecked="{Binding Ativo}" Margin="0,25,0,0"/>
-                 </StackPanel>
-                 <!-- Botão Salvar -->
-                 <Button Grid.Row="7" Grid.ColumnSpan="3" Content="Salvar" Command="{Binding SalvarCommand}" Classes="Primary" />
-                </Grid>
-            </ScrollViewer>
-        </Grid>
-    </UserControl>
+                <!-- Nome -->
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="Nome:" FontWeight="Bold" />
+                <TextBox Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Nome}" Margin="0,25,0,0" />
+                <!-- Número Cadastro -->
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="Nº Cadastro:" FontWeight="Bold" />
+                <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding NumeroCadastro}" Margin="0,25,0,0" />
+                <!-- Data de Nascimento -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Nascimento:" FontWeight="Bold" />
+                <CalendarDatePicker Grid.Row="2" Grid.Column="0" SelectedDate="{Binding DataNascimento}"
+                                    Margin="0,25,0,0" />
+                <!-- Telefone -->
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="Telefone:" FontWeight="Bold" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Telefone}" Margin="0,25,0,0" />
+                <!-- Whatsapp -->
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="Whatsapp:" FontWeight="Bold" />
+                <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding Whatsapp}" Margin="0,25,0,0" />
+                <!-- Endereço: Rua -->
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="Rua:" FontWeight="Bold" />
+                <TextBox Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding Rua}" Margin="0,25,0,0" />
+                <!-- Endereço: Número -->
+                <TextBlock Grid.Row="3" Grid.Column="2" Text="Número:" FontWeight="Bold" />
+                <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Numero}" Margin="0,25,0,0" />
+                <!-- Endereço: Complemento -->
+                <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="Complemento:" FontWeight="Bold" />
+                <TextBox Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding Complemento}" Margin="0,25,0,0" />
+                <!-- Endereço: Bairro -->
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Bairro:" FontWeight="Bold" />
+                <TextBox Grid.Row="5" Grid.Column="0" Text="{Binding Bairro}" Margin="0,25,0,0" />
+                <!-- Endereço: Cidade -->
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="Cidade:" FontWeight="Bold" />
+                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Cidade}" Margin="0,25,0,0" />
+                <!-- Endereço: UF -->
+                <TextBlock Grid.Row="5" Grid.Column="2" Text="UF:" FontWeight="Bold" />
+                <ComboBox Grid.Row="5" Grid.Column="2" ItemsSource="{Binding EstadosBrasileiros}"
+                          SelectedItem="{Binding Uf}" Margin="0,25,0,0" />
+                <!-- Endereço: CEP -->
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="CEP:" FontWeight="Bold" />
+                <TextBox Grid.Row="6" Grid.Column="0" Text="{Binding Cep}" Margin="0,25,0,0" />
+                <!-- Data de Cadastro -->
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="Cadastro:" FontWeight="Bold" />
+                <CalendarDatePicker Grid.Row="6" Grid.Column="1" SelectedDate="{Binding DataCadastro}"
+                                    Margin="0,25,0,0" />
+                <!-- Ativo -->
+                <StackPanel Grid.Row="6" Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Ativo" VerticalAlignment="Center" />
+                    <ToggleSwitch IsChecked="{Binding Ativo}" Margin="0,25,0,0" />
+                </StackPanel>
+                <!-- Botão Salvar -->
+                <Button Grid.Row="7" Grid.ColumnSpan="3" Content="Salvar" Command="{Binding SalvarCommand}"
+                        Classes="Primary" />
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

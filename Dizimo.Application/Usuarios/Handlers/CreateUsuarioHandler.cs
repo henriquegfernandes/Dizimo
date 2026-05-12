@@ -1,15 +1,17 @@
-using System;
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Usuarios.Commands;
 using Dizimo.Domain.Entities;
-using System.Threading.Tasks;
+using Dizimo.Domain.Repositories;
 
 namespace Dizimo.Application.Usuarios.Handlers;
 
 public class CreateUsuarioHandler
 {
     private readonly IUnitOfWork _unitOfWork;
-    public CreateUsuarioHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public CreateUsuarioHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task<Guid> Handle(CreateUsuarioCommand command)
     {

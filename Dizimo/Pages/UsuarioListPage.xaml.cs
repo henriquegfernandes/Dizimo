@@ -1,35 +1,28 @@
+using System.Diagnostics;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml;
 using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
 using Dizimo.ViewModels;
-using Avalonia.Controls;
 
 namespace Dizimo.Pages;
 
-public partial class UsuarioListPage : UserControl
+public class UsuarioListPage : UserControl
 {
     public UsuarioListPage()
     {
         AvaloniaXamlLoader.Load(this);
-        System.Diagnostics.Debug.WriteLine("[INFO] UsuarioListPage inicializado");
+        Debug.WriteLine("[INFO] UsuarioListPage inicializado");
     }
 
     public void FilterTextBox_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Return)
-        {
-            if (this.DataContext is UsuarioListViewModel viewModel)
-            {
+            if (DataContext is UsuarioListViewModel viewModel)
                 viewModel.AplicarFiltrosEnterCommand.Execute(null);
-            }
-        }
     }
 
     public void FilterTextBox_LostFocus(object? sender, RoutedEventArgs e)
     {
-        if (this.DataContext is UsuarioListViewModel viewModel)
-        {
-            viewModel.AplicarFiltrosEnterCommand.Execute(null);
-        }
+        if (DataContext is UsuarioListViewModel viewModel) viewModel.AplicarFiltrosEnterCommand.Execute(null);
     }
 }

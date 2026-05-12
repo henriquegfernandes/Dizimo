@@ -1,7 +1,7 @@
 <Solution>
-  <Project Path="Dizimo/Dizimo.csproj" />
-  <Project Path="Dizimo.Domain/Dizimo.Domain.csproj" />
-  <Project Path="Dizimo.Application/Dizimo.Application.csproj" />
-  <Project Path="Dizimo.Infrastructure/Dizimo.Infrastructure.csproj" />
-  <Project Path="Dizimo.Tests/Dizimo.Tests.csproj" />
+    <Project Path="Dizimo/Dizimo.csproj"/>
+    <Project Path="Dizimo.Domain/Dizimo.Domain.csproj"/>
+    <Project Path="Dizimo.Application/Dizimo.Application.csproj"/>
+    <Project Path="Dizimo.Infrastructure/Dizimo.Infrastructure.csproj"/>
+    <Project Path="Dizimo.Tests/Dizimo.Tests.csproj"/>
 </Solution>

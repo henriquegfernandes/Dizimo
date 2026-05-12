@@ -1,9 +1,5 @@
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Dizimo.Application.Dashboard;
 
@@ -11,33 +7,17 @@ public class DashboardService
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    public class DizimistaPeriodoOfertaData
-    {
-        public string Periodo { get; set; } = string.Empty;
-        public int Quantidade { get; set; }
-        public string Cor { get; set; } = string.Empty;
-
-        public DizimistaPeriodoOfertaData() { }
-
-        public DizimistaPeriodoOfertaData(string periodo, int quantidade, string cor)
-        {
-            Periodo = periodo;
-            Quantidade = quantidade;
-            Cor = cor;
-        }
-    }
-
     public DashboardService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     /// <summary>
-    /// Retorna estatísticas de dizimistas agrupados por período da última oferta
-    /// Verde: Últimos 2 meses
-    /// Amarelo: 2 a 6 meses
-    /// Laranja: 6 meses a 1 ano
-    /// Vermelho: mais de 1 ano
+    ///     Retorna estatísticas de dizimistas agrupados por período da última oferta
+    ///     Verde: Últimos 2 meses
+    ///     Amarelo: 2 a 6 meses
+    ///     Laranja: 6 meses a 1 ano
+    ///     Vermelho: mais de 1 ano
     /// </summary>
     public async Task<List<DizimistaPeriodoOfertaData>> GetDizimistasAgrupadosPorPeriodoAsync()
     {
@@ -87,17 +67,20 @@ public class DashboardService
         }
 
         // Mapear para cores
-        dados.Add(new("Últimos 2 meses", dizimistasPorPeriodo["Últimos 2 meses"], "#22C55E")); // Verde
-        dados.Add(new("2-6 meses", dizimistasPorPeriodo["2-6 meses"], "#FBBF24")); // Amarelo
-        dados.Add(new("6-12 meses", dizimistasPorPeriodo["6-12 meses"], "#F97316")); // Laranja
-        dados.Add(new("Mais de 1 ano", dizimistasPorPeriodo["Mais de 1 ano"], "#EF4444")); // Vermelho
+        dados.Add(new DizimistaPeriodoOfertaData("Últimos 2 meses", dizimistasPorPeriodo["Últimos 2 meses"],
+            "#22C55E")); // Verde
+        dados.Add(new DizimistaPeriodoOfertaData("2-6 meses", dizimistasPorPeriodo["2-6 meses"], "#FBBF24")); // Amarelo
+        dados.Add(new DizimistaPeriodoOfertaData("6-12 meses", dizimistasPorPeriodo["6-12 meses"],
+            "#F97316")); // Laranja
+        dados.Add(new DizimistaPeriodoOfertaData("Mais de 1 ano", dizimistasPorPeriodo["Mais de 1 ano"],
+            "#EF4444")); // Vermelho
 
         return dados;
     }
 
     /// <summary>
-    /// Retorna dizimistas aniversariantes da semana atual
-    /// Considera dizimistas que completam aniversário do sábado passado até o final da semana atual
+    ///     Retorna dizimistas aniversariantes da semana atual
+    ///     Considera dizimistas que completam aniversário do sábado passado até o final da semana atual
     /// </summary>
     public async Task<List<Dizimista>> GetAniversariantesSemanasAsync()
     {
@@ -107,7 +90,7 @@ public class DashboardService
         // Descobrir o sábado passado
         var diasDesdeSegunda = (int)hoje.DayOfWeek - 1;
         if (diasDesdeSegunda < 0) diasDesdeSegunda += 7;
-        
+
         var sabadoPassado = hoje.AddDays(-diasDesdeSegunda - 2);
         if (sabadoPassado > hoje)
             sabadoPassado = sabadoPassado.AddDays(-7);
@@ -128,7 +111,7 @@ public class DashboardService
     }
 
     /// <summary>
-    /// Retorna dizimistas aniversariantes do mês atual
+    ///     Retorna dizimistas aniversariantes do mês atual
     /// </summary>
     public async Task<List<Dizimista>> GetAniversariantesMesAsync(int? month)
     {
@@ -137,9 +120,27 @@ public class DashboardService
         var referenceMonth = month is null ? today.Month : month;
 
         return dizimistas
-            .Where(d => d.DataNascimento.Month == referenceMonth && d.Ativo == true)
+            .Where(d => d.DataNascimento.Month == referenceMonth && d.Ativo)
             .OrderBy(d => d.DataNascimento.Day)
             .ThenBy(d => d.Nome)
             .ToList();
+    }
+
+    public class DizimistaPeriodoOfertaData
+    {
+        public DizimistaPeriodoOfertaData()
+        {
+        }
+
+        public DizimistaPeriodoOfertaData(string periodo, int quantidade, string cor)
+        {
+            Periodo = periodo;
+            Quantidade = quantidade;
+            Cor = cor;
+        }
+
+        public string Periodo { get; set; } = string.Empty;
+        public int Quantidade { get; set; }
+        public string Cor { get; set; } = string.Empty;
     }
 }

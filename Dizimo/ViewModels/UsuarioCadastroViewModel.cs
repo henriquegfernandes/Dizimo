@@ -1,79 +1,37 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Application.Usuarios.Commands;
 using Dizimo.Application.Usuarios.Handlers;
 using Dizimo.Application.Usuarios.Queries;
 using Dizimo.Domain.Entities;
-using Dizimo.Services;
-using System.Collections.ObjectModel;
 
 namespace Dizimo.ViewModels;
 
-
 public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAware
 {
-    private readonly GetUsuarioHandlers _getHandlers;
-    private readonly UpdateUsuarioHandler _updateHandler;
     private readonly CreateUsuarioHandler _createHandler;
     private readonly DeleteUsuarioHandler _deleteHandler;
     private readonly IDialogService _dialogService;
+    private readonly GetUsuarioHandlers _getHandlers;
     private readonly INavigationService _navigationService;
-
-    private string _nome = string.Empty;
-    public string Nome
-    {
-        get => _nome;
-        set => SetProperty(ref _nome, value);
-    }
-
-    private string _login = string.Empty;
-    public string Login
-    {
-        get => _login;
-        set => SetProperty(ref _login, value);
-    }
-
-    private string _senha = string.Empty;
-    public string Senha
-    {
-        get => _senha;
-        set => SetProperty(ref _senha, value);
-    }
+    private readonly UpdateUsuarioHandler _updateHandler;
 
     private bool _ativo = true;
-    public bool Ativo
-    {
-        get => _ativo;
-        set => SetProperty(ref _ativo, value);
-    }
 
     private Guid _id;
-    public Guid Id
-    {
-        get => _id;
-        set => SetProperty(ref _id, value);
-    }
 
     private bool _isEditMode;
-    public bool IsEditMode
-    {
-        get => _isEditMode;
-        set => SetProperty(ref _isEditMode, value);
-    }
+
+    private string _login = string.Empty;
+
+    private string _nome = string.Empty;
 
     private ObservableCollection<string> _perfilOptions = new();
-    public ObservableCollection<string> PerfilOptions
-    {
-        get => _perfilOptions;
-        set => SetProperty(ref _perfilOptions, value);
-    }
 
     private string _perfilSelecionado = string.Empty;
-    public string PerfilSelecionado
-    {
-        get => _perfilSelecionado;
-        set => SetProperty(ref _perfilSelecionado, value);
-    }
+
+    private string _senha = string.Empty;
 
     public UsuarioCadastroViewModel(
         GetUsuarioHandlers getHandlers,
@@ -93,15 +51,57 @@ public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAwa
         InitializePerfilOptions();
     }
 
-    private void InitializePerfilOptions()
+    public string Nome
     {
-        PerfilOptions = new ObservableCollection<string>
-        {
-            PerfilUsuario.Padrao.ToString(),
-            PerfilUsuario.Admin.ToString()
-        };
-        PerfilSelecionado = PerfilUsuario.Padrao.ToString();
+        get => _nome;
+        set => SetProperty(ref _nome, value);
     }
+
+    public string Login
+    {
+        get => _login;
+        set => SetProperty(ref _login, value);
+    }
+
+    public string Senha
+    {
+        get => _senha;
+        set => SetProperty(ref _senha, value);
+    }
+
+    public bool Ativo
+    {
+        get => _ativo;
+        set => SetProperty(ref _ativo, value);
+    }
+
+    public Guid Id
+    {
+        get => _id;
+        set => SetProperty(ref _id, value);
+    }
+
+    public bool IsEditMode
+    {
+        get => _isEditMode;
+        set => SetProperty(ref _isEditMode, value);
+    }
+
+    public ObservableCollection<string> PerfilOptions
+    {
+        get => _perfilOptions;
+        set => SetProperty(ref _perfilOptions, value);
+    }
+
+    public string PerfilSelecionado
+    {
+        get => _perfilSelecionado;
+        set => SetProperty(ref _perfilSelecionado, value);
+    }
+
+    public IAsyncRelayCommand SalvarCommand => new AsyncRelayCommand(SalvarAsync);
+
+    public IAsyncRelayCommand ExcluirCommand => new AsyncRelayCommand(ExcluirAsync);
 
     public void OnNavigatedTo(NavigationParameters parameters)
     {
@@ -117,18 +117,24 @@ public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAwa
         }
 
         if (usuarioId.HasValue && usuarioId.Value != Guid.Empty)
-        {
             _ = CarregarUsuarioAsync(usuarioId.Value);
-        }
         else
-        {
             LimparCampos();
-        }
     }
 
     public void OnNavigatedFrom()
     {
         // Lógica ao sair da página se necessário
+    }
+
+    private void InitializePerfilOptions()
+    {
+        PerfilOptions = new ObservableCollection<string>
+        {
+            PerfilUsuario.Padrao.ToString(),
+            PerfilUsuario.Admin.ToString()
+        };
+        PerfilSelecionado = PerfilUsuario.Padrao.ToString();
     }
 
     private async Task CarregarUsuarioAsync(Guid usuarioId)
@@ -137,7 +143,7 @@ public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAwa
         {
             var usuarios = await _getHandlers.Handle(new GetAllUsuariosQuery());
             var usuario = usuarios.FirstOrDefault(u => u.Id == usuarioId);
-            
+
             if (usuario != null)
             {
                 Id = usuario.Id;
@@ -154,8 +160,6 @@ public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAwa
             await _dialogService.ShowAlertAsync("Erro", $"Erro ao carregar usuário: {ex.Message}");
         }
     }
-
-    public IAsyncRelayCommand SalvarCommand => new AsyncRelayCommand(SalvarAsync);
 
     private async Task SalvarAsync()
     {
@@ -197,15 +201,13 @@ public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAwa
         }
     }
 
-    public IAsyncRelayCommand ExcluirCommand => new AsyncRelayCommand(ExcluirAsync);
-
     private async Task ExcluirAsync()
     {
         if (IsEditMode && Id != Guid.Empty)
         {
-            bool confirm = await _dialogService.ShowConfirmAsync("Confirmar", "Tem certeza que deseja excluir este usuário?");
+            var confirm =
+                await _dialogService.ShowConfirmAsync("Confirmar", "Tem certeza que deseja excluir este usuário?");
             if (confirm)
-            {
                 try
                 {
                     await _deleteHandler.Handle(new DeleteUsuarioCommand(Id));
@@ -217,7 +219,6 @@ public partial class UsuarioCadastroViewModel : ObservableObject, INavigationAwa
                 {
                     await _dialogService.ShowAlertAsync("Erro", $"Erro ao excluir usuário: {ex.Message}");
                 }
-            }
         }
     }
 

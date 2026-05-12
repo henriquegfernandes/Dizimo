@@ -1,23 +1,35 @@
 using Dizimo.Domain.Entities;
-using Dizimo.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Dizimo.Infrastructure.Persistence;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 using Dizimo.Domain.Models;
+using Dizimo.Domain.Repositories;
+using Dizimo.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dizimo.Infrastructure.Repositories;
 
 public class OfertaRepository : IOfertaRepository
 {
     private readonly DizimoDbContext _context;
-    public OfertaRepository(DizimoDbContext context) => _context = context;
 
-    public async Task<Oferta?> GetByIdAsync(Guid id) => await _context.Ofertas.FindAsync(id);
-    public async Task<IEnumerable<Oferta>> GetByDizimistaAsync(Guid dizimistaId) => await _context.Ofertas.Where(o => o.DizimistaId == dizimistaId).ToListAsync();
-    public async Task<IEnumerable<Oferta>> GetByDateAsync(DateTime date) => await _context.Ofertas.Where(o => o.Data.Date == date.Date).ToListAsync();
+    public OfertaRepository(DizimoDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Oferta?> GetByIdAsync(Guid id)
+    {
+        return await _context.Ofertas.FindAsync(id);
+    }
+
+    public async Task<IEnumerable<Oferta>> GetByDizimistaAsync(Guid dizimistaId)
+    {
+        return await _context.Ofertas.Where(o => o.DizimistaId == dizimistaId).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Oferta>> GetByDateAsync(DateTime date)
+    {
+        return await _context.Ofertas.Where(o => o.Data.Date == date.Date).ToListAsync();
+    }
+
     public async Task<IEnumerable<Oferta>> SearchAsync(DateTime? date, Guid? dizimistaId)
     {
         var query = _context.Ofertas.AsQueryable();
@@ -25,43 +37,14 @@ public class OfertaRepository : IOfertaRepository
         if (dizimistaId.HasValue) query = query.Where(o => o.DizimistaId == dizimistaId.Value);
         return await query.ToListAsync();
     }
-    public async Task<IEnumerable<Oferta>> GetAllAsync() => await _context.Ofertas.ToListAsync();
 
-    /// <summary>
-    /// Aplica filtro case-insensitive por nome ou número de cadastro do dizimista.
-    /// Trata NumeroCadastro com tentativa de parse numérico para melhor performance.
-    /// </summary>
-    private IQueryable<Oferta> ApplyNomeFilter(IQueryable<Oferta> query, string? filtroNome)
+    public async Task<IEnumerable<Oferta>> GetAllAsync()
     {
-        if (string.IsNullOrWhiteSpace(filtroNome))
-            return query;
-
-        // Tenta fazer parse do filtro como número para comparação numérica
-        bool isNumericFilter = int.TryParse(filtroNome, out int numeroCadastro);
-        
-        // Converte para minúsculas para comparação case-insensitive
-        var filtroMinusculo = filtroNome.ToLower();
-
-        query = query.Join(
-            _context.Dizimistas,
-            oferta => oferta.DizimistaId,
-            dizimista => dizimista.Id,
-            (oferta, dizimista) => new { oferta, dizimista }
-        )
-        .Where(x =>
-            // Filtro por nome (case-insensitive)
-            x.dizimista.Nome.ToLower().Contains(filtroMinusculo) ||
-            // Se for número, tenta comparação numérica exata; caso contrário, tenta partial match
-            (isNumericFilter 
-                ? x.dizimista.NumeroCadastro == numeroCadastro
-                : x.dizimista.NumeroCadastro.ToString().ToLower().Contains(filtroMinusculo))
-        )
-        .Select(x => x.oferta);
-
-        return query;
+        return await _context.Ofertas.ToListAsync();
     }
 
-    public async Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
+    public async Task<decimal> GetTotalValorAsync(DateTime? dataInicio = null, DateTime? dataFim = null,
+        string? tipoPagamento = null, string? filtroNome = null)
     {
         var query = _context.Ofertas.AsQueryable();
 
@@ -86,7 +69,8 @@ public class OfertaRepository : IOfertaRepository
         return await query.SumAsync(o => o.Valor);
     }
 
-    public async Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize, DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
+    public async Task<PaginatedResult<Oferta>> GetAllPaginatedAsync(int pageNumber, int pageSize,
+        DateTime? dataInicio = null, DateTime? dataFim = null, string? tipoPagamento = null, string? filtroNome = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 20;
@@ -130,7 +114,11 @@ public class OfertaRepository : IOfertaRepository
         };
     }
 
-    public async Task AddAsync(Oferta oferta) { await _context.Ofertas.AddAsync(oferta); }
+    public async Task AddAsync(Oferta oferta)
+    {
+        await _context.Ofertas.AddAsync(oferta);
+    }
+
     public async Task UpdateAsync(Oferta oferta)
     {
         var existingOferta = await _context.Ofertas.FindAsync(oferta.Id);
@@ -143,12 +131,47 @@ public class OfertaRepository : IOfertaRepository
             existingOferta.AnoReferencia = oferta.AnoReferencia;
             _context.Ofertas.Update(existingOferta);
         }
+
         await Task.CompletedTask;
     }
+
     public async Task DeleteAsync(Guid id)
     {
         var entity = await _context.Ofertas.FindAsync(id);
         if (entity != null) _context.Ofertas.Remove(entity);
     }
-}
 
+    /// <summary>
+    ///     Aplica filtro case-insensitive por nome ou número de cadastro do dizimista.
+    ///     Trata NumeroCadastro com tentativa de parse numérico para melhor performance.
+    /// </summary>
+    private IQueryable<Oferta> ApplyNomeFilter(IQueryable<Oferta> query, string? filtroNome)
+    {
+        if (string.IsNullOrWhiteSpace(filtroNome))
+            return query;
+
+        // Tenta fazer parse do filtro como número para comparação numérica
+        var isNumericFilter = int.TryParse(filtroNome, out var numeroCadastro);
+
+        // Converte para minúsculas para comparação case-insensitive
+        var filtroMinusculo = filtroNome.ToLower();
+
+        query = query.Join(
+                _context.Dizimistas,
+                oferta => oferta.DizimistaId,
+                dizimista => dizimista.Id,
+                (oferta, dizimista) => new { oferta, dizimista }
+            )
+            .Where(x =>
+                // Filtro por nome (case-insensitive)
+                x.dizimista.Nome.ToLower().Contains(filtroMinusculo) ||
+                // Se for número, tenta comparação numérica exata; caso contrário, tenta partial match
+                (isNumericFilter
+                    ? x.dizimista.NumeroCadastro == numeroCadastro
+                    : x.dizimista.NumeroCadastro.ToString().ToLower().Contains(filtroMinusculo))
+            )
+            .Select(x => x.oferta);
+
+        return query;
+    }
+}

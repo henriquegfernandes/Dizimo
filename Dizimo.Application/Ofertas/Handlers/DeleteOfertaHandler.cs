@@ -1,13 +1,16 @@
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Ofertas.Commands;
-using System.Threading.Tasks;
+using Dizimo.Domain.Repositories;
 
 namespace Dizimo.Application.Ofertas.Handlers;
 
 public class DeleteOfertaHandler
 {
     private readonly IUnitOfWork _unitOfWork;
-    public DeleteOfertaHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public DeleteOfertaHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task Handle(DeleteOfertaCommand command)
     {

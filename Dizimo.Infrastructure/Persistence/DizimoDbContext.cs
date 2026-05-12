@@ -1,21 +1,23 @@
-using Microsoft.EntityFrameworkCore;
 using Dizimo.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dizimo.Infrastructure.Persistence;
 
 public class DizimoDbContext : DbContext
 {
+    public DizimoDbContext(DbContextOptions<DizimoDbContext> options) : base(options)
+    {
+    }
+
     public DbSet<Dizimista> Dizimistas { get; set; }
     public DbSet<Oferta> Ofertas { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
 
-    public DizimoDbContext(DbContextOptions<DizimoDbContext> options) : base(options) { }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
-        // Configurar Endereco como owned type com todas as propriedades necessárias
+
+        // Configurar Endereco como owned type com todas as propriedades necessï¿½rias
         modelBuilder.Entity<Dizimista>().OwnsOne(d => d.Endereco, enderecoBuilder =>
         {
             enderecoBuilder.Property(e => e.Rua).IsRequired();

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using ClosedXML.Excel;
 using Dizimo.Domain.Entities;
 
@@ -22,7 +19,7 @@ public class AniversariantesExcelService
         headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
         headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-        int row = 2;
+        var row = 2;
         foreach (var d in aniversariantes)
         {
             worksheet.Cell(row, 1).Value = d.NumeroCadastro;
@@ -43,4 +40,3 @@ public class AniversariantesExcelService
         return stream;
     }
 }
-

@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
@@ -12,13 +11,14 @@ public class MonthNumberToNameConverter : IValueConverter
         {
             var cultureInfo = new CultureInfo("pt-BR");
             var date = new DateTime(2024, month, 1);
-            string mesNome = date.ToString("MMMM", cultureInfo);
-            
-            // Converter para Title Case (primeira letra maiúscula)
+            var mesNome = date.ToString("MMMM", cultureInfo);
+
+            // Converter para Title Case (primeira letra maiï¿½scula)
             mesNome = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(mesNome);
-            
+
             return mesNome;
         }
+
         return string.Empty;
     }
 

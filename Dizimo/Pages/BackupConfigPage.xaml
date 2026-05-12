@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -10,18 +11,18 @@
                 <StackPanel Margin="16" Spacing="12">
                     <!-- Seção Principal -->
                     <TextBlock Text="Configurações de Backup"
-                               FontSize="24" 
-                               FontWeight="Bold" 
-                               Foreground="{DynamicResource BrushPrimary}" 
-                               Margin="0,0,0,8"/>
-                    
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource BrushPrimary}"
+                               Margin="0,0,0,8" />
+
                     <!-- Seção: Local de Backup -->
                     <TextBlock Text="Local de Backup"
-                           FontSize="18"
-                           FontWeight="Bold" />
+                               FontSize="18"
+                               FontWeight="Bold" />
                     <!-- Card de Configuração -->
-                    <Border Padding="20" 
-                            Background="{DynamicResource BrushBackgroundSecondary}" 
+                    <Border Padding="20"
+                            Background="{DynamicResource BrushBackgroundSecondary}"
                             CornerRadius="8"
                             BorderBrush="{DynamicResource BrushBorder}"
                             BorderThickness="1">
@@ -29,19 +30,19 @@
                             <!-- Pasta de Backup -->
                             <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
                                 <TextBlock Grid.Row="0"
-                                           Text="Pasta de Backup" 
-                                           FontSize="14" 
+                                           Text="Pasta de Backup"
+                                           FontSize="14"
                                            FontWeight="SemiBold" />
-                                
+
                                 <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                     <TextBlock Grid.Column="0"
-                                               Text="{Binding BackupFolderPath}" 
+                                               Text="{Binding BackupFolderPath}"
                                                FontSize="13"
                                                Foreground="{DynamicResource BrushTextSecondary}"
                                                VerticalAlignment="Center"
                                                TextWrapping="Wrap" />
                                     <Button Grid.Column="1"
-                                            Content="Editar" 
+                                            Content="Editar"
                                             Command="{Binding EscolherPastaCommand}"
                                             Classes="Secondary"
                                             Padding="12,8"
@@ -74,45 +75,46 @@
                             </Grid>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- Seção de Ações Manuais -->
                     <TextBlock Text="Ações Manuais"
-                               FontSize="18" 
+                               FontSize="18"
                                FontWeight="SemiBold" />
-                    
+
                     <!-- Botões de Ação -->
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                         <Button Grid.Column="0"
-                                Content="Fazer Backup" 
-                                Command="{Binding BackupCommand}" 
+                                Content="Fazer Backup"
+                                Command="{Binding BackupCommand}"
                                 Classes="Primary"
                                 Padding="14,12"
                                 CornerRadius="6"
                                 ToolTip.Tip="Fazer backup dos dados"
                                 HorizontalAlignment="Stretch" />
                         <Button Grid.Column="1"
-                                Content="Restaurar" 
-                                Command="{Binding RestoreCommand}" 
+                                Content="Restaurar"
+                                Command="{Binding RestoreCommand}"
                                 Classes="Primary"
                                 Padding="14,12"
                                 CornerRadius="6"
                                 ToolTip.Tip="Restaurar dados de backup"
                                 HorizontalAlignment="Stretch" />
                     </Grid>
-                    
+
                     <!-- Informações -->
-                    <Border Padding="16" 
-                            Background="{DynamicResource BrushBackgroundTertiary}" 
+                    <Border Padding="16"
+                            Background="{DynamicResource BrushBackgroundTertiary}"
                             CornerRadius="6">
                         <StackPanel Spacing="8">
-                            <TextBlock Text="ℹ️ Informações" 
-                                       FontWeight="SemiBold" 
+                            <TextBlock Text="ℹ️ Informações"
+                                       FontWeight="SemiBold"
                                        FontSize="13" />
-                            <TextBlock Text="O backup salva todos os dados em uma pasta local. Use a opção 'Editar' para escolher onde os dados serão armazenados." 
-                                       FontSize="12"
-                                       Foreground="{DynamicResource BrushTextSecondary}"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Text="Faça backup regularmente para não perder seus dados." 
+                            <TextBlock
+                                Text="O backup salva todos os dados em uma pasta local. Use a opção 'Editar' para escolher onde os dados serão armazenados."
+                                FontSize="12"
+                                Foreground="{DynamicResource BrushTextSecondary}"
+                                TextWrapping="Wrap" />
+                            <TextBlock Text="Faça backup regularmente para não perder seus dados."
                                        FontSize="12"
                                        Foreground="{DynamicResource BrushTextSecondary}"
                                        TextWrapping="Wrap" />

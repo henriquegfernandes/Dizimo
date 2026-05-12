@@ -1,12 +1,11 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
 namespace Dizimo.Converters;
 
 /// <summary>
-/// Conversor para exibir datas no formato PT-BR (dd/MM/yyyy)
-/// Exemplo: 2024-01-15 -> "15/01/2024"
+///     Conversor para exibir datas no formato PT-BR (dd/MM/yyyy)
+///     Exemplo: 2024-01-15 -> "15/01/2024"
 /// </summary>
 public class DatePtBrConverter : IValueConverter
 {
@@ -27,10 +26,9 @@ public class DatePtBrConverter : IValueConverter
         {
             var ptBr = new CultureInfo("pt-BR");
             if (DateTime.TryParseExact(stringValue, "dd/MM/yyyy", ptBr, DateTimeStyles.None, out var result))
-            {
                 return result;
-            }
         }
+
         return DateTime.Now;
     }
 }

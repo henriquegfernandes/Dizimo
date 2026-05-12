@@ -1,13 +1,16 @@
-using Dizimo.Domain.Repositories;
 using Dizimo.Application.Dizimistas.Commands;
-using System.Threading.Tasks;
+using Dizimo.Domain.Repositories;
 
 namespace Dizimo.Application.Dizimistas.Handlers;
 
 public class DeleteDizimistaHandler
 {
     private readonly IUnitOfWork _unitOfWork;
-    public DeleteDizimistaHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public DeleteDizimistaHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task Handle(DeleteDizimistaCommand command)
     {

@@ -10,7 +10,7 @@ public class CepFormatterConverter : IValueConverter
         if (value is not string cep || string.IsNullOrWhiteSpace(cep))
             return string.Empty;
 
-        // Remove caracteres não numéricos
+        // Remove caracteres nï¿½o numï¿½ricos
         var cleaned = new string(cep.Where(char.IsDigit).ToArray());
 
         if (cleaned.Length == 0)
@@ -28,7 +28,7 @@ public class CepFormatterConverter : IValueConverter
         if (value is not string formatted)
             return string.Empty;
 
-        // Remove caracteres não numéricos
+        // Remove caracteres nï¿½o numï¿½ricos
         return new string(formatted.Where(char.IsDigit).ToArray());
     }
 }

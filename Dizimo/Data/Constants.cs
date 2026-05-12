@@ -1,18 +1,17 @@
-namespace Dizimo.Data
-{
-    public static class Constants
-    {
-        public const string DatabaseFilename = "AppSQLite.db3";
+namespace Dizimo.Data;
 
-        public static string DatabasePath
+public static class Constants
+{
+    public const string DatabaseFilename = "AppSQLite.db3";
+
+    public static string DatabasePath
+    {
+        get
         {
-            get
-            {
-                var appDataDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
-                    "Dizimo");
-                return $"Data Source={Path.Combine(appDataDir, DatabaseFilename)}";
-            }
+            var appDataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Dizimo");
+            return $"Data Source={Path.Combine(appDataDir, DatabaseFilename)}";
         }
     }
 }

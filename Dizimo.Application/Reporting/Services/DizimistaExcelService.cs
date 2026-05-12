@@ -1,7 +1,7 @@
+using System.Globalization;
+using ClosedXML.Excel;
 using Dizimo.Domain.Entities;
 using Dizimo.Domain.Repositories;
-using ClosedXML.Excel;
-using System.Globalization;
 
 namespace Dizimo.Application.Reporting.Services;
 
@@ -27,11 +27,9 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
 
         // Filtro de nome
         if (!string.IsNullOrWhiteSpace(filtroNome))
-        {
             dizimistasFiltrados = dizimistasFiltrados.Where(d =>
                 d.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
                 d.NumeroCadastro.ToString().Contains(filtroNome));
-        }
 
         // Aplicar a mesma ordenação que a página: OrderBy(d => d.Nome)
         dizimistas = [.. dizimistasFiltrados.OrderBy(d => d.Nome)];
@@ -63,7 +61,7 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
         headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
         // Dados
-        int rowNumber = 2;
+        var rowNumber = 2;
         foreach (var d in dizimistas)
         {
             var endereco = d.Endereco ?? new Endereco();
@@ -156,13 +154,9 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
         worksheet.Cell(2, 14).Value = "01310100";
 
         // Linhas em branco para o usuário preencher (5 linhas)
-        for (int i = 3; i <= 7; i++)
-        {
-            for (int j = 1; j <= 14; j++)
-            {
+        for (var i = 3; i <= 7; i++)
+            for (var j = 1; j <= 14; j++)
                 worksheet.Cell(i, j).Value = "";
-            }
-        }
 
         // Ajustar largura das colunas e formatos
         worksheet.Column(1).Width = 15;
@@ -197,14 +191,11 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
         using var workbook = new XLWorkbook(stream);
         var worksheet = workbook.Worksheet(1);
 
-        int lastRow = 1;
+        var lastRow = 1;
         var lastRowUsed = worksheet.LastRowUsed();
-        if (lastRowUsed != null)
-        {
-            lastRow = lastRowUsed.RowNumber();
-        }
+        if (lastRowUsed != null) lastRow = lastRowUsed.RowNumber();
 
-        for (int rowNumber = 2; rowNumber <= lastRow; rowNumber++)
+        for (var rowNumber = 2; rowNumber <= lastRow; rowNumber++)
         {
             var numeroCadastroCell = worksheet.Cell(rowNumber, 1).GetValue<string>();
             if (string.IsNullOrWhiteSpace(numeroCadastroCell)) continue;
@@ -216,11 +207,10 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
             if (string.IsNullOrWhiteSpace(nome)) continue;
 
             var dataNascimentoCell = worksheet.Cell(rowNumber, 3).GetValue<string>();
-            if (!DateTime.TryParseExact(dataNascimentoCell?.Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dataNascimento))
-            {
+            if (!DateTime.TryParseExact(dataNascimentoCell?.Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out var dataNascimento))
                 if (!DateTime.TryParse(dataNascimentoCell?.Trim(), out dataNascimento))
                     continue;
-            }
 
             var telefone = worksheet.Cell(rowNumber, 4).GetValue<string>() ?? "";
             var whatsapp = worksheet.Cell(rowNumber, 5).GetValue<string>() ?? "";
@@ -229,7 +219,8 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
             var dataCadastroCell = worksheet.Cell(rowNumber, 6).GetValue<string>();
             if (!string.IsNullOrWhiteSpace(dataCadastroCell))
             {
-                if (DateTime.TryParseExact(dataCadastroCell.Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dc))
+                if (DateTime.TryParseExact(dataCadastroCell.Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture,
+                        DateTimeStyles.None, out var dc))
                     dataCadastro = dc;
                 else if (DateTime.TryParse(dataCadastroCell.Trim(), out var dc2))
                     dataCadastro = dc2;
@@ -269,4 +260,3 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
         return result;
     }
 }
-

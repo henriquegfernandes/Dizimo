@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Dizimo.ViewModels"
@@ -7,7 +8,7 @@
              xmlns:behaviors="clr-namespace:Dizimo.Behaviors"
              x:Class="Dizimo.Pages.UsuarioListPage"
              x:DataType="vm:UsuarioListViewModel">
-    
+
     <UserControl.Resources>
         <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
         <converters:GreaterThanZeroToBoolConverter x:Key="GreaterThanZeroToBoolConverter" />
@@ -17,34 +18,34 @@
         <ScrollViewer>
             <StackPanel Spacing="16" Margin="16">
                 <StackPanel Margin="16" Spacing="12">
-                    <TextBlock Text="Gerenciamento de Usuários" 
-                               FontSize="24" 
-                               FontWeight="Bold" 
+                    <TextBlock Text="Gerenciamento de Usuários"
+                               FontSize="24"
+                               FontWeight="Bold"
                                Foreground="{DynamicResource BrushPrimary}" />
                     <!-- Filtro de busca -->
                     <Grid ColumnSpacing="16" ColumnDefinitions="*,Auto,Auto">
-                        <TextBox PlaceholderText="Buscar por nome ou login" 
-                                Text="{Binding FiltroNome}" 
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                KeyDown="FilterTextBox_KeyDown"
-                                LostFocus="FilterTextBox_LostFocus" />
+                        <TextBox PlaceholderText="Buscar por nome ou login"
+                                 Text="{Binding FiltroNome}"
+                                 Grid.Column="0"
+                                 VerticalAlignment="Center"
+                                 KeyDown="FilterTextBox_KeyDown"
+                                 LostFocus="FilterTextBox_LostFocus" />
                         <Button Grid.Column="1"
-                               Classes="Secondary"
-                               Command="{Binding AplicarFiltrosCommand}" 
-                               Content="Filtrar"
-                               Padding="12"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               CornerRadius="6" />
+                                Classes="Secondary"
+                                Command="{Binding AplicarFiltrosCommand}"
+                                Content="Filtrar"
+                                Padding="12"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                CornerRadius="6" />
                         <Button Grid.Column="2"
-                               Classes="Secondary"
-                               Command="{Binding LimparFiltrosCommand}" 
-                               Content="Limpar"
-                               Padding="12"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               CornerRadius="6" />
+                                Classes="Secondary"
+                                Command="{Binding LimparFiltrosCommand}"
+                                Content="Limpar"
+                                Padding="12"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                CornerRadius="6" />
                     </Grid>
 
                     <!-- Linha de título da lista -->
@@ -59,8 +60,8 @@
 
                     <!-- Lista paginada com ItemsControl -->
                     <ItemsControl x:Name="UsuariosCollectionView"
-                                 ItemsSource="{Binding Usuarios}"
-                                 Margin="0,0,0,8">
+                                  ItemsSource="{Binding Usuarios}"
+                                  Margin="0,0,0,8">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="domain:Usuario">
                                 <Grid ColumnSpacing="16" ColumnDefinitions="0.5*,3*,2*,2*,1.5*,Auto" Margin="0,8">
@@ -71,26 +72,29 @@
                                               behaviors:CheckBoxSelectionBehavior.SelectedItems="{Binding $parent[ItemsControl].DataContext.UsuariosSelecionados}"
                                               VerticalAlignment="Center"
                                               HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding Nome}" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Login}" Grid.Column="2" TextAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Perfil}" Grid.Column="3" TextAlignment="Center" VerticalAlignment="Center" />
-                                    
-                                     <!-- Status do usuário -->
-                                     <TextBlock Grid.Column="4" 
-                                               TextAlignment="Center" 
+                                    <TextBlock Text="{Binding Nome}" Grid.Column="1" TextAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Login}" Grid.Column="2" TextAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Perfil}" Grid.Column="3" TextAlignment="Center"
+                                               VerticalAlignment="Center" />
+
+                                    <!-- Status do usuário -->
+                                    <TextBlock Grid.Column="4"
+                                               TextAlignment="Center"
                                                VerticalAlignment="Center"
                                                Text="{Binding Ativo, Converter={StaticResource BoolToTextConverter}}" />
-                                    
+
                                     <!-- Botão de editar -->
                                     <Button Grid.Column="5"
-                                           Command="{Binding $parent[ItemsControl].DataContext.EditarUsuarioCommand}"
-                                           CommandParameter="{Binding}"
-                                           Padding="8,4"
-                                           CornerRadius="6"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           ToolTip.Tip="Editar"
-                                           Classes="Primary">
+                                            Command="{Binding $parent[ItemsControl].DataContext.EditarUsuarioCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="8,4"
+                                            CornerRadius="6"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Editar"
+                                            Classes="Primary">
                                         <TextBlock Text="✏️" FontSize="14" Foreground="White" />
                                     </Button>
                                 </Grid>
@@ -102,41 +106,43 @@
         </ScrollViewer>
 
         <!-- Botões flutuantes de ação em massa (excluir, ativar/inativar, selecionar todos) - Centralizados -->
-        <Grid ColumnSpacing="12" ColumnDefinitions="*,*,*" VerticalAlignment="Bottom" HorizontalAlignment="Center" IsVisible="{Binding UsuariosSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}, Mode=OneWay}" Margin="0,0,0,24">
+        <Grid ColumnSpacing="12" ColumnDefinitions="*,*,*" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+              IsVisible="{Binding UsuariosSelecionados.Count, Converter={StaticResource GreaterThanZeroToBoolConverter}, Mode=OneWay}"
+              Margin="0,0,0,24">
             <Button Content="{Binding TextoBotaoSelecao}"
-                   Classes="Primary"
-                   Command="{Binding SelecionarTodosCommand}"
-                   Padding="12"
-                   CornerRadius="8"
-                   Grid.Column="0"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
-            <Button Content="Excluir" 
-                   Classes="Primary"
-                   Command="{Binding ExcluirUsuariosSelecionadosCommand}" 
-                   Padding="12"
-                   CornerRadius="8"
-                   Grid.Column="1"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
-            <Button Content="Ativar/Inativar" 
-                   Classes="Primary"
-                   Command="{Binding InativarUsuariosSelecionadosCommand}" 
-                   Padding="12"
-                   CornerRadius="8"
-                   Grid.Column="2"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
+                    Classes="Primary"
+                    Command="{Binding SelecionarTodosCommand}"
+                    Padding="12"
+                    CornerRadius="8"
+                    Grid.Column="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            <Button Content="Excluir"
+                    Classes="Primary"
+                    Command="{Binding ExcluirUsuariosSelecionadosCommand}"
+                    Padding="12"
+                    CornerRadius="8"
+                    Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            <Button Content="Ativar/Inativar"
+                    Classes="Primary"
+                    Command="{Binding InativarUsuariosSelecionadosCommand}"
+                    Padding="12"
+                    CornerRadius="8"
+                    Grid.Column="2"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
         </Grid>
 
         <!-- Botão flutuante de adicionar usuário -->
         <Button Classes="Floating"
-            Command="{Binding NovoUsuarioCommand}"
-            IsEnabled="True"
-            Content="➕"
-            VerticalAlignment="Bottom"
-            HorizontalAlignment="Right"
-            Margin="24"
-            ToolTip.Tip="Adicionar" />
+                Command="{Binding NovoUsuarioCommand}"
+                IsEnabled="True"
+                Content="➕"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Right"
+                Margin="24"
+                ToolTip.Tip="Adicionar" />
     </Grid>
 </UserControl>

@@ -1,36 +1,43 @@
 using Dizimo.Domain.Entities;
-using Dizimo.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Dizimo.Infrastructure.Persistence;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Dizimo.Domain.Models;
+using Dizimo.Domain.Repositories;
+using Dizimo.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dizimo.Infrastructure.Repositories;
 
 public class DizimistaRepository : IDizimistaRepository
 {
     private readonly DizimoDbContext _context;
-    public DizimistaRepository(DizimoDbContext context) => _context = context;
 
-    public async Task<Dizimista?> GetByIdAsync(Guid id) => 
-        await _context.Dizimistas
+    public DizimistaRepository(DizimoDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Dizimista?> GetByIdAsync(Guid id)
+    {
+        return await _context.Dizimistas
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.Id == id);
-            
-    public async Task<Dizimista?> GetByNumeroCadastroAsync(int numeroCadastro) => 
-        await _context.Dizimistas
+    }
+
+    public async Task<Dizimista?> GetByNumeroCadastroAsync(int numeroCadastro)
+    {
+        return await _context.Dizimistas
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.NumeroCadastro == numeroCadastro);
-            
-    public async Task<IEnumerable<Dizimista>> GetAllAsync() => 
-        await _context.Dizimistas
+    }
+
+    public async Task<IEnumerable<Dizimista>> GetAllAsync()
+    {
+        return await _context.Dizimistas
             .AsNoTracking()
             .ToListAsync();
+    }
 
-    public async Task<PaginatedResult<Dizimista>> GetAllPaginatedAsync(int pageNumber, int pageSize, string? filtroNome = null, string? statusSelecionado = null)
+    public async Task<PaginatedResult<Dizimista>> GetAllPaginatedAsync(int pageNumber, int pageSize,
+        string? filtroNome = null, string? statusSelecionado = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 20;
@@ -46,8 +53,8 @@ public class DizimistaRepository : IDizimistaRepository
                 query = query.Where(d => !d.Ativo);
         }
 
-        // Se há filtro de nome, precisa trazer para cliente e contar depois
-        // Caso contrário, pode fazer tudo no SQL
+        // Se hï¿½ filtro de nome, precisa trazer para cliente e contar depois
+        // Caso contrï¿½rio, pode fazer tudo no SQL
         PaginatedResult<Dizimista> result;
 
         if (string.IsNullOrWhiteSpace(filtroNome))
@@ -76,8 +83,8 @@ public class DizimistaRepository : IDizimistaRepository
                 .ToListAsync();
 
             var filteredItems = itemsFromDb.Where(d =>
-                d.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
-                d.NumeroCadastro.ToString().Contains(filtroNome))
+                    d.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase) ||
+                    d.NumeroCadastro.ToString().Contains(filtroNome))
                 .ToList();
 
             var totalCount = filteredItems.Count;
@@ -97,15 +104,20 @@ public class DizimistaRepository : IDizimistaRepository
 
         return result;
     }
-            
-    public async Task<IEnumerable<Dizimista>> GetAniversariantesAsync(int mes) => 
-        await _context.Dizimistas
+
+    public async Task<IEnumerable<Dizimista>> GetAniversariantesAsync(int mes)
+    {
+        return await _context.Dizimistas
             .AsNoTracking()
             .Where(d => d.DataNascimento.Month == mes)
             .ToListAsync();
-            
-    public async Task AddAsync(Dizimista dizimista) { await _context.Dizimistas.AddAsync(dizimista); }
-    
+    }
+
+    public async Task AddAsync(Dizimista dizimista)
+    {
+        await _context.Dizimistas.AddAsync(dizimista);
+    }
+
     public async Task UpdateAsync(Dizimista dizimista)
     {
         var entity = await _context.Dizimistas
@@ -129,22 +141,20 @@ public class DizimistaRepository : IDizimistaRepository
             _context.Dizimistas.Update(entity);
         }
     }
-    
+
     public async Task DeleteAsync(Guid id)
     {
         var entity = await _context.Dizimistas.FindAsync(id);
         if (entity != null) _context.Dizimistas.Remove(entity);
     }
-    
+
     public async Task InativarAsync(Guid id)
     {
         var entity = await _context.Dizimistas.FindAsync(id);
-        if (entity != null) 
-        { 
+        if (entity != null)
+        {
             entity.Ativo = !entity.Ativo;
-            _context.Dizimistas.Update(entity); 
+            _context.Dizimistas.Update(entity);
         }
     }
 }
-
-

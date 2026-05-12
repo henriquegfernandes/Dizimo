@@ -20,7 +20,7 @@ public class Dizimista
     public string Nome { get; set; } = string.Empty;
     public DateTime DataNascimento { get; set; }
     public bool Ativo { get; set; } = true;
-    public Endereco Endereco { get; set; } = new Endereco();
+    public Endereco Endereco { get; set; } = new();
     public string Telefone { get; set; } = string.Empty;
     public string Whatsapp { get; set; } = string.Empty;
     public DateTime DataCadastro { get; set; } = DateTime.Today;

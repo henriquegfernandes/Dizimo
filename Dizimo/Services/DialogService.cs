@@ -1,10 +1,10 @@
-namespace Dizimo.Services;
-
 using System.Diagnostics;
 
+namespace Dizimo.Services;
+
 /// <summary>
-/// Implementação de debug para IDialogService
-/// Use AvaloniaDialogService em produção para diálogos reais
+///     Implementação de debug para IDialogService
+///     Use AvaloniaDialogService em produção para diálogos reais
 /// </summary>
 public class DialogService : IDialogService
 {
@@ -14,7 +14,8 @@ public class DialogService : IDialogService
         return Task.CompletedTask;
     }
 
-    public Task<bool> ShowConfirmAsync(string title, string message, string acceptText = "Sim", string cancelText = "Não")
+    public Task<bool> ShowConfirmAsync(string title, string message, string acceptText = "Sim",
+        string cancelText = "Não")
     {
         Debug.WriteLine($"[DIALOG] {title}: {message} [{acceptText}/{cancelText}]");
         return Task.FromResult(false);
@@ -46,8 +47,8 @@ public class DialogService : IDialogService
 
     public Task<string?> ShowFilePickerAsync(string title, string? initialPath = null, string[]? filters = null)
     {
-        Debug.WriteLine($"[DIALOG] File Picker: {title} (initialPath: {initialPath}, filters: {string.Join(",", filters ?? Array.Empty<string>())})");
+        Debug.WriteLine(
+            $"[DIALOG] File Picker: {title} (initialPath: {initialPath}, filters: {string.Join(",", filters ?? Array.Empty<string>())})");
         return Task.FromResult<string?>(null);
     }
 }
-

@@ -1,17 +1,12 @@
-using Dizimo.Domain.Entities;
 using System.Security.Cryptography;
 using System.Text;
+using Dizimo.Domain.Entities;
 
 namespace Dizimo.Services;
 
 public class SessaoService
 {
     private static IPreferencesService? _preferencesService;
-
-    public static void Initialize(IPreferencesService preferencesService)
-    {
-        _preferencesService = preferencesService;
-    }
 
     public static Guid? UsuarioId
     {
@@ -50,6 +45,11 @@ public class SessaoService
 
     public static bool IsLogado => UsuarioId != null;
     public static bool IsAdmin => Perfil == PerfilUsuario.Admin;
+
+    public static void Initialize(IPreferencesService preferencesService)
+    {
+        _preferencesService = preferencesService;
+    }
 
     public static void Login(Guid usuarioId, PerfilUsuario perfil, string usuarioNome)
     {

@@ -1,170 +1,174 @@
-using Avalonia.Markup.Xaml.Styling;
+using System.Diagnostics;
 using Avalonia.Media;
-using System.Linq;
-using Avalonia.VisualTree;
+using Avalonia.Styling;
 
 namespace Dizimo.Services;
 
 /// <summary>
-/// Enumeração de temas suportados pela aplicação
+///     Enumeração de temas suportados pela aplicação
 /// </summary>
 public enum AppTheme
 {
     /// <summary>
-    /// Tema claro - cores claras com texto escuro
+    ///     Tema claro - cores claras com texto escuro
     /// </summary>
     Light,
-    
+
     /// <summary>
-    /// Tema escuro - cores escuras com texto claro
+    ///     Tema escuro - cores escuras com texto claro
     /// </summary>
     Dark,
-    
+
     /// <summary>
-    /// Tema automático - segue a preferência do sistema
+    ///     Tema automático - segue a preferência do sistema
     /// </summary>
     Auto
 }
 
 /// <summary>
-/// Serviço responsável por gerenciar os temas da aplicação
-/// Suporta alternância entre temas claro e escuro com SimpleTheme
-/// 
-/// Para usar: ThemeService.Initialize(this, preferencesService);
-/// Para mudar tema: ThemeService.SaveThemePreference(AppTheme.Dark);
+///     Serviço responsável por gerenciar os temas da aplicação
+///     Suporta alternância entre temas claro e escuro com SimpleTheme
+///     Para usar: ThemeService.Initialize(this, preferencesService);
+///     Para mudar tema: ThemeService.SaveThemePreference(AppTheme.Dark);
 /// </summary>
 public class ThemeService
 {
-    private static AppTheme _currentTheme = AppTheme.Light;
-    private static global::Avalonia.Application? _application;
-    private static IPreferencesService? _preferencesService;
     private const string ThemePreferenceKey = "AppTheme";
+    private static AppTheme _currentTheme = AppTheme.Light;
+    private static Avalonia.Application? _application;
+    private static IPreferencesService? _preferencesService;
 
     /// <summary>
-    /// Inicializa o serviço de temas
+    ///     Inicializa o serviço de temas
     /// </summary>
-    public static void Initialize(global::Avalonia.Application app, IPreferencesService? preferencesService = null)
+    public static void Initialize(Avalonia.Application app, IPreferencesService? preferencesService = null)
     {
         _application = app;
         _preferencesService = preferencesService;
-        
+
         // Carrega o tema salvo anteriormente
         if (_preferencesService != null)
         {
             var savedTheme = _preferencesService.Get(ThemePreferenceKey, AppTheme.Light.ToString());
-            if (Enum.TryParse<AppTheme>(savedTheme, out var theme))
-            {
-                _currentTheme = theme;
-            }
+            if (Enum.TryParse<AppTheme>(savedTheme, out var theme)) _currentTheme = theme;
         }
-        
+
         ApplyTheme(_currentTheme);
-        System.Diagnostics.Debug.WriteLine($"[THEME] Serviço de temas inicializado com tema: {_currentTheme}");
+        Debug.WriteLine($"[THEME] Serviço de temas inicializado com tema: {_currentTheme}");
     }
 
     /// <summary>
-    /// Salva a preferência de tema do usuário e aplica o tema
+    ///     Salva a preferência de tema do usuário e aplica o tema
     /// </summary>
     public static void SaveThemePreference(AppTheme theme)
     {
         _currentTheme = theme;
-        
+
         // Persiste em disco se o IPreferencesService estiver disponível
         if (_preferencesService != null)
         {
             _preferencesService.Set(ThemePreferenceKey, theme.ToString());
-            System.Diagnostics.Debug.WriteLine($"[THEME] Tema salvo em preferências: {theme}");
+            Debug.WriteLine($"[THEME] Tema salvo em preferências: {theme}");
         }
-        
+
         ApplyTheme(theme);
-        System.Diagnostics.Debug.WriteLine($"[THEME] Tema salvo e aplicado: {theme}");
+        Debug.WriteLine($"[THEME] Tema salvo e aplicado: {theme}");
     }
 
     /// <summary>
-    /// Retorna a preferência de tema salva
+    ///     Retorna a preferência de tema salva
     /// </summary>
     public static AppTheme GetSavedThemePreference()
     {
         if (_preferencesService != null)
         {
             var savedTheme = _preferencesService.Get(ThemePreferenceKey, AppTheme.Light.ToString());
-            if (Enum.TryParse<AppTheme>(savedTheme, out var theme))
-            {
-                return theme;
-            }
+            if (Enum.TryParse<AppTheme>(savedTheme, out var theme)) return theme;
         }
-        
+
         return _currentTheme;
     }
 
     /// <summary>
-    /// Aplica o tema selecionado ao aplicativo
-    /// Atualiza os recursos de aplicação de acordo com o tema
+    ///     Aplica o tema selecionado ao aplicativo
+    ///     Atualiza os recursos de aplicação de acordo com o tema
     /// </summary>
     public static void ApplyTheme(AppTheme theme)
     {
         if (_application == null)
         {
-            System.Diagnostics.Debug.WriteLine("[THEME] Aviso: Aplicação não inicializada");
+            Debug.WriteLine("[THEME] Aviso: Aplicação não inicializada");
             return;
         }
 
         try
         {
             _currentTheme = theme;
-            
+
             // Determina qual tema será aplicado
-            AppTheme effectiveTheme = theme;
-            if (theme == AppTheme.Auto)
-            {
-                effectiveTheme = DetectSystemTheme();
-            }
+            var effectiveTheme = theme;
+            if (theme == AppTheme.Auto) effectiveTheme = DetectSystemTheme();
 
             // Define as cores dos brushes conforme o tema
             if (effectiveTheme == AppTheme.Dark)
             {
                 // TEMA ESCURO
-                _application.Resources["BrushTextPrimary"] = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)); // Branco
-                _application.Resources["BrushTextSecondary"] = new SolidColorBrush(Color.FromArgb(255, 179, 179, 179)); // Cinza claro
-                _application.Resources["BrushTextTertiary"] = new SolidColorBrush(Color.FromArgb(255, 128, 128, 128)); // Cinza
-                
-                _application.Resources["BrushBackgroundPrimary"] = new SolidColorBrush(Color.FromArgb(255, 18, 18, 18)); // #121212
-                _application.Resources["BrushBackgroundSecondary"] = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)); // #1E1E1E
-                _application.Resources["BrushBackgroundTertiary"] = new SolidColorBrush(Color.FromArgb(255, 44, 44, 44)); // #2C2C2C
-                
+                _application.Resources["BrushTextPrimary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)); // Branco
+                _application.Resources["BrushTextSecondary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 179, 179, 179)); // Cinza claro
+                _application.Resources["BrushTextTertiary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 128, 128, 128)); // Cinza
+
+                _application.Resources["BrushBackgroundPrimary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 18, 18, 18)); // #121212
+                _application.Resources["BrushBackgroundSecondary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)); // #1E1E1E
+                _application.Resources["BrushBackgroundTertiary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 44, 44, 44)); // #2C2C2C
+
                 _application.Resources["BrushBorder"] = new SolidColorBrush(Color.FromArgb(255, 56, 56, 56)); // #383838
-                _application.Resources["BrushDivider"] = new SolidColorBrush(Color.FromArgb(255, 44, 44, 44)); // #2C2C2C
+                _application.Resources["BrushDivider"] =
+                    new SolidColorBrush(Color.FromArgb(255, 44, 44, 44)); // #2C2C2C
             }
             else
             {
                 // TEMA CLARO
-                _application.Resources["BrushTextPrimary"] = new SolidColorBrush(Color.FromArgb(255, 33, 33, 33)); // #212121 Preto
-                _application.Resources["BrushTextSecondary"] = new SolidColorBrush(Color.FromArgb(255, 100, 100, 100)); // #646464 Cinza
-                _application.Resources["BrushTextTertiary"] = new SolidColorBrush(Color.FromArgb(255, 150, 150, 150)); // #969696 Cinza claro
-                
-                _application.Resources["BrushBackgroundPrimary"] = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)); // Branco
-                _application.Resources["BrushBackgroundSecondary"] = new SolidColorBrush(Color.FromArgb(255, 242, 242, 242)); // #F2F2F2 Cinza bem claro
-                _application.Resources["BrushBackgroundTertiary"] = new SolidColorBrush(Color.FromArgb(255, 230, 230, 230)); // #E6E6E6 Cinza
-                
-                _application.Resources["BrushBorder"] = new SolidColorBrush(Color.FromArgb(255, 220, 220, 220)); // #DCDCDC
-                _application.Resources["BrushDivider"] = new SolidColorBrush(Color.FromArgb(255, 230, 230, 230)); // #E6E6E6
+                _application.Resources["BrushTextPrimary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 33, 33, 33)); // #212121 Preto
+                _application.Resources["BrushTextSecondary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 100, 100, 100)); // #646464 Cinza
+                _application.Resources["BrushTextTertiary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 150, 150, 150)); // #969696 Cinza claro
+
+                _application.Resources["BrushBackgroundPrimary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)); // Branco
+                _application.Resources["BrushBackgroundSecondary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 242, 242, 242)); // #F2F2F2 Cinza bem claro
+                _application.Resources["BrushBackgroundTertiary"] =
+                    new SolidColorBrush(Color.FromArgb(255, 230, 230, 230)); // #E6E6E6 Cinza
+
+                _application.Resources["BrushBorder"] =
+                    new SolidColorBrush(Color.FromArgb(255, 220, 220, 220)); // #DCDCDC
+                _application.Resources["BrushDivider"] =
+                    new SolidColorBrush(Color.FromArgb(255, 230, 230, 230)); // #E6E6E6
             }
 
             // Aplica o tema no Avalonia
-            _application.RequestedThemeVariant = effectiveTheme == AppTheme.Dark 
-                ? global::Avalonia.Styling.ThemeVariant.Dark 
-                : global::Avalonia.Styling.ThemeVariant.Light;
+            _application.RequestedThemeVariant = effectiveTheme == AppTheme.Dark
+                ? ThemeVariant.Dark
+                : ThemeVariant.Light;
 
-            System.Diagnostics.Debug.WriteLine($"[THEME] Tema aplicado com sucesso: {effectiveTheme}");
+            Debug.WriteLine($"[THEME] Tema aplicado com sucesso: {effectiveTheme}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[THEME] Erro ao aplicar tema: {ex.Message}");
+            Debug.WriteLine($"[THEME] Erro ao aplicar tema: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Detecta o tema do sistema operacional
+    ///     Detecta o tema do sistema operacional
     /// </summary>
     private static AppTheme DetectSystemTheme()
     {
@@ -174,8 +178,8 @@ public class ThemeService
     }
 
     /// <summary>
-    /// Mapeia índice (0/1/2) para AppTheme
-    /// Usado para compatibilidade com ComboBox ou similares
+    ///     Mapeia índice (0/1/2) para AppTheme
+    ///     Usado para compatibilidade com ComboBox ou similares
     /// </summary>
     public static int GetThemeIndex(AppTheme theme)
     {
@@ -189,7 +193,7 @@ public class ThemeService
     }
 
     /// <summary>
-    /// Mapeia índice para AppTheme
+    ///     Mapeia índice para AppTheme
     /// </summary>
     public static AppTheme GetThemeFromIndex(int index)
     {
@@ -203,11 +207,10 @@ public class ThemeService
     }
 
     /// <summary>
-    /// Retorna o tema atual em uso
+    ///     Retorna o tema atual em uso
     /// </summary>
     public static AppTheme GetCurrentTheme()
     {
         return _currentTheme;
     }
 }
-

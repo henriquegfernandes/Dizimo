@@ -1,17 +1,16 @@
+using System.Diagnostics;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dizimo.Infrastructure.Backup.Services;
-using Dizimo.Services;
-using Avalonia.Controls;
-using Avalonia.Platform.Storage;
 using AppLifetime = Avalonia.Controls.ApplicationLifetimes.ClassicDesktopStyleApplicationLifetime;
 
 namespace Dizimo.ViewModels;
 
 public partial class BackupViewModel : ObservableObject
 {
-    private readonly LocalBackupService _localBackupService;
     private readonly IDialogService _dialogService;
+    private readonly LocalBackupService _localBackupService;
 
     public BackupViewModel(LocalBackupService localBackupService, IDialogService dialogService)
     {
@@ -39,16 +38,17 @@ public partial class BackupViewModel : ObservableObject
         try
         {
             // Abrir file picker para o usuário selecionar o arquivo de backup
-            if (global::Avalonia.Application.Current?.ApplicationLifetime is AppLifetime desktop && desktop.MainWindow != null)
+            if (Avalonia.Application.Current?.ApplicationLifetime is AppLifetime desktop && desktop.MainWindow != null)
             {
                 var topLevel = TopLevel.GetTopLevel(desktop.MainWindow);
                 if (topLevel?.StorageProvider is null)
                 {
-                    await _dialogService.ShowErrorAsync("Não foi possível acessar o gerenciador de arquivos do sistema");
+                    await _dialogService.ShowErrorAsync(
+                        "Não foi possível acessar o gerenciador de arquivos do sistema");
                     return;
                 }
 
-                var files = await topLevel.StorageProvider.OpenFilePickerAsync(new()
+                var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
                     Title = "Selecionar Arquivo de Backup para Restaurar",
                     AllowMultiple = false,
@@ -62,7 +62,7 @@ public partial class BackupViewModel : ObservableObject
                 var backupFilePath = selectedFile.Path.LocalPath;
 
                 // Confirmar antes de restaurar (será destrutivo)
-                bool confirm = await _dialogService.ShowConfirmAsync(
+                var confirm = await _dialogService.ShowConfirmAsync(
                     "Confirmar Restauração",
                     $"Tem certeza que deseja restaurar o backup de:\n{Path.GetFileName(backupFilePath)}\n\n" +
                     "Todos os dados atuais serão substituídos! O aplicativo será encerrado e reiniciado automaticamente.",
@@ -72,38 +72,39 @@ public partial class BackupViewModel : ObservableObject
                     return;
 
                 // Restaurar o banco
-                System.Diagnostics.Debug.WriteLine("[INFO] Iniciando restauração do banco...");
+                Debug.WriteLine("[INFO] Iniciando restauração do banco...");
                 await _localBackupService.RestoreFromFileAsync(backupFilePath);
-                System.Diagnostics.Debug.WriteLine("[INFO] Banco restaurado com sucesso");
+                Debug.WriteLine("[INFO] Banco restaurado com sucesso");
 
                 // Aguardar para garantir limpeza completa
                 await Task.Delay(1000);
 
-                await _dialogService.ShowSuccessAsync("Restauração realizada com sucesso! O aplicativo será encerrado e reiniciado.");
-                System.Diagnostics.Debug.WriteLine("[INFO] Dialogo de sucesso exibido");
+                await _dialogService.ShowSuccessAsync(
+                    "Restauração realizada com sucesso! O aplicativo será encerrado e reiniciado.");
+                Debug.WriteLine("[INFO] Dialogo de sucesso exibido");
 
                 // Aguardar mais um pouco
                 await Task.Delay(500);
 
                 // Reiniciar a aplicação completamente
-                System.Diagnostics.Debug.WriteLine("[INFO] Encerrando aplicação para reiniciar...");
-                
+                Debug.WriteLine("[INFO] Encerrando aplicação para reiniciar...");
+
                 // Limpar a sessão do usuário ANTES de sair
                 SessaoService.Logout();
-                System.Diagnostics.Debug.WriteLine("[AUTH] Sessão do usuário limpa");
-                
-                var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+                Debug.WriteLine("[AUTH] Sessão do usuário limpa");
+
+                var currentProcess = Process.GetCurrentProcess();
                 var exePath = currentProcess.MainModule?.FileName;
-                
+
                 if (!string.IsNullOrEmpty(exePath))
                 {
                     // Iniciar nova instância
-                    System.Diagnostics.Process.Start(exePath);
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Nova instância iniciada: {exePath}");
+                    Process.Start(exePath);
+                    Debug.WriteLine($"[INFO] Nova instância iniciada: {exePath}");
                 }
-                
+
                 // Encerrar aplicação atual
-                System.Diagnostics.Debug.WriteLine("[INFO] Encerrando aplicação atual...");
+                Debug.WriteLine("[INFO] Encerrando aplicação atual...");
                 Environment.Exit(0);
             }
             else
@@ -113,7 +114,7 @@ public partial class BackupViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ERRO] Erro ao restaurar: {ex.Message}");
+            Debug.WriteLine($"[ERRO] Erro ao restaurar: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Erro ao restaurar: {ex.Message}");
         }
     }

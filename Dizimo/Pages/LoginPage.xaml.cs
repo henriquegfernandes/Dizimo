@@ -1,23 +1,23 @@
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+using System.Diagnostics;
 using Avalonia.Input;
+using Avalonia.Markup.Xaml;
 using Dizimo.ViewModels;
 
 namespace Dizimo.Pages;
 
 /// <summary>
-/// Página de login - Otimizada para Avalonia UI
+///     Página de login - Otimizada para Avalonia UI
 /// </summary>
-public partial class LoginPage : UserControl
+public class LoginPage : UserControl
 {
     public LoginPage()
     {
         AvaloniaXamlLoader.Load(this);
-        System.Diagnostics.Debug.WriteLine("[INFO] LoginPage inicializado");
+        Debug.WriteLine("[INFO] LoginPage inicializado");
     }
 
     /// <summary>
-    /// Handler para tratar Enter no login - move foco para senha
+    ///     Handler para tratar Enter no login - move foco para senha
     /// </summary>
     public void OnLoginKeyDown(object? sender, KeyEventArgs e)
     {
@@ -29,35 +29,30 @@ public partial class LoginPage : UserControl
     }
 
     /// <summary>
-    /// Handler para tratar Enter na senha - executa comando de login
+    ///     Handler para tratar Enter na senha - executa comando de login
     /// </summary>
     public void OnSenhaKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Return && DataContext is LoginViewModel vm)
-        {
             if (vm.LoginCommand.CanExecute(null))
             {
                 vm.LoginCommand.Execute(null);
                 e.Handled = true;
             }
-        }
     }
 
     /// <summary>
-    /// Reset do estado de login quando o DataContext muda
+    ///     Reset do estado de login quando o DataContext muda
     /// </summary>
-    protected override void OnDataContextChanged(System.EventArgs e)
+    protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        
-        if (DataContext is LoginViewModel vm)
-        {
-            vm.ResetLoginState();
-        }
+
+        if (DataContext is LoginViewModel vm) vm.ResetLoginState();
     }
 
     /// <summary>
-    /// Procura pelo TextBox de senha na hierarquia
+    ///     Procura pelo TextBox de senha na hierarquia
     /// </summary>
     private void FindSenhaTextBox(Control parent)
     {
@@ -68,14 +63,8 @@ public partial class LoginPage : UserControl
         }
 
         if (parent is Panel panel)
-        {
             foreach (var child in panel.Children)
-            {
                 if (child is Control control)
-                {
                     FindSenhaTextBox(control);
-                }
-            }
-        }
     }
 }
