@@ -493,11 +493,13 @@ public partial class DizimistaCadastroViewModel(
                             Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
 
                             // Mostrar resultado
-                            var mensagem =
-                                $"Importação concluída!\n\n✓ {sucessos} dizimista(s) importado(s) com sucesso";
+                            var mensagem = "Importação concluída!\n\n";
+                            mensagem += $"✓ {sucessos} dizimista(s) importado(s)";
+                            
                             if (erros > 0)
-                                mensagem += $"\n✗ {erros} erro(s) durante a importação";
-
+                                mensagem += $"\n✗ {erros} dizimista(s) não importado(s)";
+                            
+                            mensagem += $"\n\nTotal processado: {sucessos + erros} linha(s)";
                             mensagem += "\n\nDeseja cadastrar outro dizimista ou voltar para a lista?";
 
                             var result = await _dialogService.ShowConfirmAsync(

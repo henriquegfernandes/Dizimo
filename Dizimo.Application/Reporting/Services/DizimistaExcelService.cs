@@ -226,11 +226,10 @@ public class DizimistaExcelService(IUnitOfWork unitOfWork)
                     dataCadastro = dc2;
             }
 
-            var ativoCell = worksheet.Cell(rowNumber, 7).GetValue<string>();
-            var ativo = !string.IsNullOrWhiteSpace(ativoCell) && (
-                ativoCell.Equals("Sim", StringComparison.OrdinalIgnoreCase) ||
-                ativoCell.Equals("True", StringComparison.OrdinalIgnoreCase) ||
-                ativoCell.Equals("1"));
+            var ativoCell = worksheet.Cell(rowNumber, 7).GetValue<string>()?.Trim() ?? "";
+            var ativo = ativoCell.Equals("Sim", StringComparison.OrdinalIgnoreCase) ||
+                        ativoCell.Equals("True", StringComparison.OrdinalIgnoreCase) ||
+                        ativoCell.Equals("1");
 
             var endereco = new Endereco
             {
