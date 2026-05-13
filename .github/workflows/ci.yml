@@ -136,10 +136,6 @@ jobs:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
           retention-days: 30
-        with:
-          name: dizimo-${{ matrix.rid }}
-          path: publish-${{ matrix.rid }}
-          retention-days: 30
 
   # ============================================================================
   # CODE QUALITY - Runs on all branches
