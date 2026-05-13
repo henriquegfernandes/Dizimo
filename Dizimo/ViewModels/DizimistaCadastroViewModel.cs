@@ -169,7 +169,7 @@ public partial class DizimistaCadastroViewModel(
         CEP = Cep
     };
 
-    public async void OnNavigatedTo(NavigationParameters parameters)
+    public async void OnNavigatedTo(NavigationParameters? parameters)
     {
         // Tenta extrair o ID do parâmetro de navegação
         Guid? dizimistaId = null;
@@ -195,13 +195,13 @@ public partial class DizimistaCadastroViewModel(
                 Telefone = dizimista.Telefone;
                 Whatsapp = dizimista.Whatsapp;
                 DataCadastro = dizimista.DataCadastro;
-                Rua = dizimista.Endereco?.Rua ?? string.Empty;
-                Numero = dizimista.Endereco?.Numero ?? string.Empty;
-                Complemento = dizimista.Endereco?.Complemento ?? string.Empty;
-                Bairro = dizimista.Endereco?.Bairro ?? string.Empty;
-                Cidade = dizimista.Endereco?.Cidade ?? "Osasco";
-                Uf = dizimista.Endereco?.UF ?? "SP";
-                Cep = dizimista.Endereco?.CEP ?? string.Empty;
+                Rua = dizimista.Endereco.Rua;
+                Numero = dizimista.Endereco.Numero;
+                Complemento = dizimista.Endereco.Complemento;
+                Bairro = dizimista.Endereco.Bairro;
+                Cidade = dizimista.Endereco.Cidade;
+                Uf = dizimista.Endereco.UF;
+                Cep = dizimista.Endereco.CEP;
                 IsEditMode = true;
             }
         }
@@ -328,7 +328,7 @@ public partial class DizimistaCadastroViewModel(
                 Endereco, Telefone, Whatsapp, DataCadastro));
         else
             await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento, Endereco,
-                Telefone, Whatsapp, DataCadastro));
+                Telefone, Whatsapp, DataCadastro, Ativo));
 
         Debug.WriteLine("[INFO] Dizimista salvo com sucesso");
         _navigationService.Navigate("dizimistas");
@@ -349,7 +349,6 @@ public partial class DizimistaCadastroViewModel(
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
 
-                    if (storageProvider != null)
                     {
                         var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                         {
@@ -420,7 +419,6 @@ public partial class DizimistaCadastroViewModel(
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
-                    if (storageProvider != null)
                     {
                         var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                         {
@@ -470,7 +468,7 @@ public partial class DizimistaCadastroViewModel(
                                         continue;
                                     }
 
-                                    // Criar novo dizimista
+                                    // Criar novo dizimista com o campo Ativo da planilha
                                     var cmd = new CreateDizimistaCommand(
                                         dizimista.NumeroCadastro,
                                         dizimista.Nome,
@@ -478,7 +476,8 @@ public partial class DizimistaCadastroViewModel(
                                         dizimista.Endereco,
                                         dizimista.Telefone,
                                         dizimista.Whatsapp,
-                                        dizimista.DataCadastro
+                                        dizimista.DataCadastro,
+                                        dizimista.Ativo  // Passar o campo Ativo da planilha
                                     );
 
                                     await _createHandler.Handle(cmd);

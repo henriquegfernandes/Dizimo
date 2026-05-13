@@ -74,7 +74,7 @@
                     </Border>
 
                     <!-- Seção: Aniversariantes -->
-                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto" ColumnSpacing="10" Margin="0,20,0,0">
                         <TextBlock Grid.Column="0"
                                    Text="Aniversariantes"
                                    FontSize="18"
@@ -127,7 +127,9 @@
                     </Grid>
 
                     <!-- Lista de Aniversariantes -->
-                    <Border BorderThickness="1" CornerRadius="10" Padding="0">
+                    <Border BorderThickness="1" CornerRadius="10" Padding="0" Margin="0,0,0,30"
+                            Background="{DynamicResource BrushBackgroundSecondary}"
+                            BorderBrush="{DynamicResource BrushBorder}">
                         <ItemsControl ItemsSource="{Binding Aniversariantes}" MinHeight="200">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
