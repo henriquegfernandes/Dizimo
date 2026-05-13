@@ -22,7 +22,7 @@ jobs:
     outputs:
       version: ${{ steps.extract.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Extract version from .csproj
         id: extract
@@ -64,15 +64,15 @@ jobs:
             name: macOS (Apple Silicon ARM64)
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
     
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
       - name: Setup NuGet cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.nuget/packages
@@ -104,7 +104,7 @@ jobs:
     
       - name: Upload test results (Windows x64 only)
         if: matrix.rid == 'win-x64' && always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-${{ matrix.rid }}
           path: '**/TestResults/**'
@@ -114,9 +114,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.rid }}" = "win-x64" ] || [ "${{ matrix.rid }}" = "win-arm64" ]; then
-            dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }} /p:DebugType=Embedded /p:IncludeNativeLibrariesForSelfExtract=true
+            dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o "publish-${{ matrix.rid }}" -p:DebugType=Embedded -p:IncludeNativeLibrariesForSelfExtract=true
           else
-            dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }}
+            dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o "publish-${{ matrix.rid }}"
           fi
 
       - name: Verify publish output
@@ -131,7 +131,11 @@ jobs:
 
       - name: Upload build artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
+        with:
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
+          retention-days: 30
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -145,12 +149,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
     
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -191,10 +195,10 @@ jobs:
             arch: ARM64
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Download artifact for ${{ matrix.arch }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -248,7 +252,7 @@ jobs:
           & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
 
       - name: Upload Windows Installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dizimo-windows-${{ matrix.arch }}-installer
           path: Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe
@@ -271,10 +275,10 @@ jobs:
             arch: x86_64
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Download artifact for ${{ matrix.arch }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -392,7 +396,7 @@ jobs:
           ls -lh Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
 
       - name: Upload Linux AppImage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dizimo-linux-${{ matrix.arch }}-appimage
           path: Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
@@ -414,10 +418,10 @@ jobs:
             arch: arm64
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Download artifact for ${{ matrix.arch }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -499,7 +503,7 @@ jobs:
           hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
 
       - name: Upload macOS DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dizimo-macos-${{ matrix.arch }}-dmg
           path: Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg
@@ -515,10 +519,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: artifacts
 
