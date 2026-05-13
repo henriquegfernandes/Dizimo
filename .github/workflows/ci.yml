@@ -114,7 +114,15 @@ jobs:
           else
             dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }}
           fi
-        continue-on-error: true
+
+      - name: Verify publish output
+        run: |
+          if [ ! -d "publish-${{ matrix.rid }}" ]; then
+            echo "❌ Publish output missing for ${{ matrix.rid }}"
+            exit 1
+          fi
+          echo "✅ Publish output verified for ${{ matrix.rid }}"
+          ls -lh publish-${{ matrix.rid }}/Dizimo.exe 2>/dev/null || ls -lh publish-${{ matrix.rid }}/Dizimo
 
       - name: Upload build artifact
         if: success()
