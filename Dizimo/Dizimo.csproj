@@ -35,12 +35,18 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PublishReadyToRun>false</PublishReadyToRun>
         <DefaultLanguage>pt-br</DefaultLanguage>
+        
+        <!-- Ensure no console window opens on Windows -->
+        <UseWindowsForms>false</UseWindowsForms>
+        <Prefer32Bit>false</Prefer32Bit>
     </PropertyGroup>
 
     <!-- Windows-specific properties only for Windows builds -->
     <PropertyGroup Condition="'$(IsWindows)' == 'true'">
         <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+        <!-- Preserve WinExe output type in all scenarios -->
+        <OutputType>WinExe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>

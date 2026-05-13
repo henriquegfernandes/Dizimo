@@ -108,7 +108,12 @@ jobs:
           retention-days: 7
 
       - name: Publish for ${{ matrix.name }}
-        run: dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }}
+        run: |
+          if [ "${{ matrix.rid }}" = "win-x64" ] || [ "${{ matrix.rid }}" = "win-arm64" ]; then
+            dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }} /p:DebugType=Embedded /p:IncludeNativeLibrariesForSelfExtract=true
+          else
+            dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }}
+          fi
         continue-on-error: true
 
       - name: Upload build artifact
@@ -194,6 +199,7 @@ jobs:
         run: |
           $nsiScript = @"
           !include "MUI2.nsh"
+          !include "x64.nsh"
           Name "Dizimo"
           OutFile "Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe"
           InstallDir "`$PROGRAMFILES\Dizimo"
@@ -205,14 +211,22 @@ jobs:
             SetOutPath "`$INSTDIR"
             File /r "installer\*.*"
             CreateDirectory "`$SMPROGRAMS\Dizimo"
-            CreateShortcut "`$SMPROGRAMS\Dizimo\Dizimo.lnk" "`$INSTDIR\Dizimo.exe"
-            CreateShortcut "`$DESKTOP\Dizimo.lnk" "`$INSTDIR\Dizimo.exe"
+            ; Create shortcuts with icon
+            CreateShortcut "`$SMPROGRAMS\Dizimo\Dizimo.lnk" "`$INSTDIR\Dizimo.exe" "" "`$INSTDIR\appicon.ico" 0
+            CreateShortcut "`$DESKTOP\Dizimo.lnk" "`$INSTDIR\Dizimo.exe" "" "`$INSTDIR\appicon.ico" 0
+            CreateShortcut "`$SMPROGRAMS\Dizimo\Uninstall.lnk" "`$INSTDIR\Uninstall.exe"
             WriteUninstaller "`$INSTDIR\Uninstall.exe"
+            ; Register uninstall info
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "DisplayName" "Dizimo"
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "DisplayIcon" "`$INSTDIR\appicon.ico"
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "UninstallString" "`$INSTDIR\Uninstall.exe"
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "InstallLocation" "`$INSTDIR"
           SectionEnd
           Section "Uninstall"
             RMDir /r "`$INSTDIR"
             RMDir /r "`$SMPROGRAMS\Dizimo"
             Delete "`$DESKTOP\Dizimo.lnk"
+            DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo"
           SectionEnd
           "@
           $nsiScript | Out-File -Encoding ASCII "installer.nsi"
@@ -385,96 +399,96 @@ jobs:
             arch: arm64
     
     steps:
-       - uses: actions/checkout@v4
-       
-       - name: Download artifact for ${{ matrix.arch }}
-         uses: actions/download-artifact@v4
-         with:
-           name: dizimo-${{ matrix.rid }}
-           path: publish-${{ matrix.rid }}
+      - uses: actions/checkout@v4
+      
+      - name: Download artifact for ${{ matrix.arch }}
+        uses: actions/download-artifact@v4
+        with:
+          name: dizimo-${{ matrix.rid }}
+          path: publish-${{ matrix.rid }}
 
-       - name: Create macOS App Bundle and DMG
-         run: |
-           set -euo pipefail
+      - name: Create macOS App Bundle and DMG
+        run: |
+          set -euo pipefail
 
-           # Create app bundle structure
-           mkdir -p Dizimo.app/Contents/MacOS
-           mkdir -p Dizimo.app/Contents/Resources
+          # Create app bundle structure
+          mkdir -p Dizimo.app/Contents/MacOS
+          mkdir -p Dizimo.app/Contents/Resources
 
-           # Copy application files
-           cp -r publish-${{ matrix.rid }}/* Dizimo.app/Contents/MacOS/
-           chmod +x Dizimo.app/Contents/MacOS/Dizimo
+          # Copy application files
+          cp -r publish-${{ matrix.rid }}/* Dizimo.app/Contents/MacOS/
+          chmod +x Dizimo.app/Contents/MacOS/Dizimo
 
-           # Copy centralized icon file
-           if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
-             cp Dizimo/Resources/AppIcon/appicon.ico Dizimo.app/Contents/Resources/AppIcon.ico
-             echo "✅ Icon copied from centralized location"
-           else
-             echo "⚠️  Warning: Icon not found"
-           fi
+          # Copy centralized icon file
+          if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
+            cp Dizimo/Resources/AppIcon/appicon.ico Dizimo.app/Contents/Resources/AppIcon.ico
+            echo "✅ Icon copied from centralized location"
+          else
+            echo "⚠️  Warning: Icon not found"
+          fi
 
-           # Create Info.plist
-           cat > Dizimo.app/Contents/Info.plist << 'EOF'
-           <?xml version="1.0" encoding="UTF-8"?>
-           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-           <plist version="1.0">
-           <dict>
-               <key>CFBundleExecutable</key>
-               <string>Dizimo</string>
-               <key>CFBundleIdentifier</key>
-               <string>com.henriquefernandestech.dizimo</string>
-               <key>CFBundleName</key>
-               <string>Dizimo</string>
-               <key>CFBundlePackageType</key>
-               <string>APPL</string>
-               <key>CFBundleShortVersionString</key>
-               <string>${{ needs.extract-version.outputs.version }}</string>
-               <key>CFBundleVersion</key>
-               <string>1</string>
-               <key>NSHighResolutionCapable</key>
-               <true/>
-           </dict>
-           </plist>
-           EOF
+          # Create Info.plist
+          cat > Dizimo.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>Dizimo</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.henriquefernandestech.dizimo</string>
+              <key>CFBundleName</key>
+              <string>Dizimo</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${{ needs.extract-version.outputs.version }}</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
 
-           # Setup paths
-           APP_NAME="Dizimo.app"
-           DMG_NAME="Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg"
-           STAGE_DIR="$(mktemp -d)"
+          # Setup paths
+          APP_NAME="Dizimo.app"
+          DMG_NAME="Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg"
+          STAGE_DIR="$(mktemp -d)"
 
-           rm -f "$DMG_NAME"
+          rm -f "$DMG_NAME"
 
-           # Stage files in isolated temp directory
-           cp -R "$APP_NAME" "$STAGE_DIR/"
-           ln -s /Applications "$STAGE_DIR/Applications"
+          # Stage files in isolated temp directory
+          cp -R "$APP_NAME" "$STAGE_DIR/"
+          ln -s /Applications "$STAGE_DIR/Applications"
 
-           echo "Building DMG from staging directory: $STAGE_DIR"
-           ls -la "$STAGE_DIR"
+          echo "Building DMG from staging directory: $STAGE_DIR"
+          ls -la "$STAGE_DIR"
 
-           # Create compressed DMG image using hdiutil create
-           echo "Creating compressed DMG image..."
-           hdiutil create \
-             -volname "Dizimo" \
-             -srcfolder "$STAGE_DIR" \
-             -ov \
-             -format UDZO \
-             "$DMG_NAME" || {
-               echo "Failed to create DMG"
-               exit 1
-             }
+          # Create compressed DMG image using hdiutil create
+          echo "Creating compressed DMG image..."
+          hdiutil create \
+            -volname "Dizimo" \
+            -srcfolder "$STAGE_DIR" \
+            -ov \
+            -format UDZO \
+            "$DMG_NAME" || {
+              echo "Failed to create DMG"
+              exit 1
+            }
 
-           rm -rf "$STAGE_DIR"
+          rm -rf "$STAGE_DIR"
 
-           echo "DMG creation completed successfully"
-           ls -lh "$DMG_NAME"
-           hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
+          echo "DMG creation completed successfully"
+          ls -lh "$DMG_NAME"
+          hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
 
-       - name: Upload macOS DMG
-         uses: actions/upload-artifact@v4
-         with:
-           name: dizimo-macos-${{ matrix.arch }}-dmg
-           path: Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg
-           retention-days: 30
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizimo-macos-${{ matrix.arch }}-dmg
+          path: Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg
+          retention-days: 30
 
   # ============================================================================
   # CREATE RELEASE - Only on main branch, after all builds pass
