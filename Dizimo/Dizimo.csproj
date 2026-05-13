@@ -68,8 +68,6 @@
         <AvaloniaResource Include="Pages/BackupConfigPage.xaml"/>
         <!-- Resources (Fonts, Images) -->
         <AvaloniaResource Include="Resources\**"/>
-        <!-- Desktop file for Linux -->
-        <None Include="Resources/AppIcon/dizimo.desktop" />
     </ItemGroup>
 
     <ItemGroup>
