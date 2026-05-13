@@ -1,5 +1,8 @@
 name: CI/CD
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [ main, develop ]
@@ -108,6 +111,7 @@ jobs:
           retention-days: 7
 
       - name: Publish for ${{ matrix.name }}
+        shell: bash
         run: |
           if [ "${{ matrix.rid }}" = "win-x64" ] || [ "${{ matrix.rid }}" = "win-arm64" ]; then
             dotnet publish Dizimo/Dizimo.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish-${{ matrix.rid }} /p:DebugType=Embedded /p:IncludeNativeLibrariesForSelfExtract=true
@@ -116,6 +120,7 @@ jobs:
           fi
 
       - name: Verify publish output
+        shell: bash
         run: |
           if [ ! -d "publish-${{ matrix.rid }}" ]; then
             echo "❌ Publish output missing for ${{ matrix.rid }}"
@@ -161,10 +166,12 @@ jobs:
           dotnet build Dizimo/Dizimo.csproj -c Release /p:TreatWarningsAsErrors=true || true
 
       - name: Check for secrets
+        # Only run on pull requests where BASE and HEAD are different
+        if: github.event_name == 'pull_request'
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
+          base: ${{ github.event.pull_request.base.sha }}
           head: HEAD
         continue-on-error: true
 
