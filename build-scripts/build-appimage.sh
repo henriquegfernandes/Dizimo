@@ -6,10 +6,11 @@ set -e
 
 PUBLISH_DIR="${1:-.}"
 APP_VERSION="${2:-1.1.2}"
-APP_NAME="Dizimo"
 OUTPUT_DIR="."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Source centralized build configuration
+source "$SCRIPT_DIR/build-config.sh"
 
 echo "Building AppImage for $APP_NAME v$APP_VERSION..."
 
@@ -24,36 +25,32 @@ mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
 cp -r "$PUBLISH_DIR"/* AppDir/usr/bin/ || true
 chmod +x AppDir/usr/bin/Dizimo
 
-# Copy icon files (ICO como fallback, PNG como principal)
-if [ -f "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.ico" ]; then
-    echo "Copiando ícone ICO..."
-    cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.ico" AppDir/usr/share/icons/hicolor/256x256/apps/dizimo.ico
-    cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.ico" AppDir/usr/share/icons/hicolor/512x512/apps/dizimo.ico
+# Copy icon from centralized location
+echo "Copying icon from: $ICON_PATH"
+if [ -f "$ICON_PATH" ]; then
+    cp "$ICON_PATH" AppDir/usr/share/icons/hicolor/256x256/apps/dizimo.ico
+    cp "$ICON_PATH" AppDir/usr/share/icons/hicolor/512x512/apps/dizimo.ico
+    echo "✅ Icon copied successfully"
+else
+    echo "⚠️  Warning: Icon not found at $ICON_PATH"
 fi
 
-if [ -f "$PROJECT_ROOT/Dizimo/Resources/AppIcon/dizimoicon.png" ]; then
-    echo "Copiando ícone PNG..."
-    cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/dizimoicon.png" AppDir/usr/share/icons/hicolor/256x256/apps/dizimo.png
-    cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/dizimoicon.png" AppDir/usr/share/icons/hicolor/512x512/apps/dizimo.png
-fi
-
-# Create desktop entry com referência a ICO
+# Create desktop entry
 cat > AppDir/usr/share/applications/dizimo.desktop << 'EOF'
 [Desktop Entry]
 Version=1.0
 Type=Application
 Name=Dizimo
-Comment=Sistema de Controle Financeiro para Igrejas
+Comment=Church Financial Control System
 Comment[pt_BR]=Sistema de Controle Financeiro para Igrejas
 Exec=Dizimo %F
 Icon=dizimo
-Categories=Office;Finance;Qt;
+Categories=Office;Finance;
 Keywords=church;tithe;finance;offering;
 Terminal=false
 StartupNotify=true
 StartupWMClass=Dizimo
 EOF
-... existing code...
 
 # Create AppRun script
 cat > AppDir/AppRun << 'APPRUN_EOF'
@@ -71,15 +68,8 @@ echo "Creating AppImage..."
 if command -v appimagetool &> /dev/null; then
     appimagetool AppDir "${OUTPUT_DIR}/${APP_NAME}-${APP_VERSION}-x86_64.AppImage"
 else
-    echo "⚠️  appimagetool not found. Criando AppImage com fallback..."
-    cat > "${OUTPUT_DIR}/${APP_NAME}.AppImage" << 'WRAPPER_EOF'
-#!/bin/bash
-SELF=$(readlink -f "$0")
-HERE=${SELF%/*}
-HERE="${HERE}/AppDir"
-exec "$HERE/AppRun" "$@"
-WRAPPER_EOF
-    chmod +x "${OUTPUT_DIR}/${APP_NAME}.AppImage"
+    echo "⚠️  appimagetool not found"
+    exit 1
 fi
 
 echo "✅ AppImage created successfully!"

@@ -182,10 +182,13 @@ jobs:
       - name: Install NSIS
         run: choco install nsis -y
 
-      - name: Create installer directory
+      - name: Create installer directory and copy icon
         run: |
           mkdir -p installer
           copy-item publish-${{ matrix.rid }}\* installer\ -Recurse
+          # Copy icon from centralized location
+          copy-item Dizimo\Resources\AppIcon\appicon.ico installer\appicon.ico
+          Write-Host "✅ Icon copied to installer directory"
 
       - name: Build NSIS installer
         run: |
@@ -286,10 +289,21 @@ jobs:
         run: |
           mkdir -p AppDir/usr/bin
           mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
           mkdir -p AppDir/usr/lib
           
           cp -r publish-${{ matrix.rid }}/* AppDir/usr/bin/
           chmod +x AppDir/usr/bin/Dizimo
+          
+          # Copy centralized icon file
+          if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
+            cp Dizimo/Resources/AppIcon/appicon.ico AppDir/usr/share/icons/hicolor/256x256/apps/dizimo.ico
+            cp Dizimo/Resources/AppIcon/appicon.ico AppDir/usr/share/icons/hicolor/512x512/apps/dizimo.ico
+            echo "✅ Icon copied from centralized location"
+          else
+            echo "⚠️  Warning: Icon not found, will generate placeholder"
+          fi
           
           # Create desktop entry at AppDir root for appimagetool compatibility
           cat > AppDir/Dizimo.desktop << 'EOF'
@@ -315,13 +329,21 @@ jobs:
           EOF
           chmod +x AppDir/AppRun
           
-          # Provide an icon at AppDir root (required by appimagetool)
-          # Generate a placeholder icon using ImageMagick
-          sudo apt-get update
-          sudo apt-get install -y imagemagick || true
-          convert -size 256x256 xc:lightgray -gravity center -pointsize 32 -annotate 0 "D" AppDir/Dizimo.png || {
-            echo "Warning: Could not generate icon, continuing..."
-          }
+          # Generate icon from centralized file or use placeholder as fallback
+          if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
+            # Try to use the ICO file directly
+            cp Dizimo/Resources/AppIcon/appicon.ico AppDir/Dizimo.png 2>/dev/null || {
+              echo "⚠️  Could not copy ICO as PNG, generating placeholder..."
+              sudo apt-get update
+              sudo apt-get install -y imagemagick || true
+              convert -size 256x256 xc:lightgray -gravity center -pointsize 32 -annotate 0 "D" AppDir/Dizimo.png || true
+            }
+          else
+            echo "Generating placeholder icon..."
+            sudo apt-get update
+            sudo apt-get install -y imagemagick || true
+            convert -size 256x256 xc:lightgray -gravity center -pointsize 32 -annotate 0 "D" AppDir/Dizimo.png || true
+          fi
           
           # Diagnostics
           echo "=== AppImage tools diagnostics ==="
@@ -382,6 +404,14 @@ jobs:
            # Copy application files
            cp -r publish-${{ matrix.rid }}/* Dizimo.app/Contents/MacOS/
            chmod +x Dizimo.app/Contents/MacOS/Dizimo
+
+           # Copy centralized icon file
+           if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
+             cp Dizimo/Resources/AppIcon/appicon.ico Dizimo.app/Contents/Resources/AppIcon.ico
+             echo "✅ Icon copied from centralized location"
+           else
+             echo "⚠️  Warning: Icon not found"
+           fi
 
            # Create Info.plist
            cat > Dizimo.app/Contents/Info.plist << 'EOF'

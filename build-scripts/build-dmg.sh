@@ -6,16 +6,20 @@ set -e
 
 PUBLISH_DIR="${1:-.}"
 APP_VERSION="${2:-1.1.2}"
-APP_NAME="Dizimo"
 OUTPUT_DIR="."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source centralized build configuration
+source "$SCRIPT_DIR/build-config.sh"
+
+# Define DMG variables
 DMG_NAME="${APP_NAME}-${APP_VERSION}.dmg"
 TEMP_DMG="temp-${DMG_NAME}"
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TEMP_DIR="/tmp/Dizimo-DMG-$$"
 
 echo "Building macOS DMG for $APP_NAME v$APP_VERSION..."
 
 # Create temporary directory structure
-TEMP_DIR="/tmp/Dizimo-DMG-$$"
 mkdir -p "$TEMP_DIR/$APP_NAME"
 
 # Create the app bundle structure
@@ -28,32 +32,16 @@ echo "Copying application files..."
 cp -r "$PUBLISH_DIR"/* "$APP_BUNDLE/Contents/MacOS/"
 chmod +x "$APP_BUNDLE/Contents/MacOS/Dizimo"
 
-# Copy and convert icon
+# Copy icon from centralized location
 echo "Setting up application icon..."
-if [ -f "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.ico" ]; then
-    # Convert ICO to ICNS if iconutil is available
-    if command -v iconutil &> /dev/null; then
-        # Create .iconset directory
-        ICONSET="$TEMP_DIR/dizimo.iconset"
-        mkdir -p "$ICONSET"
-        
-        # Try to create ICNS from SVG or PNG
-        if [ -f "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.svg" ]; then
-            echo "Converting SVG icon to ICNS..."
-            # This requires additional tools, so we'll use a simpler approach
-            cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.svg" "$APP_BUNDLE/Contents/Resources/AppIcon.svg" 2>/dev/null || true
-        fi
-        
-        if [ -f "$PROJECT_ROOT/Dizimo/Resources/AppIcon/dizimoicon.png" ]; then
-            cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/dizimoicon.png" "$APP_BUNDLE/Contents/Resources/AppIcon.png"
-        fi
-    fi
-    
-    # Also copy ICO as fallback
-    cp "$PROJECT_ROOT/Dizimo/Resources/AppIcon/appicon.ico" "$APP_BUNDLE/Contents/Resources/AppIcon.ico" 2>/dev/null || true
+if [ -f "$ICON_PATH" ]; then
+    cp "$ICON_PATH" "$APP_BUNDLE/Contents/Resources/AppIcon.ico"
+    echo "✅ Icon copied to app bundle"
+else
+    echo "⚠️  Warning: Icon not found at $ICON_PATH"
 fi
 
-# Create Info.plist with CFBundleIconFile and proper metadata
+# Create Info.plist with icon reference and proper metadata
 echo "Creating Info.plist..."
 cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -86,8 +74,6 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
-    <key>NSRequiresIPhoneOS</key>
-    <false/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2024 Henrique Fernandes Tech. All rights reserved.</string>
 </dict>
@@ -100,14 +86,10 @@ sed -i '' "s/VERSION_PLACEHOLDER/$APP_VERSION/g" "$APP_BUNDLE/Contents/Info.plis
 # Create PkgInfo file
 echo "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
-# Create a symbolic link to Applications folder for drag-and-drop install
-echo "Creating Applications symlink..."
+# Create Applications symlink for drag-and-drop install
 ln -s /Applications "$TEMP_DIR/$APP_NAME/Applications"
 
-# Create a .DS_Store with custom layout (optional, requires tools)
-# For now, we'll just create the structure
-
-# Create DMG
+# Create DMG image
 echo "Creating DMG image..."
 hdiutil create \
     -volname "$APP_NAME" \
@@ -118,8 +100,6 @@ hdiutil create \
 
 # Move to output directory
 mv "$TEMP_DMG" "$OUTPUT_DIR/$DMG_NAME"
-
-# Make the DMG world-readable
 chmod 644 "$OUTPUT_DIR/$DMG_NAME"
 
 # Clean up
@@ -129,9 +109,3 @@ echo ""
 echo "✅ DMG built successfully!"
 echo "   File: $OUTPUT_DIR/$DMG_NAME"
 echo "   Size: $(du -h "$OUTPUT_DIR/$DMG_NAME" | cut -f1)"
-echo ""
-echo "To install:"
-echo "  1. Open $DMG_NAME"
-echo "  2. Drag 'Dizimo' to the Applications folder"
-echo "  3. Eject the DMG"
-echo "  4. Open Applications and launch Dizimo"
