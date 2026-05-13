@@ -9,6 +9,7 @@
         Title="Dizimo - Sistema de Controle Financeiro"
         Width="1200"
         Height="800"
+        Icon="avares://Dizimo/Resources/AppIcon/appicon.ico"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         Background="{DynamicResource ApplicationBackgroundBrush}">

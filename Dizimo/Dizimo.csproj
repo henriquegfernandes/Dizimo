@@ -15,7 +15,7 @@
         <ApplicationTitle>Dizimo</ApplicationTitle>
 
         <!-- App Icon -->
-        <ApplicationIcon>Resources/AppIcon/appicon.ico</ApplicationIcon>
+        <ApplicationIcon Condition="'$(IsWindows)' == 'true'">Resources/AppIcon/appicon.ico</ApplicationIcon>
 
         <!-- App Identifier -->
         <ApplicationId>com.henriquefernandestech.dizimo</ApplicationId>
@@ -45,6 +45,11 @@
         <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     </PropertyGroup>
 
+    <!-- Linux-specific properties for icon resolution -->
+    <PropertyGroup Condition="'$(IsLinux)' == 'true'">
+        <ApplicationIcon>Resources/AppIcon/dizimoicon.png</ApplicationIcon>
+    </PropertyGroup>
+
     <ItemGroup>
         <!-- XAML Files -->
         <AvaloniaResource Include="App.xaml"/>
@@ -63,6 +68,8 @@
         <AvaloniaResource Include="Pages/BackupConfigPage.xaml"/>
         <!-- Resources (Fonts, Images) -->
         <AvaloniaResource Include="Resources\**"/>
+        <!-- Desktop file for Linux -->
+        <None Include="Resources/AppIcon/dizimo.desktop" />
     </ItemGroup>
 
     <ItemGroup>
