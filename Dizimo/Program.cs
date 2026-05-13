@@ -60,11 +60,31 @@ public class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _backupOnCloseService = _serviceProvider.GetService<BackupOnCloseService>();
-            desktop.MainWindow = new MainWindow
+            var mainWindow = new MainWindow
             {
                 DataContext = _serviceProvider.GetRequiredService<AppRootViewModel>()
             };
-            desktop.Exit += async (s, e) => await OnApplicationExitingAsync();
+            
+            // Configurar ícone da aplicação
+            try
+            {
+                mainWindow.Icon = new WindowIcon("avares://Dizimo/Resources/AppIcon/appicon.ico");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao carregar ícone appicon.ico: {ex.Message}");
+                try
+                {
+                    mainWindow.Icon = new WindowIcon("avares://Dizimo/Resources/AppIcon/dizimoicon.png");
+                }
+                catch (Exception fallbackEx)
+                {
+                    Debug.WriteLine($"Erro ao carregar ícone fallback dizimoicon.png: {fallbackEx.Message}");
+                }
+            }
+            
+            desktop.MainWindow = mainWindow;
+            desktop.Exit += async (_, _) => await OnApplicationExitingAsync();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -181,26 +201,20 @@ public class App : Avalonia.Application
                 // Tentar descartar o DbContext para liberar a conexão
                 try
                 {
-                    db.Database.ExecuteSqlRaw("PRAGMA integrity_check;");
-                }
-                catch
-                {
-                }
-
-                try
-                {
                     db.Database.CloseConnection();
                 }
-                catch
+                catch (Exception closeEx)
                 {
+                    Debug.WriteLine($"Erro ao fechar conexão: {closeEx.Message}");
                 }
 
                 try
                 {
                     db.Dispose();
                 }
-                catch
+                catch (Exception disposeEx)
                 {
+                    Debug.WriteLine($"Erro ao descartar DbContext: {disposeEx.Message}");
                 }
 
                 // Aguardar para garantir que todas as conexões foram fechadas
@@ -274,14 +288,11 @@ public class App : Avalonia.Application
         if (ex == null)
             return false;
 
-        var message = ex.Message ?? "";
-        var innerMessage = ex.InnerException?.Message ?? "";
-
-        return message.Contains("database disk image is malformed") ||
-               message.Contains("SQLite Error 11") ||
-               message.Contains("SQLITE_CORRUPT") ||
-               innerMessage.Contains("database disk image is malformed") ||
-               innerMessage.Contains("SQLite Error 11");
+        var exceptionInfo = ex.ToString();
+        
+        return exceptionInfo.Contains("database disk image is malformed") ||
+               exceptionInfo.Contains("SQLite Error 11") ||
+               exceptionInfo.Contains("SQLITE_CORRUPT");
     }
 
     /// <summary>
@@ -304,6 +315,7 @@ public class App : Avalonia.Application
             };
 
             foreach (var file in filesToDelete)
+            {
                 try
                 {
                     if (File.Exists(file))
@@ -319,6 +331,7 @@ public class App : Avalonia.Application
                 {
                     Debug.WriteLine($"Erro ao deletar {file}: {ex.Message}");
                 }
+            }
 
             Debug.WriteLine("Limpeza de banco corrompido concluída");
         }

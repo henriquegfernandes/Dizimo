@@ -9,7 +9,8 @@ public record CreateDizimistaCommand(
     Endereco Endereco,
     string Telefone,
     string Whatsapp,
-    DateTime DataCadastro
+    DateTime DataCadastro,
+    bool Ativo = true
 );
 
 public record UpdateDizimistaCommand(

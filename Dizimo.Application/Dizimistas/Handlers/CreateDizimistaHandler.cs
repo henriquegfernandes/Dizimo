@@ -21,7 +21,7 @@ public class CreateDizimistaHandler
             NumeroCadastro = command.NumeroCadastro,
             Nome = command.Nome,
             DataNascimento = command.DataNascimento,
-            Ativo = true,
+            Ativo = command.Ativo,
             Endereco = command.Endereco,
             Telefone = command.Telefone,
             Whatsapp = command.Whatsapp,

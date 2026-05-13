@@ -18,6 +18,7 @@ public class DashboardService
     ///     Amarelo: 2 a 6 meses
     ///     Laranja: 6 meses a 1 ano
     ///     Vermelho: mais de 1 ano
+    ///     Se o dizimista não tiver oferta registrada, usa a data de cadastro
     /// </summary>
     public async Task<List<DizimistaPeriodoOfertaData>> GetDizimistasAgrupadosPorPeriodoAsync()
     {
@@ -46,21 +47,17 @@ public class DashboardService
                 .OrderByDescending(o => o.Data)
                 .FirstOrDefault();
 
-            if (ultimaOferta == null)
-            {
-                // Dizimista sem oferta registrada
-                dizimistasPorPeriodo["Mais de 1 ano"]++;
-                continue;
-            }
+            // Usar data da última oferta, ou data de cadastro se não houver ofertas
+            var dataReferencia = ultimaOferta?.Data ?? dizimista.DataCadastro;
 
-            var diasDesdeOferta = (hoje - ultimaOferta.Data).TotalDays;
-            var mesesDesdeOferta = diasDesdeOferta / 30.0;
+            var diasDesdeData = (hoje - dataReferencia).TotalDays;
+            var mesesDesdeData = diasDesdeData / 30.0;
 
-            if (mesesDesdeOferta <= 2)
+            if (mesesDesdeData <= 2)
                 dizimistasPorPeriodo["Últimos 2 meses"]++;
-            else if (mesesDesdeOferta <= 6)
+            else if (mesesDesdeData <= 6)
                 dizimistasPorPeriodo["2-6 meses"]++;
-            else if (mesesDesdeOferta <= 12)
+            else if (mesesDesdeData <= 12)
                 dizimistasPorPeriodo["6-12 meses"]++;
             else
                 dizimistasPorPeriodo["Mais de 1 ano"]++;

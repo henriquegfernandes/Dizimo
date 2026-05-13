@@ -15,7 +15,7 @@
         <ApplicationTitle>Dizimo</ApplicationTitle>
 
         <!-- App Icon -->
-        <ApplicationIcon>Resources/AppIcon/appicon.ico</ApplicationIcon>
+        <ApplicationIcon Condition="'$(IsWindows)' == 'true'">Resources/AppIcon/appicon.ico</ApplicationIcon>
 
         <!-- App Identifier -->
         <ApplicationId>com.henriquefernandestech.dizimo</ApplicationId>
@@ -43,6 +43,11 @@
     <PropertyGroup Condition="'$(IsWindows)' == 'true'">
         <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
+
+    <!-- Linux-specific properties for icon resolution -->
+    <PropertyGroup Condition="'$(IsLinux)' == 'true'">
+        <ApplicationIcon>Resources/AppIcon/dizimoicon.png</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>

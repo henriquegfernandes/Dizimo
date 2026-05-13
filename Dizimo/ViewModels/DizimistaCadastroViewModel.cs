@@ -169,9 +169,8 @@ public partial class DizimistaCadastroViewModel(
         CEP = Cep
     };
 
-    public async void OnNavigatedTo(NavigationParameters parameters)
+    public async void OnNavigatedTo(NavigationParameters? parameters)
     {
-        // Tenta extrair o ID do parâmetro de navegação
         Guid? dizimistaId = null;
 
         if (parameters != null && parameters.TryGetValue("id", out var idObj))
@@ -195,13 +194,13 @@ public partial class DizimistaCadastroViewModel(
                 Telefone = dizimista.Telefone;
                 Whatsapp = dizimista.Whatsapp;
                 DataCadastro = dizimista.DataCadastro;
-                Rua = dizimista.Endereco?.Rua ?? string.Empty;
-                Numero = dizimista.Endereco?.Numero ?? string.Empty;
-                Complemento = dizimista.Endereco?.Complemento ?? string.Empty;
-                Bairro = dizimista.Endereco?.Bairro ?? string.Empty;
-                Cidade = dizimista.Endereco?.Cidade ?? "Osasco";
-                Uf = dizimista.Endereco?.UF ?? "SP";
-                Cep = dizimista.Endereco?.CEP ?? string.Empty;
+                Rua = dizimista.Endereco.Rua;
+                Numero = dizimista.Endereco.Numero;
+                Complemento = dizimista.Endereco.Complemento;
+                Bairro = dizimista.Endereco.Bairro;
+                Cidade = dizimista.Endereco.Cidade;
+                Uf = dizimista.Endereco.UF;
+                Cep = dizimista.Endereco.CEP;
                 IsEditMode = true;
             }
         }
@@ -213,7 +212,6 @@ public partial class DizimistaCadastroViewModel(
 
     public void OnNavigatedFrom()
     {
-        // Lógica ao sair da página se necessário
     }
 
     /// <summary>
@@ -221,16 +219,9 @@ public partial class DizimistaCadastroViewModel(
     /// </summary>
     private void LimparCamposNumericos()
     {
-        // Remove caracteres nao numericos do telefone
         Telefone = new string([.. Telefone.Where(char.IsDigit)]);
-
-        // Remove caracteres nao numericos do whatsapp
         Whatsapp = new string([.. Whatsapp.Where(char.IsDigit)]);
-
-        // Remove caracteres nao numericos do CEP
         Cep = new string([.. Cep.Where(char.IsDigit)]);
-
-        // Remove caracteres nao numericos do numero
         Numero = new string([.. Numero.Where(char.IsDigit)]);
     }
 
@@ -240,26 +231,18 @@ public partial class DizimistaCadastroViewModel(
     /// <returns>Mensagem de erro, ou null se valido</returns>
     private string? ValidarCampos()
     {
-        // Contar apenas digitos do telefone
         var telefoneLimpo = new string([.. Telefone.Where(char.IsDigit)]);
-
-        // Contar apenas digitos do whatsapp
         var whatsappLimpo = new string([.. Whatsapp.Where(char.IsDigit)]);
-
-        // Contar apenas digitos do CEP
         var cepLimpo = new string([.. Cep.Where(char.IsDigit)]);
 
-        // Validar telefone
         if (!string.IsNullOrWhiteSpace(telefoneLimpo))
             if (telefoneLimpo.Length < 10 || telefoneLimpo.Length > 11)
                 return "Telefone deve conter entre 10 e 11 digitos.";
 
-        // Validar whatsapp
         if (!string.IsNullOrWhiteSpace(whatsappLimpo))
             if (whatsappLimpo.Length < 10 || whatsappLimpo.Length > 11)
                 return "WhatsApp deve conter entre 10 e 11 digitos.";
 
-        // Validar CEP
         if (!string.IsNullOrWhiteSpace(cepLimpo))
             if (cepLimpo.Length != 8)
                 return "CEP deve conter exatamente 8 digitos.";
@@ -290,10 +273,8 @@ public partial class DizimistaCadastroViewModel(
     [RelayCommand]
     public async Task SalvarAsync()
     {
-        // Limpar caracteres especiais antes de salvar
         LimparCamposNumericos();
 
-        // Validar campos
         var erroValidacao = ValidarCampos();
         if (!string.IsNullOrEmpty(erroValidacao))
         {
@@ -301,7 +282,6 @@ public partial class DizimistaCadastroViewModel(
             return;
         }
 
-        // Validacao de codigo duplicado ao cadastrar novo dizimista
         if (!IsEditMode && NumeroCadastro > 0)
         {
             var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
@@ -312,7 +292,6 @@ public partial class DizimistaCadastroViewModel(
             }
         }
 
-        // Ao editar, verificar se o codigo foi alterado e ja existe outro dizimista com o novo codigo
         if (IsEditMode && NumeroCadastro > 0)
         {
             var dizimistaExistente = await _getHandler.Handle(new GetDizimistaByNumeroCadastroQuery(NumeroCadastro));
@@ -328,7 +307,7 @@ public partial class DizimistaCadastroViewModel(
                 Endereco, Telefone, Whatsapp, DataCadastro));
         else
             await _createHandler.Handle(new CreateDizimistaCommand(NumeroCadastro, Nome, DataNascimento, Endereco,
-                Telefone, Whatsapp, DataCadastro));
+                Telefone, Whatsapp, DataCadastro, Ativo));
 
         Debug.WriteLine("[INFO] Dizimista salvo com sucesso");
         _navigationService.Navigate("dizimistas");
@@ -345,37 +324,34 @@ public partial class DizimistaCadastroViewModel(
 
             if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
                 desktop.MainWindow != null)
+            {
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
-
-                    if (storageProvider != null)
+                    var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                     {
-                        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-                        {
-                            Title = "Salvar Planilha Modelo",
-                            DefaultExtension = "xlsx",
-                            FileTypeChoices = new[]
-                                { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
-                            SuggestedFileName = fileName
-                        });
+                        Title = "Salvar Planilha Modelo",
+                        DefaultExtension = "xlsx",
+                        FileTypeChoices = new[]
+                            { new FilePickerFileType("Arquivo Excel") { Patterns = new[] { "*.xlsx" } } },
+                        SuggestedFileName = fileName
+                    });
 
-                        if (file != null)
-                        {
-                            var excelStream = DizimistaExcelService.GerarModelo();
-                            await using var fileStream = await file.OpenWriteAsync();
-                            await fileStream.WriteAsync(excelStream.ToArray());
-                            Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
-                            return;
-                        }
+                    if (file != null)
+                    {
+                        var excelStream = DizimistaExcelService.GerarModelo();
+                        await using var fileStream = await file.OpenWriteAsync();
+                        await fileStream.WriteAsync(excelStream.ToArray());
+                        Debug.WriteLine($"[INFO] Arquivo modelo salvo com sucesso em: {file.Path}");
+                        return;
                     }
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                 }
+            }
 
-            // Fallback: salvar em Downloads
             var excelStreamFallback = DizimistaExcelService.GerarModelo();
             var downloadsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -417,103 +393,98 @@ public partial class DizimistaCadastroViewModel(
 
             if (Avalonia.Application.Current?.ApplicationLifetime is ClassicDesktopStyleApplicationLifetime desktop &&
                 desktop.MainWindow != null)
+            {
                 try
                 {
                     var storageProvider = desktop.MainWindow.StorageProvider;
-                    if (storageProvider != null)
+                    var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                     {
-                        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                        Title = "Selecionar Planilha para Importar",
+                        AllowMultiple = false,
+                        FileTypeFilter = new[]
+                            { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
+                    });
+
+                    if (files.Count > 0)
+                    {
+                        var file = files[0];
+                        Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
+
+                        await using var stream = await file.OpenReadAsync();
+                        using var memoryStream = new MemoryStream();
+                        await stream.CopyToAsync(memoryStream);
+                        var excelBytes = memoryStream.ToArray();
+
+                        var dizimistasImportados = await DizimistaExcelService.ImportarAsync(excelBytes);
+
+                        if (dizimistasImportados.Count == 0)
                         {
-                            Title = "Selecionar Planilha para Importar",
-                            AllowMultiple = false,
-                            FileTypeFilter = new[]
-                                { new FilePickerFileType("Arquivos Excel") { Patterns = new[] { "*.xlsx", "*.xls" } } }
-                        });
-
-                        if (files.Count > 0)
-                        {
-                            var file = files[0];
-                            Debug.WriteLine($"[INFO] Arquivo selecionado: {file.Name}");
-
-                            // Ler arquivo
-                            await using var stream = await file.OpenReadAsync();
-                            using var memoryStream = new MemoryStream();
-                            await stream.CopyToAsync(memoryStream);
-                            var excelBytes = memoryStream.ToArray();
-
-                            // Importar dizimistas do arquivo
-                            var dizimistasImportados = await DizimistaExcelService.ImportarAsync(excelBytes);
-
-                            if (dizimistasImportados.Count == 0)
-                            {
-                                await _dialogService.ShowAlertAsync("Importação",
-                                    "Nenhum dizimista foi encontrado no arquivo.");
-                                return;
-                            }
-
-                            Debug.WriteLine($"[INFO] {dizimistasImportados.Count} dizimistas lidos da planilha");
-
-                            // Salvar cada dizimista importado
-                            var sucessos = 0;
-                            var erros = 0;
-
-                            foreach (var dizimista in dizimistasImportados)
-                                try
-                                {
-                                    // Verificar se já existe um dizimista com o mesmo número de cadastro
-                                    var existente =
-                                        await _getHandler.Handle(
-                                            new GetDizimistaByNumeroCadastroQuery(dizimista.NumeroCadastro));
-                                    if (existente != null)
-                                    {
-                                        erros++;
-                                        continue;
-                                    }
-
-                                    // Criar novo dizimista
-                                    var cmd = new CreateDizimistaCommand(
-                                        dizimista.NumeroCadastro,
-                                        dizimista.Nome,
-                                        dizimista.DataNascimento,
-                                        dizimista.Endereco,
-                                        dizimista.Telefone,
-                                        dizimista.Whatsapp,
-                                        dizimista.DataCadastro
-                                    );
-
-                                    await _createHandler.Handle(cmd);
-                                    sucessos++;
-                                }
-                                catch (Exception ex)
-                                {
-                                    erros++;
-                                    Debug.WriteLine($"[ERRO] Erro ao importar dizimista: {ex.Message}");
-                                }
-
-                            Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
-
-                            // Mostrar resultado
-                            var mensagem = "Importação concluída!\n\n";
-                            mensagem += $"✓ {sucessos} dizimista(s) importado(s)";
-                            
-                            if (erros > 0)
-                                mensagem += $"\n✗ {erros} dizimista(s) não importado(s)";
-                            
-                            mensagem += $"\n\nTotal processado: {sucessos + erros} linha(s)";
-                            mensagem += "\n\nDeseja cadastrar outro dizimista ou voltar para a lista?";
-
-                            var result = await _dialogService.ShowConfirmAsync(
-                                "Importação Concluída",
-                                mensagem,
-                                "Cadastrar Outro",
-                                "Voltar para Lista");
-
-                            if (!result)
-                                _navigationService.Navigate("dizimistas");
-                            else
-                                LimparCampos();
+                            await _dialogService.ShowAlertAsync("Importação",
+                                "Nenhum dizimista foi encontrado no arquivo.");
                             return;
                         }
+
+                        Debug.WriteLine($"[INFO] {dizimistasImportados.Count} dizimistas lidos da planilha");
+
+                        var sucessos = 0;
+                        var erros = 0;
+
+                        foreach (var dizimista in dizimistasImportados)
+                        {
+                            try
+                            {
+                                var existente =
+                                    await _getHandler.Handle(
+                                        new GetDizimistaByNumeroCadastroQuery(dizimista.NumeroCadastro));
+                                if (existente != null)
+                                {
+                                    erros++;
+                                    continue;
+                                }
+
+                                var cmd = new CreateDizimistaCommand(
+                                    dizimista.NumeroCadastro,
+                                    dizimista.Nome,
+                                    dizimista.DataNascimento,
+                                    dizimista.Endereco,
+                                    dizimista.Telefone,
+                                    dizimista.Whatsapp,
+                                    dizimista.DataCadastro,
+                                    dizimista.Ativo
+                                );
+
+                                await _createHandler.Handle(cmd);
+                                sucessos++;
+                            }
+                            catch (Exception ex)
+                            {
+                                erros++;
+                                Debug.WriteLine($"[ERRO] Erro ao importar dizimista: {ex.Message}");
+                            }
+                        }
+
+                        Debug.WriteLine($"[INFO] Importação concluída: {sucessos} sucesso(s), {erros} erro(s)");
+
+                        var mensagem = "Importação concluída!\n\n";
+                        mensagem += $"✓ {sucessos} dizimista(s) importado(s)";
+                        
+                        if (erros > 0)
+                            mensagem += $"\n✗ {erros} dizimista(s) não importado(s)";
+                        
+                        mensagem += $"\n\nTotal processado: {sucessos + erros} linha(s)";
+                        mensagem += "\n\nDeseja cadastrar outro dizimista ou voltar para a lista?";
+
+                        var result = await _dialogService.ShowConfirmAsync(
+                            "Importação Concluída",
+                            mensagem,
+                            "Cadastrar Outro",
+                            "Voltar para Lista");
+
+                        if (!result)
+                            _navigationService.Navigate("dizimistas");
+                        else
+                            LimparCampos();
+                        return;
                     }
                 }
                 catch (Exception ex)
@@ -521,6 +492,7 @@ public partial class DizimistaCadastroViewModel(
                     Debug.WriteLine($"[ERRO] Erro ao abrir file picker: {ex.Message}");
                     await _dialogService.ShowErrorAsync($"Erro ao abrir file picker: {ex.Message}");
                 }
+            }
 
             Debug.WriteLine("[ERRO] StorageProvider não disponível");
             await _dialogService.ShowErrorAsync("StorageProvider não disponível");
