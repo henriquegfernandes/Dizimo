@@ -465,15 +465,19 @@ jobs:
           # Setup paths
           APP_NAME="Dizimo.app"
           DMG_NAME="Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg"
-          STAGE_DIR="$(mktemp -d)"
+          STAGE_DIR="$PWD/dmg-stage"
 
-          rm -f "$DMG_NAME"
+          rm -rf "$STAGE_DIR" "$DMG_NAME"
+          mkdir -p "$STAGE_DIR"
+
+          trap 'rm -rf "$STAGE_DIR"' EXIT
 
           # Stage files in isolated temp directory
           cp -R "$APP_NAME" "$STAGE_DIR/"
           ln -s /Applications "$STAGE_DIR/Applications"
+          sync
+          sleep 2
           hdiutil create -volname "Dizimo" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_NAME" || { echo "Failed to create DMG"; exit 1; }
-          rm -rf "$STAGE_DIR"
 
 
       - name: Setup Code Signing Certificate (macOS)
