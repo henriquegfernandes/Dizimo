@@ -1,7 +1,5 @@
 name: CI/CD
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:
@@ -22,7 +20,7 @@ jobs:
     outputs:
       version: ${{ steps.extract.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       
       - name: Extract version from .csproj
         id: extract
@@ -64,15 +62,15 @@ jobs:
             name: macOS (Apple Silicon ARM64)
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
     
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
       - name: Setup NuGet cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.nuget/packages
@@ -104,7 +102,7 @@ jobs:
     
       - name: Upload test results (Windows x64 only)
         if: matrix.rid == 'win-x64' && always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.rid }}
           path: '**/TestResults/**'
@@ -131,7 +129,7 @@ jobs:
 
       - name: Upload build artifact
         if: success()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -145,12 +143,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
     
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -191,10 +189,10 @@ jobs:
             arch: ARM64
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       
       - name: Download artifact for ${{ matrix.arch }}
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -202,6 +200,7 @@ jobs:
       - name: Verify Executable Type (WinExe)
         run: |
           $exePath = "publish-${{ matrix.rid }}\Dizimo.exe"
+          if (-not (Test-Path $exePath)) { exit 1 }
           [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exePath)
           if ($bytes.Length -lt 64 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { exit 1 }
           $peOffset = [System.BitConverter]::ToInt32($bytes, 0x3C)
@@ -213,12 +212,6 @@ jobs:
             [System.IO.File]::WriteAllBytes($exePath, $bytes)
           }
 
-      - name: Verify staged installer files
-        run: |
-          $appDir = Join-Path $env:TEMP "dizimo-app"
-          $iconPath = Join-Path $env:TEMP "dizimo-resources\appicon.ico"
-          if (-not (Test-Path $appDir) -or -not (Get-ChildItem $appDir -Recurse -ErrorAction SilentlyContinue) -or -not (Test-Path $iconPath)) { exit 1 }
-
       - name: Install Inno Setup
         run: choco install innosetup -y
 
@@ -228,6 +221,12 @@ jobs:
           New-Item -ItemType Directory -Path "$env:TEMP\dizimo-resources" -Force | Out-Null
           Copy-Item "publish-${{ matrix.rid }}\*" "$env:TEMP\dizimo-app\" -Recurse -Force
           Copy-Item "Dizimo\Resources\AppIcon\appicon.ico" "$env:TEMP\dizimo-resources\appicon.ico" -Force
+
+      - name: Verify staged installer files
+        run: |
+          $appDir = Join-Path $env:TEMP "dizimo-app"
+          $iconPath = Join-Path $env:TEMP "dizimo-resources\appicon.ico"
+          if (-not (Test-Path $appDir) -or -not (Get-ChildItem $appDir -Recurse -ErrorAction SilentlyContinue) -or -not (Test-Path $iconPath)) { exit 1 }
 
       - name: Build Inno Setup Installer
         run: |
@@ -297,7 +296,7 @@ jobs:
           CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERTIFICATE_PASSWORD }}
 
       - name: Upload Windows Installer
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dizimo-windows-${{ matrix.arch }}-installer
           path: Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe
@@ -317,10 +316,10 @@ jobs:
             arch: x86_64
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       
       - name: Download artifact for ${{ matrix.arch }}
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -400,7 +399,7 @@ jobs:
           sha256sum "$APPIMAGE_FILE" > "${APPIMAGE_FILE}.sha256"
 
       - name: Upload Linux AppImage
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dizimo-linux-${{ matrix.arch }}-appimage
           path: Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage*
@@ -422,10 +421,10 @@ jobs:
             arch: arm64
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       
       - name: Download artifact for ${{ matrix.arch }}
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
@@ -537,7 +536,7 @@ jobs:
           echo "✨ App bundle signed successfully"
 
       - name: Upload macOS DMG
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dizimo-macos-${{ matrix.arch }}-dmg
           path: Dizimo-v${{ needs.extract-version.outputs.version }}-macos-${{ matrix.arch }}.dmg
@@ -553,10 +552,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           path: artifacts
 
