@@ -91,5 +91,14 @@
         <ProjectReference Include="..\\Dizimo.Infrastructure\\Dizimo.Infrastructure.csproj"/>
     </ItemGroup>
 
+    <!-- ================================================================ -->
+    <!-- Force Windows GUI subsystem on Windows publish                  -->
+    <!-- ================================================================ -->
+    <Target Name="EnsureWindowsGUI" AfterTargets="Publish" Condition="'$(IsWindows)' == 'true' AND '$(RuntimeIdentifier)' != ''">
+        <PropertyGroup>
+            <ExePath>$(PublishDir)Dizimo.exe</ExePath>
+        </PropertyGroup>
+        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(ExePath)') { Write-Host 'Setting Windows GUI subsystem for $(ExePath)'; $peFile = Get-Content -Path '$(ExePath)' -AsByteStream -TotalCount 64; if ($peFile[60] -eq 2) { $peFile[60] = 3; Set-Content -Path '$(ExePath)' -Value $peFile -AsByteStream -NoNewline; Write-Host 'Console subsystem changed to GUI subsystem'; } else { Write-Host 'Already running as GUI or already modified'; } } else { Write-Host 'WARNING: $(ExePath) not found'; }&quot;" />
+    </Target>
 
 </Project>
