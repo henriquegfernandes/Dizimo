@@ -2,6 +2,8 @@
 #define AppVersion "1.1.2"
 #define AppPublisher "Henrique Fernandes Tech"
 #define AppExeName "Dizimo.exe"
+#define SourceAppDir GetEnv("TEMP") + "\dizimo-app"
+#define SourceIconFile GetEnv("TEMP") + "\dizimo-resources\appicon.ico"
 
 [Setup]
 AppName={#AppName}
@@ -29,9 +31,9 @@ Name: "desktopicon"; Description: "Create desktop shortcut"; GroupDescription: "
 
 [Files]
 ; Files are copied from staging directory by CI/CD build process
-; Use {%TEMP} to reference Windows temp directory where workflow stages files
-Source: "{%TEMP}\dizimo-app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{%TEMP}\dizimo-resources\appicon.ico"; DestDir: "{app}"; Flags: ignoreversion
+; Using GetEnv("TEMP") to reference Windows temp directory where workflow stages files
+Source: "{#SourceAppDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceIconFile}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\appicon.ico"
