@@ -201,79 +201,44 @@ jobs:
 
       - name: Verify Executable Type (WinExe)
         run: |
-          Write-Host "🔍 Verifying executable type..."
-          
           $exePath = "publish-${{ matrix.rid }}\Dizimo.exe"
-          
-          if (-not (Test-Path $exePath)) {
-            Write-Host "❌ ERROR: Dizimo.exe not found at $exePath"
-            exit 1
-          }
-          
           [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exePath)
-          
-          if ($bytes.Length -gt 60) {
-            $subsystem = $bytes[60]
-            
-            if ($subsystem -eq 3) {
-              Write-Host "✅ CONFIRMED: Executable is GUI (WinExe) - subsystem value is 3"
-            } elseif ($subsystem -eq 2) {
-              Write-Host "⚠️  WARNING: Executable is Console (Exe) - subsystem value is 2"
-              Write-Host "Converting to GUI..."
-              $bytes[60] = 3
-              [System.IO.File]::WriteAllBytes($exePath, $bytes)
-              Write-Host "✅ Converted to GUI subsystem"
-            } else {
-              Write-Host "⚠️  Unexpected subsystem value: $subsystem"
-            }
+          if ($bytes.Length -lt 64 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { exit 1 }
+          $peOffset = [System.BitConverter]::ToInt32($bytes, 0x3C)
+          $subsystemOffset = $peOffset + 68
+          $subsystem = [System.BitConverter]::ToInt16($bytes, $subsystemOffset)
+          if ($subsystem -ne 3) {
+            $bytes[$subsystemOffset] = 0x03
+            $bytes[$subsystemOffset + 1] = 0x00
+            [System.IO.File]::WriteAllBytes($exePath, $bytes)
           }
+
+      - name: Verify staged installer files
+        run: |
+          $appDir = Join-Path $env:TEMP "dizimo-app"
+          $iconPath = Join-Path $env:TEMP "dizimo-resources\appicon.ico"
+          if (-not (Test-Path $appDir) -or -not (Get-ChildItem $appDir -Recurse -ErrorAction SilentlyContinue) -or -not (Test-Path $iconPath)) { exit 1 }
 
       - name: Install Inno Setup
         run: choco install innosetup -y
 
       - name: Prepare Files for Installer
         run: |
-          # Create staging directories
           New-Item -ItemType Directory -Path "$env:TEMP\dizimo-app" -Force | Out-Null
           New-Item -ItemType Directory -Path "$env:TEMP\dizimo-resources" -Force | Out-Null
-          
-          # Copy app files
           Copy-Item "publish-${{ matrix.rid }}\*" "$env:TEMP\dizimo-app\" -Recurse -Force
-          
-          # Copy icon
           Copy-Item "Dizimo\Resources\AppIcon\appicon.ico" "$env:TEMP\dizimo-resources\appicon.ico" -Force
-          
-          Write-Host "✅ Files prepared for installer"
 
       - name: Build Inno Setup Installer
         run: |
-          Write-Host "🔨 Building Inno Setup installer from configuration..."
-          
-          # Use the ISS file from repository
           $issFile = "build-scripts\Dizimo.iss"
-          
-          # Update ISS with dynamic version in temp location
           $issContent = Get-Content $issFile -Raw
           $issContent = $issContent -replace '#define AppVersion ".*?"', "#define AppVersion `"${{ needs.extract-version.outputs.version }}`""
           $issContent = $issContent -replace 'OutputBaseFilename=Dizimo-Setup', "OutputBaseFilename=Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup"
           $issContent = $issContent -replace 'ArchitecturesAllowed=x64', "ArchitecturesAllowed=${{ matrix.arch == 'x64' && 'x64' || 'arm64' }}"
-          
-          # Write to temp file
           $issContent | Out-File -Encoding ASCII "Dizimo-Build.iss"
-          
-          Write-Host "📋 Using Inno Setup configuration..."
-          Write-Host "   Version: ${{ needs.extract-version.outputs.version }}"
-          Write-Host "   Architecture: ${{ matrix.arch }}"
-          
-          Write-Host "🔨 Compiling installer..."
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Dizimo-Build.iss"
-          
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Inno Setup installer created successfully"
-          } else {
-            Write-Host "❌ Inno Setup build failed with exit code: $LASTEXITCODE"
-            exit 1
-          }
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Import Code Signing Certificate (Windows)
         if: env.WINDOWS_CODE_SIGNING_CERTIFICATE != ''
@@ -339,11 +304,8 @@ jobs:
           retention-days: 30
 
   # ============================================================================
-  # BUILD LINUX APPIMAGE - Only for x86_64
+  # BUILD LINUX APPIMAGE
   # ============================================================================
-  # Note: ARM64 AppImage is not built in CI because ubuntu-latest is x86_64 only.
-  # ARM64 binaries are available as ZIP artifacts from build-and-test job.
-  # To build ARM64 AppImage in CI, add a self-hosted ARM64 runner to the matrix.
   build-linux-appimage:
     name: Build Linux AppImage (${{ matrix.arch }})
     runs-on: ubuntu-latest
@@ -365,38 +327,13 @@ jobs:
 
       - name: Download and setup AppImage tools
         run: |
-          set -euo pipefail
-
           ARCH="${{ matrix.arch }}"
-
-          # Use a reliable appimagetool source (continuous builds include aarch64)
-          if [ "$ARCH" = "x86_64" ]; then
-            URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
-          elif [ "$ARCH" = "aarch64" ]; then
-            URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage"
-          else
-            echo "Unsupported arch: $ARCH"
-            exit 1
-          fi
-
-          # Fail on HTTP errors; follow redirects
-          curl -fSL "$URL" -o appimagetool
-          chmod +x appimagetool
-
-          # Sanity check (prevents the 9-byte 'Not Found' situation)
-          test -s appimagetool
-          FILE_SIZE=$(stat -c%s appimagetool)
-          if [ "$FILE_SIZE" -lt 1000000 ]; then
-            echo "Downloaded appimagetool is unexpectedly small ($FILE_SIZE bytes). Likely a bad URL or HTTP error page."
-            head -n 5 appimagetool || true
-            exit 1
-          fi
-
-          echo "AppImage tools downloaded successfully (size: $FILE_SIZE bytes)"
-          
-          # Install runtime dependencies
-          sudo apt-get update
-          sudo apt-get install -y libfuse2 || true
+          if [ "$ARCH" = "x86_64" ]; then URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          elif [ "$ARCH" = "aarch64" ]; then URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage"
+          else echo "Unsupported arch: $ARCH"; exit 1; fi
+          curl -fSL "$URL" -o appimagetool && chmod +x appimagetool
+          [ $(stat -c%s appimagetool) -gt 1000000 ] || exit 1
+          sudo apt-get update -y && sudo apt-get install -y libfuse2 || true
 
       - name: Build AppImage
         run: |
@@ -444,50 +381,23 @@ jobs:
           
           # Generate icon from centralized file or use placeholder as fallback
           if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
-            # Try to use the ICO file directly
             cp Dizimo/Resources/AppIcon/appicon.ico AppDir/Dizimo.png 2>/dev/null || {
-              echo "⚠️  Could not copy ICO as PNG, generating placeholder..."
               sudo apt-get update
               sudo apt-get install -y imagemagick || true
               convert -size 256x256 xc:lightgray -gravity center -pointsize 32 -annotate 0 "D" AppDir/Dizimo.png || true
             }
           else
-            echo "Generating placeholder icon..."
             sudo apt-get update
             sudo apt-get install -y imagemagick || true
             convert -size 256x256 xc:lightgray -gravity center -pointsize 32 -annotate 0 "D" AppDir/Dizimo.png || true
           fi
           
-          # Diagnostics
-          echo "=== AppImage tools diagnostics ==="
-          ./appimagetool --version || true
-          file appimagetool || true
-          echo "=== AppDir structure ==="
-          ls -laR AppDir/ | head -50
-          
-          # Create AppImage
-          echo "=== Creating AppImage ==="
-          ./appimagetool AppDir "Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage" || {
-            echo "appimagetool failed, check logs above"
-            exit 1
-          }
-          
-          echo "=== AppImage created successfully ==="
-          ls -lh Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
+          ./appimagetool AppDir "Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage" || exit 1
 
       - name: Create AppImage Checksums
         run: |
-          set -euo pipefail
-          
           APPIMAGE_FILE="Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage"
-          
-          echo "📋 Creating checksums for $APPIMAGE_FILE..."
-          
-          # SHA256 checksum
           sha256sum "$APPIMAGE_FILE" > "${APPIMAGE_FILE}.sha256"
-          echo "✅ SHA256: $(cat ${APPIMAGE_FILE}.sha256)"
-          
-          echo "📝 Checksums created"
 
       - name: Upload Linux AppImage
         uses: actions/upload-artifact@v5
@@ -522,23 +432,10 @@ jobs:
 
       - name: Create macOS App Bundle and DMG
         run: |
-          set -euo pipefail
-
-          # Create app bundle structure
-          mkdir -p Dizimo.app/Contents/MacOS
-          mkdir -p Dizimo.app/Contents/Resources
-
-          # Copy application files
+          mkdir -p Dizimo.app/Contents/MacOS Dizimo.app/Contents/Resources
           cp -r publish-${{ matrix.rid }}/* Dizimo.app/Contents/MacOS/
           chmod +x Dizimo.app/Contents/MacOS/Dizimo
-
-          # Copy centralized icon file
-          if [ -f "Dizimo/Resources/AppIcon/appicon.ico" ]; then
-            cp Dizimo/Resources/AppIcon/appicon.ico Dizimo.app/Contents/Resources/AppIcon.ico
-            echo "✅ Icon copied from centralized location"
-          else
-            echo "⚠️  Warning: Icon not found"
-          fi
+          [ -f "Dizimo/Resources/AppIcon/appicon.ico" ] && cp Dizimo/Resources/AppIcon/appicon.ico Dizimo.app/Contents/Resources/AppIcon.ico
 
           # Create Info.plist
           cat > Dizimo.app/Contents/Info.plist << 'EOF'
@@ -574,27 +471,9 @@ jobs:
           # Stage files in isolated temp directory
           cp -R "$APP_NAME" "$STAGE_DIR/"
           ln -s /Applications "$STAGE_DIR/Applications"
-
-          echo "Building DMG from staging directory: $STAGE_DIR"
-          ls -la "$STAGE_DIR"
-
-          # Create compressed DMG image using hdiutil create
-          echo "Creating compressed DMG image..."
-          hdiutil create \
-            -volname "Dizimo" \
-            -srcfolder "$STAGE_DIR" \
-            -ov \
-            -format UDZO \
-            "$DMG_NAME" || {
-              echo "Failed to create DMG"
-              exit 1
-            }
-
+          hdiutil create -volname "Dizimo" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_NAME" || { echo "Failed to create DMG"; exit 1; }
           rm -rf "$STAGE_DIR"
 
-          echo "DMG creation completed successfully"
-          ls -lh "$DMG_NAME"
-          hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
 
       - name: Setup Code Signing Certificate (macOS)
         if: env.MACOS_CODE_SIGNING_CERTIFICATE != ''

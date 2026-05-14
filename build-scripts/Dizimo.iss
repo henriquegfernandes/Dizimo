@@ -29,9 +29,9 @@ Name: "desktopicon"; Description: "Create desktop shortcut"; GroupDescription: "
 
 [Files]
 ; Files are copied from staging directory by CI/CD build process
-; Source path is set dynamically in the workflow
-Source: "{tmp}\dizimo-app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{tmp}\dizimo-resources\appicon.ico"; DestDir: "{app}"; Flags: ignoreversion
+; Use {%TEMP} to reference Windows temp directory where workflow stages files
+Source: "{%TEMP}\dizimo-app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{%TEMP}\dizimo-resources\appicon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\appicon.ico"
