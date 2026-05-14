@@ -317,7 +317,8 @@ jobs:
           # Import certificate to store
           Write-Host "🔐 Importing code signing certificate..."
           $securePassword = ConvertTo-SecureString -String $env:CODE_SIGNING_CERT_PASSWORD -AsPlainText -Force
-          Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword -Force | Out-Null
+          $importedCert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+          Write-Host "✅ Imported certificate thumbprint: $($importedCert.Thumbprint)"
           
           # Store path for next step
           Write-Host "CERT_PATH=$certPath" >> $env:GITHUB_ENV
