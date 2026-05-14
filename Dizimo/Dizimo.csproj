@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <OutputType Condition="'$(IsWindows)' == 'true'">WinExe</OutputType>
-        <OutputType Condition="'$(IsWindows)' != 'true'">Exe</OutputType>
+        <!-- Default to Exe for non-Windows platforms -->
+        <OutputType>Exe</OutputType>
         <RootNamespace>Dizimo</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -35,20 +35,13 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PublishReadyToRun>false</PublishReadyToRun>
         <DefaultLanguage>pt-br</DefaultLanguage>
-        
-        <!-- Ensure no console window opens on Windows -->
-        <UseWindowsForms>false</UseWindowsForms>
-        <Prefer32Bit>false</Prefer32Bit>
     </PropertyGroup>
 
-    <!-- Windows-specific properties only for Windows builds -->
-    <PropertyGroup Condition="'$(IsWindows)' == 'true'">
+    <!-- 🪟 Windows-specific properties (WinExe for no console, platform version) -->
+    <PropertyGroup Condition="'$(IsWindows)' == 'true' OR $(RuntimeIdentifier.StartsWith('win'))">
+        <OutputType>WinExe</OutputType>
         <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-        <!-- CRITICAL: Force WinExe output type in all scenarios -->
-        <OutputType>WinExe</OutputType>
-        <!-- Prevent subsystem override -->
-        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
     <ItemGroup>
@@ -93,28 +86,5 @@
         <ProjectReference Include="..\\Dizimo.Infrastructure\\Dizimo.Infrastructure.csproj"/>
     </ItemGroup>
 
-    <!-- ================================================================ -->
-    <!-- Force Windows GUI subsystem on Windows publish                  -->
-    <!-- ================================================================ -->
-    <Target Name="EnsureWindowsGUI" AfterTargets="Publish" Condition="'$(IsWindows)' == 'true' AND '$(RuntimeIdentifier)' != ''">
-        <PropertyGroup>
-            <ExePath>$(PublishDir)Dizimo.exe</ExePath>
-            <ScriptPath>$([System.IO.Path]::GetDirectoryName('$(MSBuildThisFileDirectory)'))\build-scripts\set-gui-subsystem.bat</ScriptPath>
-        </PropertyGroup>
-        
-        <!-- Log the paths we're using -->
-        <Message Text="🔐 Ensuring Windows GUI subsystem..." Importance="high" />
-        <Message Text="   Executable: $(ExePath)" Importance="high" />
-        <Message Text="   Script: $(ScriptPath)" Importance="high" />
-        
-        <!-- Run the batch script to set GUI subsystem -->
-        <Exec Command="&quot;$(ScriptPath)&quot; &quot;$(ExePath)&quot;" 
-              ContinueOnError="false"
-              EchoOff="false" />
-        
-        <!-- Verify the result -->
-        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(ExePath)') { [byte[]]$$bytes = [System.IO.File]::ReadAllBytes('$(ExePath)'); if ($$bytes.Length -gt 60) { if ($$bytes[60] -eq 3) { Write-Host '✅ VERIFIED: GUI subsystem (3) is set'; exit 0; } else { Write-Host '⚠️  WARNING: Subsystem is ' $$bytes[60]; exit 0; } } } else { Write-Host 'ERROR: File not found'; exit 1; }&quot;"
-              ContinueOnError="true" />
-    </Target>
 
 </Project>

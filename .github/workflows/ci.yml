@@ -129,35 +129,6 @@ jobs:
           echo "✅ Publish output verified for ${{ matrix.rid }}"
           ls -lh publish-${{ matrix.rid }}/Dizimo.exe 2>/dev/null || ls -lh publish-${{ matrix.rid }}/Dizimo
 
-      - name: Fix GUI Subsystem for Windows Builds
-        if: matrix.rid == 'win-x64' || matrix.rid == 'win-arm64'
-        run: |
-          Write-Host "🔐 Verifying Windows GUI subsystem on published executable..."
-          
-          $exePath = "publish-${{ matrix.rid }}\Dizimo.exe"
-          
-          if (Test-Path $exePath) {
-            $bytes = [System.IO.File]::ReadAllBytes($exePath)
-            
-            if ($bytes.Length -gt 60) {
-              $currentSubsystem = $bytes[60]
-              Write-Host "   Current subsystem value: $currentSubsystem (2=Console, 3=GUI)"
-              
-              if ($currentSubsystem -eq 2) {
-                Write-Host "   ⚠️  Console subsystem detected, changing to GUI (3)..."
-                $bytes[60] = 3
-                [System.IO.File]::WriteAllBytes($exePath, $bytes)
-                Write-Host "   ✅ Changed successfully"
-              } elseif ($currentSubsystem -eq 3) {
-                Write-Host "   ✅ Already GUI subsystem (3)"
-              } else {
-                Write-Host "   ⚠️  Unexpected value: $currentSubsystem"
-              }
-            }
-          } else {
-            Write-Host "   ⚠️  Warning: Executable not found at $exePath"
-          }
-
       - name: Upload build artifact
         if: success()
         uses: actions/upload-artifact@v5
@@ -228,81 +199,80 @@ jobs:
           name: dizimo-${{ matrix.rid }}
           path: publish-${{ matrix.rid }}
 
-      - name: Install NSIS
-        run: choco install nsis -y
-
-      - name: Create installer directory and copy icon
+      - name: Verify Executable Type (WinExe)
         run: |
-          mkdir -p installer
-          copy-item publish-${{ matrix.rid }}\* installer\ -Recurse
-          # Copy icon from centralized location
-          copy-item Dizimo\Resources\AppIcon\appicon.ico installer\appicon.ico
-          Write-Host "✅ Icon copied to installer directory"
-
-      - name: Build NSIS installer
-        run: |
-          $nsiScript = @"
-          !include "MUI2.nsh"
-          !include "x64.nsh"
-          Name "Dizimo"
-          OutFile "Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe"
-          InstallDir "`$PROGRAMFILES\Dizimo"
-          RequestExecutionLevel admin
-          !insertmacro MUI_PAGE_DIRECTORY
-          !insertmacro MUI_PAGE_INSTFILES
-          !insertmacro MUI_LANGUAGE "English"
-          Section "Install"
-            SetOutPath "`$INSTDIR"
-            File /r "installer\*.*"
-            CreateDirectory "`$SMPROGRAMS\Dizimo"
-            ; Create shortcuts with icon
-            CreateShortcut "`$SMPROGRAMS\Dizimo\Dizimo.lnk" "`$INSTDIR\Dizimo.exe" "" "`$INSTDIR\appicon.ico" 0
-            CreateShortcut "`$DESKTOP\Dizimo.lnk" "`$INSTDIR\Dizimo.exe" "" "`$INSTDIR\appicon.ico" 0
-            CreateShortcut "`$SMPROGRAMS\Dizimo\Uninstall.lnk" "`$INSTDIR\Uninstall.exe"
-            WriteUninstaller "`$INSTDIR\Uninstall.exe"
-            ; Register uninstall info
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "DisplayName" "Dizimo"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "DisplayIcon" "`$INSTDIR\appicon.ico"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "UninstallString" "`$INSTDIR\Uninstall.exe"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo" "InstallLocation" "`$INSTDIR"
-          SectionEnd
-          Section "Uninstall"
-            RMDir /r "`$INSTDIR"
-            RMDir /r "`$SMPROGRAMS\Dizimo"
-            Delete "`$DESKTOP\Dizimo.lnk"
-            DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Dizimo"
-          SectionEnd
-          "@
-          $nsiScript | Out-File -Encoding ASCII "installer.nsi"
-          & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
-
-      - name: Ensure GUI Subsystem for Executable
-        run: |
-          Write-Host "🔐 Verifying and fixing GUI subsystem on executables..."
+          Write-Host "🔍 Verifying executable type..."
           
-          # Read the Dizimo.exe from installer directory
-          $exePath = "installer\Dizimo.exe"
+          $exePath = "publish-${{ matrix.rid }}\Dizimo.exe"
           
-          if (Test-Path $exePath) {
-            [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exePath)
+          if (-not (Test-Path $exePath)) {
+            Write-Host "❌ ERROR: Dizimo.exe not found at $exePath"
+            exit 1
+          }
+          
+          [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exePath)
+          
+          if ($bytes.Length -gt 60) {
+            $subsystem = $bytes[60]
             
-            if ($bytes.Length -gt 60) {
-              $currentSubsystem = $bytes[60]
-              Write-Host "Current subsystem value: $currentSubsystem (2=Console, 3=GUI)"
-              
-              if ($currentSubsystem -eq 2) {
-                Write-Host "⚠️  Console subsystem detected, changing to GUI..."
-                $bytes[60] = 3
-                [System.IO.File]::WriteAllBytes($exePath, $bytes)
-                Write-Host "✅ Changed to GUI subsystem (3)"
-              } elseif ($currentSubsystem -eq 3) {
-                Write-Host "✅ Already configured as GUI subsystem (3)"
-              } else {
-                Write-Host "⚠️  Unexpected subsystem value: $currentSubsystem"
-              }
+            if ($subsystem -eq 3) {
+              Write-Host "✅ CONFIRMED: Executable is GUI (WinExe) - subsystem value is 3"
+            } elseif ($subsystem -eq 2) {
+              Write-Host "⚠️  WARNING: Executable is Console (Exe) - subsystem value is 2"
+              Write-Host "Converting to GUI..."
+              $bytes[60] = 3
+              [System.IO.File]::WriteAllBytes($exePath, $bytes)
+              Write-Host "✅ Converted to GUI subsystem"
+            } else {
+              Write-Host "⚠️  Unexpected subsystem value: $subsystem"
             }
+          }
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Prepare Files for Installer
+        run: |
+          # Create staging directories
+          New-Item -ItemType Directory -Path "$env:TEMP\dizimo-app" -Force | Out-Null
+          New-Item -ItemType Directory -Path "$env:TEMP\dizimo-resources" -Force | Out-Null
+          
+          # Copy app files
+          Copy-Item "publish-${{ matrix.rid }}\*" "$env:TEMP\dizimo-app\" -Recurse -Force
+          
+          # Copy icon
+          Copy-Item "Dizimo\Resources\AppIcon\appicon.ico" "$env:TEMP\dizimo-resources\appicon.ico" -Force
+          
+          Write-Host "✅ Files prepared for installer"
+
+      - name: Build Inno Setup Installer
+        run: |
+          Write-Host "🔨 Building Inno Setup installer from configuration..."
+          
+          # Use the ISS file from repository
+          $issFile = "build-scripts\Dizimo.iss"
+          
+          # Update ISS with dynamic version in temp location
+          $issContent = Get-Content $issFile -Raw
+          $issContent = $issContent -replace '#define AppVersion ".*?"', "#define AppVersion `"${{ needs.extract-version.outputs.version }}`""
+          $issContent = $issContent -replace 'OutputBaseFilename=Dizimo-Setup', "OutputBaseFilename=Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup"
+          $issContent = $issContent -replace 'ArchitecturesAllowed=x64', "ArchitecturesAllowed=${{ matrix.arch == 'x64' && 'x64' || 'arm64' }}"
+          
+          # Write to temp file
+          $issContent | Out-File -Encoding ASCII "Dizimo-Build.iss"
+          
+          Write-Host "📋 Using Inno Setup configuration..."
+          Write-Host "   Version: ${{ needs.extract-version.outputs.version }}"
+          Write-Host "   Architecture: ${{ matrix.arch }}"
+          
+          Write-Host "🔨 Compiling installer..."
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Dizimo-Build.iss"
+          
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Inno Setup installer created successfully"
           } else {
-            Write-Host "⚠️  Warning: $exePath not found"
+            Write-Host "❌ Inno Setup build failed with exit code: $LASTEXITCODE"
+            exit 1
           }
 
       - name: Import Code Signing Certificate (Windows)
@@ -338,12 +308,12 @@ jobs:
           # Get thumbprint of imported certificate
           $cert = Get-ChildItem -Path Cert:\CurrentUser\My | Where-Object { $_.Subject -like "*Dizimo*" } | Select-Object -First 1
           if ($null -eq $cert) {
-              Write-Host "⚠️  No Dizimo certificate found, skipping signing..."
+              Write-Host "⚠️  No Dizimo certificate found, continuing without signing..."
               exit 0
           }
           
           Write-Host "   Using certificate: $($cert.Thumbprint)"
-          Write-Host "   Installing: $installerPath"
+          Write-Host "   Signing: $installerPath"
           
           # Sign with SignTool
           $signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
@@ -351,13 +321,12 @@ jobs:
               $signTool = "signtool.exe"
           }
           
-          & $signTool sign /f $certPath /p $password /d "Dizimo - Church Financial Management System" /t http://timestamp.digicert.com /tr http://timestamp.digicert.com /td sha256 /fd sha256 $installerPath 2>&1 | Out-Null
+          & $signTool sign /f $certPath /p $password /d "Dizimo - Church Financial Management System" /t http://timestamp.digicert.com /tr http://timestamp.digicert.com /td sha256 /fd sha256 $installerPath 2>&1
           
-          if ($LASTEXITCODE -eq 0 -or $null -ne (signtool verify /pa $installerPath 2>&1)) {
+          if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ Installer signed successfully"
           } else {
-              Write-Host "⚠️  Signing with timestamp failed, retrying without timestamp..."
-              & $signTool sign /f $certPath /p $password /d "Dizimo - Church Financial Management System" /fd sha256 $installerPath 2>&1 | Out-Null
+              Write-Host "⚠️  Signing failed, but continuing..."
           }
         env:
           CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERTIFICATE_PASSWORD }}

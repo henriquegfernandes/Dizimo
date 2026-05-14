@@ -157,7 +157,7 @@ bash build-scripts/build-dmg.sh publish-dir v1.1.0
 
 ## 📋 Versão
 
-- **Atual**: v1.1.0
+- **Atual**: v1.1.2
 - **Framework**: Avalonia 12.0.2
 - **.NET**: 10.0
 - **Banco de dados**: SQLite
@@ -165,9 +165,6 @@ bash build-scripts/build-dmg.sh publish-dir v1.1.0
 
 ## 🔗 Links úteis
 
-- [Manual de Publicação](RELEASE-GUIDE-PT-BR.md)
-- [Checklist de Release](RELEASE-READINESS.md)
-- [Relatório de Análise](RELATORIO_FINAL.md)
 - [GitHub Releases](https://github.com/henriquegfernandes/Dizimo/releases)
 
 ## 💬 Apoio e contato
