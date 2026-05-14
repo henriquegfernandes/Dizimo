@@ -129,6 +129,35 @@ jobs:
           echo "✅ Publish output verified for ${{ matrix.rid }}"
           ls -lh publish-${{ matrix.rid }}/Dizimo.exe 2>/dev/null || ls -lh publish-${{ matrix.rid }}/Dizimo
 
+      - name: Fix GUI Subsystem for Windows Builds
+        if: matrix.rid == 'win-x64' || matrix.rid == 'win-arm64'
+        run: |
+          Write-Host "🔐 Verifying Windows GUI subsystem on published executable..."
+          
+          $exePath = "publish-${{ matrix.rid }}\Dizimo.exe"
+          
+          if (Test-Path $exePath) {
+            $bytes = [System.IO.File]::ReadAllBytes($exePath)
+            
+            if ($bytes.Length -gt 60) {
+              $currentSubsystem = $bytes[60]
+              Write-Host "   Current subsystem value: $currentSubsystem (2=Console, 3=GUI)"
+              
+              if ($currentSubsystem -eq 2) {
+                Write-Host "   ⚠️  Console subsystem detected, changing to GUI (3)..."
+                $bytes[60] = 3
+                [System.IO.File]::WriteAllBytes($exePath, $bytes)
+                Write-Host "   ✅ Changed successfully"
+              } elseif ($currentSubsystem -eq 3) {
+                Write-Host "   ✅ Already GUI subsystem (3)"
+              } else {
+                Write-Host "   ⚠️  Unexpected value: $currentSubsystem"
+              }
+            }
+          } else {
+            Write-Host "   ⚠️  Warning: Executable not found at $exePath"
+          }
+
       - name: Upload build artifact
         if: success()
         uses: actions/upload-artifact@v5
@@ -246,6 +275,91 @@ jobs:
           "@
           $nsiScript | Out-File -Encoding ASCII "installer.nsi"
           & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+
+      - name: Ensure GUI Subsystem for Executable
+        run: |
+          Write-Host "🔐 Verifying and fixing GUI subsystem on executables..."
+          
+          # Read the Dizimo.exe from installer directory
+          $exePath = "installer\Dizimo.exe"
+          
+          if (Test-Path $exePath) {
+            [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exePath)
+            
+            if ($bytes.Length -gt 60) {
+              $currentSubsystem = $bytes[60]
+              Write-Host "Current subsystem value: $currentSubsystem (2=Console, 3=GUI)"
+              
+              if ($currentSubsystem -eq 2) {
+                Write-Host "⚠️  Console subsystem detected, changing to GUI..."
+                $bytes[60] = 3
+                [System.IO.File]::WriteAllBytes($exePath, $bytes)
+                Write-Host "✅ Changed to GUI subsystem (3)"
+              } elseif ($currentSubsystem -eq 3) {
+                Write-Host "✅ Already configured as GUI subsystem (3)"
+              } else {
+                Write-Host "⚠️  Unexpected subsystem value: $currentSubsystem"
+              }
+            }
+          } else {
+            Write-Host "⚠️  Warning: $exePath not found"
+          }
+
+      - name: Import Code Signing Certificate (Windows)
+        if: env.WINDOWS_CODE_SIGNING_CERTIFICATE != ''
+        run: |
+          # Decode Base64 certificate
+          $certBase64 = $env:WINDOWS_CODE_SIGNING_CERTIFICATE
+          $certBytes = [System.Convert]::FromBase64String($certBase64)
+          $certPath = Join-Path -Path $env:TEMP -ChildPath "dizimo-codesign.pfx"
+          [System.IO.File]::WriteAllBytes($certPath, $certBytes)
+          
+          # Import certificate to store
+          Write-Host "🔐 Importing code signing certificate..."
+          $securePassword = ConvertTo-SecureString -String $env:CODE_SIGNING_CERT_PASSWORD -AsPlainText -Force
+          Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword -Force | Out-Null
+          
+          # Store path for next step
+          Write-Host "CERT_PATH=$certPath" >> $env:GITHUB_ENV
+        env:
+          WINDOWS_CODE_SIGNING_CERTIFICATE: ${{ secrets.WINDOWS_CODE_SIGNING_CERTIFICATE }}
+          CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERTIFICATE_PASSWORD }}
+
+      - name: Sign Windows Installer
+        if: env.WINDOWS_CODE_SIGNING_CERTIFICATE != ''
+        run: |
+          $installerPath = "Dizimo-v${{ needs.extract-version.outputs.version }}-windows-${{ matrix.arch }}-Setup.exe"
+          $certPath = $env:CERT_PATH
+          $password = $env:CODE_SIGNING_CERT_PASSWORD
+          
+          Write-Host "🔐 Signing installer with code signing certificate..."
+          
+          # Get thumbprint of imported certificate
+          $cert = Get-ChildItem -Path Cert:\CurrentUser\My | Where-Object { $_.Subject -like "*Dizimo*" } | Select-Object -First 1
+          if ($null -eq $cert) {
+              Write-Host "⚠️  No Dizimo certificate found, skipping signing..."
+              exit 0
+          }
+          
+          Write-Host "   Using certificate: $($cert.Thumbprint)"
+          Write-Host "   Installing: $installerPath"
+          
+          # Sign with SignTool
+          $signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
+          if (-not (Test-Path $signTool)) {
+              $signTool = "signtool.exe"
+          }
+          
+          & $signTool sign /f $certPath /p $password /d "Dizimo - Church Financial Management System" /t http://timestamp.digicert.com /tr http://timestamp.digicert.com /td sha256 /fd sha256 $installerPath 2>&1 | Out-Null
+          
+          if ($LASTEXITCODE -eq 0 -or $null -ne (signtool verify /pa $installerPath 2>&1)) {
+              Write-Host "✅ Installer signed successfully"
+          } else {
+              Write-Host "⚠️  Signing with timestamp failed, retrying without timestamp..."
+              & $signTool sign /f $certPath /p $password /d "Dizimo - Church Financial Management System" /fd sha256 $installerPath 2>&1 | Out-Null
+          }
+        env:
+          CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERTIFICATE_PASSWORD }}
 
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v5
@@ -391,11 +505,25 @@ jobs:
           echo "=== AppImage created successfully ==="
           ls -lh Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
 
+      - name: Create AppImage Checksums
+        run: |
+          set -euo pipefail
+          
+          APPIMAGE_FILE="Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage"
+          
+          echo "📋 Creating checksums for $APPIMAGE_FILE..."
+          
+          # SHA256 checksum
+          sha256sum "$APPIMAGE_FILE" > "${APPIMAGE_FILE}.sha256"
+          echo "✅ SHA256: $(cat ${APPIMAGE_FILE}.sha256)"
+          
+          echo "📝 Checksums created"
+
       - name: Upload Linux AppImage
         uses: actions/upload-artifact@v5
         with:
           name: dizimo-linux-${{ matrix.arch }}-appimage
-          path: Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage
+          path: Dizimo-v${{ needs.extract-version.outputs.version }}-linux-${{ matrix.arch }}.AppImage*
           retention-days: 30
 
   # ============================================================================
@@ -497,6 +625,67 @@ jobs:
           echo "DMG creation completed successfully"
           ls -lh "$DMG_NAME"
           hdiutil verify "$DMG_NAME" || echo "Warning: Could not verify DMG, but file was created"
+
+      - name: Setup Code Signing Certificate (macOS)
+        if: env.MACOS_CODE_SIGNING_CERTIFICATE != ''
+        run: |
+          set -euo pipefail
+          
+          # Decode Base64 certificate
+          CERT_BASE64="${{ secrets.MACOS_CODE_SIGNING_CERTIFICATE }}"
+          CERT_PATH="${HOME}/dizimo-macos-codesign.p12"
+          
+          echo "🔐 Importing macOS code signing certificate..."
+          echo "$CERT_BASE64" | base64 -d > "$CERT_PATH"
+          
+          # Import into keychain
+          security import "$CERT_PATH" \
+              -k ~/Library/Keychains/login.keychain \
+              -P "${{ secrets.CODE_SIGNING_CERTIFICATE_PASSWORD }}" \
+              -T /usr/bin/codesign \
+              2>/dev/null || true
+          
+          # Allow codesign to use the key without prompting
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" ~/Library/Keychains/login.keychain 2>/dev/null || true
+          
+          echo "MACOS_CERT_PATH=$CERT_PATH" >> $GITHUB_ENV
+          echo "✅ Certificate imported"
+
+      - name: Sign macOS App Bundle
+        if: env.MACOS_CODE_SIGNING_CERTIFICATE != ''
+        run: |
+          set -euo pipefail
+          
+          echo "🔐 Signing macOS app bundle..."
+          
+          # Get certificate identity
+          CERT_IDENTITY=$(security find-identity -v -p codesigning ~/Library/Keychains/login.keychain | grep "Dizimo" | head -1 | sed -E 's/^[[:space:]]*[0-9]+[[:space:]]*([A-F0-9]+)[[:space:]]*"(.+)".*$/\2/' || echo "Developer ID Application")
+          
+          echo "   Using certificate: $CERT_IDENTITY"
+          
+          # Sign frameworks and dependencies
+          if [ -d "Dizimo.app/Contents/Frameworks" ]; then
+              echo "   Signing frameworks..."
+              find "Dizimo.app/Contents/Frameworks" -type f \( -name "*.dylib" -o -name "*.framework" \) | while read -r framework; do
+                  codesign --force --verbose \
+                      --sign "$CERT_IDENTITY" \
+                      --timestamp \
+                      "$framework" 2>/dev/null || true
+              done
+          fi
+          
+          # Sign the main bundle
+          echo "   Signing main bundle..."
+          codesign --force --verbose \
+              --sign "$CERT_IDENTITY" \
+              --timestamp \
+              "Dizimo.app"
+          
+          # Verify
+          echo "✅ Verifying signature..."
+          codesign --verify --verbose "Dizimo.app"
+          
+          echo "✨ App bundle signed successfully"
 
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v5

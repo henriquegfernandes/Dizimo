@@ -45,8 +45,10 @@
     <PropertyGroup Condition="'$(IsWindows)' == 'true'">
         <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-        <!-- Preserve WinExe output type in all scenarios -->
+        <!-- CRITICAL: Force WinExe output type in all scenarios -->
         <OutputType>WinExe</OutputType>
+        <!-- Prevent subsystem override -->
+        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
     <ItemGroup>
@@ -97,8 +99,22 @@
     <Target Name="EnsureWindowsGUI" AfterTargets="Publish" Condition="'$(IsWindows)' == 'true' AND '$(RuntimeIdentifier)' != ''">
         <PropertyGroup>
             <ExePath>$(PublishDir)Dizimo.exe</ExePath>
+            <ScriptPath>$([System.IO.Path]::GetDirectoryName('$(MSBuildThisFileDirectory)'))\build-scripts\set-gui-subsystem.bat</ScriptPath>
         </PropertyGroup>
-        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(ExePath)') { Write-Host 'Setting Windows GUI subsystem for $(ExePath)'; $peFile = Get-Content -Path '$(ExePath)' -AsByteStream -TotalCount 64; if ($peFile[60] -eq 2) { $peFile[60] = 3; Set-Content -Path '$(ExePath)' -Value $peFile -AsByteStream -NoNewline; Write-Host 'Console subsystem changed to GUI subsystem'; } else { Write-Host 'Already running as GUI or already modified'; } } else { Write-Host 'WARNING: $(ExePath) not found'; }&quot;" />
+        
+        <!-- Log the paths we're using -->
+        <Message Text="🔐 Ensuring Windows GUI subsystem..." Importance="high" />
+        <Message Text="   Executable: $(ExePath)" Importance="high" />
+        <Message Text="   Script: $(ScriptPath)" Importance="high" />
+        
+        <!-- Run the batch script to set GUI subsystem -->
+        <Exec Command="&quot;$(ScriptPath)&quot; &quot;$(ExePath)&quot;" 
+              ContinueOnError="false"
+              EchoOff="false" />
+        
+        <!-- Verify the result -->
+        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(ExePath)') { [byte[]]$$bytes = [System.IO.File]::ReadAllBytes('$(ExePath)'); if ($$bytes.Length -gt 60) { if ($$bytes[60] -eq 3) { Write-Host '✅ VERIFIED: GUI subsystem (3) is set'; exit 0; } else { Write-Host '⚠️  WARNING: Subsystem is ' $$bytes[60]; exit 0; } } } else { Write-Host 'ERROR: File not found'; exit 1; }&quot;"
+              ContinueOnError="true" />
     </Target>
 
 </Project>

@@ -419,3 +419,26 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ============================================================================
+# Code Signing Certificates - NEVER COMMIT THESE!
+# ============================================================================
+certs/
+*.p12
+*.key
+*.pem
+*.crt
+*.cer
+*.der
+*.p7b
+*.p7c
+*.p7e
+*.p7m
+*.p7r
+*.p7s
+
+# Temporary certificate files
+.temp-cert*
+*-cert-temp*
+
+
